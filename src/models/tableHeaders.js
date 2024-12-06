@@ -1,0 +1,141 @@
+const clientOrdersHeaders = [
+    { title: 'Numéro de commande', value: 'client_order_number' },
+    { title: 'Quantité', value: 'quantity'},
+    { title: 'Prix unitaire', value: 'price'},
+    { title: 'Date de livraison', value: 'delivery_date'},
+    { title: 'Actions', value: 'actions', sortable: false }
+  ]
+
+const partHeaders = [
+  { title: 'Référence & désignation', value: 'reference'},
+  { title: 'Actions', value: 'urgencies'},
+  { title: 'Matière', value: 'material'},
+  { title: 'Dessin', value: 'drawing'},
+  { title: 'Prix fournisseur', value: 'latest_supplier_price'},
+  { title: 'Prix client', value: 'latest_client_price'},
+  { title: 'Editer la pièce', value: 'actions', sortable: false },
+]
+
+const subcontractorHeaders = [
+  { title: "Numéro d'expédition", value: 'expedition_number' },
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Sous-traitant', value: 'subcontractor_name' },
+  { title: 'Actions', value: 'actions', sortable: false },
+];
+
+const logisticplacesHeaders = [
+  { title: "Numéro d'expédition", value: 'expedition_number' },
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Lieu de stockage', value: 'logistic_place_name' },
+  { title: 'Actions', value: 'actions', sortable: false },
+];
+
+const supplierOrdersHeaders = [
+  { title: 'Numéro de commande', value: 'supplier_order_number' },
+  { title: 'Quantité commandée', value: 'original_quantity'},
+  { title: 'Reste à livrer', value: 'quantity'},
+  { title: 'Prix unitaire', value: 'price'},
+  { title: 'Statut', value: 'status'},
+  { title: 'Date de livraison', value: 'delivery_date'},
+  { title: 'Actions', value: 'actions', sortable: false },
+]
+
+const expeditionHeaders = [
+  { title: 'Numéro de commande', value: 'supplier_order_number' },
+  { title: 'Partiel', value: 'partial'},
+  { title: 'Quantité commandée', value: 'quantity'},
+  { title: 'Quantité expédiée', value: 'real_quantity'},
+  { title: 'Référence', value: 'part_reference'},
+  { title: 'Désignation', value: 'part_designation'}
+]
+
+const supplierHeaders = [
+  { title: 'Nom', value: 'name' },
+  { title: 'Savoir-faire', value: 'knowledge'},
+  { title: 'Address', value: 'address'},
+  { title: 'Contact', value: 'contact_name'},
+  { title: 'Email', value: 'contact_email'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const clientHeaders = [
+  { title: 'Nom', value: 'name' },
+  { title: 'Address', value: 'address'},
+  { title: 'Contact', value: 'contact_name'},
+  { title: 'Email', value: 'contact_email'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const logisticplacesIndexHeaders = [
+  { title: 'Nom', value: 'name' },
+  { title: 'Address', value: 'address'},
+  { title: 'Contact', value: 'contact_name'},
+  { title: 'Email', value: 'contact_email'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const subcontractorIndexHeaders = [
+  { title: 'Nom', value: 'name' },
+  { title: 'Address', value: 'address'},
+  { title: 'Contact', value: 'contact_name'},
+  { title: 'Email', value: 'contact_email'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const multipleDestinationHeaders = [
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Sous-traitant', value: 'sub_contractor' },
+  { title: 'Lieu de stockage', value: 'logistic_place' },     
+  { title: 'Stockage chez client', value: 'client' },                 
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const transferHeaders = [
+  { title: 'Quantité à transférer', value: 'quantity' },
+  { title: 'Sous-traitant', value: 'sub_contractor' },
+  { title: 'Lieu de stockage', value: 'logistic_place' },     
+  { title: 'Stockage chez client', value: 'client' }
+]
+
+const clientStockPositionsHeaders = [
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Référence', value: 'reference_and_designation' },
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const sortingClientPositionHeaders = [
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Référence & désignation', value: 'reference_and_designation' },
+  { title: 'Lieu de stock consignation', value: 'consignment_stock' },                 
+  { title: 'Lieu de stock', value: 'standard_stock' }
+]
+
+const expeditionPositionHeaders = [
+  { title: 'Référence', value: 'part_reference'},
+  { title: 'Quantité', value: 'quantity'},
+  { title: 'Sous-traitant', value: 'sub_contractor' },
+  { title: 'Lieu de stockage', value: 'logistic_place'},
+  { title: 'Stockage chez client', value: 'client'},
+  { title: 'Multi-destinations', value: 'actions', sortable: false },
+]
+
+const expeditionsListHeaders = [
+  { title: 'Quantité en transit', value: 'quantity'},
+  { title: "Date de départ", value: 'real_departure_time'},
+  { title: "Date d'arrivée", value: 'delivery_date' },
+  { title: "Statut", value: 'status' },
+  { title: 'Transporteur', value: 'transporter'},
+  { title: 'Fournisseur', value: 'supplier_name'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const expeditionsIndexHeaders = [
+  { title: "Date de départ", value: 'real_departure_time'},
+  { title: "Date d'arrivée", value: 'arrival_time' },
+  { title: "Statut", value: 'status' },
+  { title: 'Transporteur', value: 'transporter'},
+  { title: 'Fournisseur', value: 'supplier_name'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+export { clientOrdersHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
