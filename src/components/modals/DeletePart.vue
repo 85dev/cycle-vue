@@ -36,16 +36,18 @@ async function deletePart() {
     <div class="pa-4 text-center">
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-
-        <v-btn
-            v-bind="activatorProps"
-            icon
-            style="background-color: none; box-shadow: none; margin-bottom: 6px;"
-            size="16"
-            class="no-effects"
-        >              
-          <v-icon color="red">mdi-delete-outline</v-icon>
-        </v-btn>
+          <div style="margin-left: -2em; margin-right: -2em;">
+            <v-chip
+                  v-bind="activatorProps"
+                  class="index-slot"
+                  variant="text"
+                  color="red"
+                  style="font-weight: 500;"
+              >
+                  <v-icon start class="ml-1">mdi-delete-outline</v-icon>
+                  <span class="mr-1">Supprimer</span>
+            </v-chip>
+          </div>
 
         </template>
   

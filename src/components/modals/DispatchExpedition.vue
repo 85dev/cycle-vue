@@ -133,8 +133,8 @@ onMounted(async() => {
             <v-chip
                 v-bind="activatorProps"
                 class="index-slot"
-                variant="elevated"
-                color="warning"
+                variant="text"
+                color="blue"
                 style="margin-right: 0.6em; font-weight: 500;"
             >
                 <v-icon start class="ml-1">mdi-gesture-spread</v-icon>

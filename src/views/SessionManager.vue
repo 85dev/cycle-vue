@@ -11,6 +11,8 @@ const signUpPassword = ref('')
 const loginEmail = ref('')
 const loginPassword = ref('')
 const toggleMenu = ref(false)
+const showLoginPassword = ref(false)
+const showSignUpPassword = ref(false)
 
 // Methods for signup, login, and reset
 async function onSignUp(event) {
@@ -57,9 +59,10 @@ async function onLogin(event) {
       <v-card class="login-menu">
         <img src="../assets/img/cycle_app.svg" style="width: 100px; margin: 2em 0em;"/>
         <div v-if="toggleMenu" class="aligner">
-          <h3 style="margin-bottom: 1em;">Inscription</h3>
+          <span class="informative-text-l" style="margin-bottom: 1em;">Inscription</span>
           <v-form @submit.prevent="onSignUp" class="form-container">
             <v-text-field
+              variant="underlined"
               class="field-input"
               v-model="signUpEmail"
               label="Email"
@@ -67,21 +70,28 @@ async function onLogin(event) {
               required
             ></v-text-field>
             <v-text-field
+              variant="underlined"
               class="field-input"
               v-model="signUpPassword"
               label="Mot de passe"
-              type="password"
+              :append-icon="showSignUpPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="() => (showSignUpPassword = !showSignUpPassword)"
+              :type="showSignUpPassword ? 'text' : 'password'"
               required
             ></v-text-field>
-            <v-btn type="submit" style="margin-bottom: 1em;" color="#5E239D">S'inscrire</v-btn>
+            <v-chip variant="elevated" color="blue" type="submit" @click="onSignUp" style="margin-bottom: 1em; font-size: 1em;">
+              <v-icon class="mr-1">mdi-account-plus-outline</v-icon>
+              S'inscrire
+            </v-chip>
           </v-form>
         </div>
 
         <!-- Login Form -->
         <div v-else class="aligner">
-          <h3 style="margin-bottom: 1em;">Connexion</h3>
+          <span class="informative-text-l" style="margin-bottom: 1em;">Connexion</span>
           <v-form @submit.prevent="onLogin" class="form-container">
             <v-text-field
+              variant="underlined"
               class="field-input"
               v-model="loginEmail"
               label="Email"
@@ -89,21 +99,27 @@ async function onLogin(event) {
               required
             ></v-text-field>
             <v-text-field
+              variant="underlined"
               class="field-input"
               v-model="loginPassword"
               label="Mot de passe"
-              type="password"
+              :append-icon="showLoginPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="() => (showLoginPassword = !showLoginPassword)"
+              :type="showLoginPassword ? 'text' : 'password'"
               required
             ></v-text-field>
-            <v-btn type="submit" style="margin-bottom: 1em;" color="#5E239D">Se connecter</v-btn>
+            <v-chip variant="elevated" color="blue" @click="onLogin" style="margin-bottom: 1em; font-size: 1em;">
+              <v-icon class="mr-1">mdi-account-arrow-right-outline</v-icon>
+              Se connecter
+            </v-chip>
           </v-form>
         </div>
       </v-card>
 
       <span style="margin-top: 1em; color: white">{{ toggleMenu ? 'Déjà inscrit ?' : "Pas encore inscrit ?" }}</span>
-      <v-btn style="margin-top: 1em; display: flex; justify-content: center; align-items: center;" @click="toggleHandler">
+      <v-chip variant="elevated" style="margin-top: 1em; display: flex; justify-content: center; align-items: center;" @click="toggleHandler">
         {{ toggleMenu ? 'Se connecter' : "S'inscrire" }}
-      </v-btn>
+      </v-chip>
 
   </div>
 </template>

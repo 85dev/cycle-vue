@@ -47,12 +47,16 @@ onMounted(async() => {
 <template>
     <v-card class="main-card">
         <CreateExpedition
+            v-if="userId !== 0 && suppliers && suppliers.length > 0"
             origin="single"
             :user-id="userId"
             :suppliers="suppliers"
             @refresh-expeditions="refreshExpeditions()"
         ></CreateExpedition>
-        <v-card style="margin: 1em" title="Index des expéditions en cours" class="b1-container">
+        <v-card style="margin: 1em" class="b1-container">
+            <v-card-title class="d-flex" style="font-weight: 700; font-size: 1em;">
+                EXPEDITIONS EN COURS
+            </v-card-title>
             <v-data-table
             v-if="runningExpeditions && runningExpeditions.length > 0"
             :headers="expeditionsIndexHeaders"
@@ -82,20 +86,28 @@ onMounted(async() => {
                 </div>
                 </template>
             </v-data-table>
-            <div class="aligner" v-else>
-                <span class="informative-text">
-                    <v-icon>mdi-help-circle-outline</v-icon>
-                    Aucune expédition actuellement en transit
-                </span>
+            <div v-else class="d-flex flex-wrap align-items-center">
+              <v-chip
+                class="ma-1 mt-2"
+                style="width: fit-content;"
+                variant="tonal"
+                color="secondary"
+              >
+                <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>
+                <span class="mr-1" >Aucune expédition en cours</span>
+              </v-chip>
             </div>
         </v-card>
-        <v-card style="margin: 0em 1em 0.7em 1em" title="Index des expéditions passées" class="b1-container">
+        <v-card style="margin: 0em 1em 0.7em 1em" class="b1-container">
+            <v-card-title class="d-flex" style="font-weight: 700; font-size: 1em;">
+                EXPEDITIONS TERMINEES
+            </v-card-title>
             <v-data-table
-            v-if="deliveredExpeditions"
-            no-data-text="Aucune expédition passée enregsitrée"
-            :headers="expeditionsIndexHeaders"
-            :items="deliveredExpeditions || []"
-            density="dense"
+                v-if="deliveredExpeditions && deliveredExpeditions.length > 0"
+                no-data-text="Aucune expédition passée enregsitrée"
+                :headers="expeditionsIndexHeaders"
+                :items="deliveredExpeditions || []"
+                density="dense"
             >
                 <template v-slot:item.real_departure_time="{ item }">
                     {{ new Date(item.real_departure_time).toLocaleDateString() }}
@@ -104,8 +116,8 @@ onMounted(async() => {
                     {{ new Date(item.arrival_time).toLocaleDateString() }}
                 </template>
                 <template v-slot:item.status="{ item }">
-                    <v-chip variant="elevated" color="success" style="margin: 0.2em 0em" outlined>
-                        <v-icon style="margin-right: 4px;" left>mdi-check-circle-outline</v-icon>
+                    <v-chip variant="elevated" style="margin: 0.2em 0em" outlined>
+                        <v-icon color="success" style="margin-right: 4px;" left>mdi-check-circle-outline</v-icon>
                         Livré
                     </v-chip>
                 </template>
@@ -116,6 +128,17 @@ onMounted(async() => {
                     ></ExpeditionDetails>
                 </template>
             </v-data-table>
+            <div v-else class="d-flex flex-wrap align-items-center">
+              <v-chip
+                class="ma-1 mt-2"
+                style="width: fit-content;"
+                variant="tonal"
+                color="secondary"
+              >
+                <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>
+                <span class="mr-1" >Aucune expédition terminée</span>
+              </v-chip>
+            </div>
         </v-card>
     </v-card>
 </template>

@@ -8,12 +8,12 @@ const clientOrdersHeaders = [
 
 const partHeaders = [
   { title: 'Référence & désignation', value: 'reference'},
-  { title: 'Actions', value: 'urgencies'},
+  { title: 'Actions requises', value: 'urgencies'},
   { title: 'Matière', value: 'material'},
   { title: 'Dessin', value: 'drawing'},
   { title: 'Prix fournisseur', value: 'latest_supplier_price'},
   { title: 'Prix client', value: 'latest_client_price'},
-  { title: 'Editer la pièce', value: 'actions', sortable: false },
+  { title: 'Actions', value: 'actions', sortable: false },
 ]
 
 const subcontractorHeaders = [
@@ -94,7 +94,7 @@ const transferHeaders = [
   { title: 'Quantité à transférer', value: 'quantity' },
   { title: 'Sous-traitant', value: 'sub_contractor' },
   { title: 'Lieu de stockage', value: 'logistic_place' },     
-  { title: 'Stockage chez client', value: 'client' }
+  { title: 'Stockage client', value: 'client' }
 ]
 
 const clientStockPositionsHeaders = [
@@ -116,7 +116,7 @@ const expeditionPositionHeaders = [
   { title: 'Sous-traitant', value: 'sub_contractor' },
   { title: 'Lieu de stockage', value: 'logistic_place'},
   { title: 'Stockage chez client', value: 'client'},
-  { title: 'Multi-destinations', value: 'actions', sortable: false },
+  { title: 'Actions', value: 'actions', sortable: false },
 ]
 
 const expeditionsListHeaders = [

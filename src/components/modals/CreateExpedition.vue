@@ -7,11 +7,14 @@ import dateConverter from '@/services/dateConverter.js';
 import { expeditionHeaders } from '@/models/tableHeaders.js'
 import { transporters } from '@/models/preselectionData.js';
 import sessionStore from '@/stores/sessionStore.js';
-import router from '@/router/index.js';
 
 const props = defineProps({
     suppliers: {
         type: Array,
+        required: true
+    },
+    userId: {
+        type: Number,
         required: true
     },
     origin: {
@@ -22,7 +25,7 @@ const props = defineProps({
 const supplierOrders = ref([])
 const selectedSupplierOrders = ref([])
 const departureDate = ref(dateConverter.formatISODate(new Date()))
-const arrivalDate = ref(new Date())
+const arrivalDate = ref(dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)))
 const selectedSupplier = ref(null)
 const selectedTransporter = ref(null)
 const number = ref(null)
@@ -64,20 +67,24 @@ onMounted( async () => {
     userId.value = sessionStore.getters.getUserID();
 
     await fetchSupplierOrders()
+    selectedSupplier.value = props.suppliers[0].name
+    selectedTransporter.value = transporters[0]
 })
 </script>
 
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            style="margin-top: 1em;"
-            v-if="props.origin === 'single'"
-            v-bind="activatorProps"
-          >              
-          <v-icon style="margin-right: 0.4em;">mdi-plus-thick</v-icon>
-            Ajouter une expédition
-          </v-btn>
+          <v-chip
+                v-bind="activatorProps" 
+                v-if="props.origin === 'single'"
+                style="margin-top: 1em;"
+                variant="elevated"
+                color="blue"
+            >
+                <v-icon class='mr-2'>mdi-plus-thick</v-icon>
+                <span>Ajouter une expédition</span>
+        </v-chip> 
         </template>
   
         <template v-slot:default="{ isActive }">
@@ -144,7 +151,12 @@ onMounted( async () => {
                             </v-row>
                             </div>
 
-                            <v-card class="dialog-table" title="Choix des positions ouvertes à ajouter" append-icon="mdi-multicast">
+                            <span class="informative-text mb-5 mt-0" style="display: flex; align-items: center; color: red">
+                                <v-icon style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
+                                La répartition de l'expédition signifie que l'expédition est arrivée à destination
+                            </span>
+
+                            <v-card class="dialog-table" title="Choix des commandes ouvertes à ajouter" append-icon="mdi-multicast">
                                 <v-data-table
                                     v-if="supplierOrders.length > 0"
                                     variant="underlined"

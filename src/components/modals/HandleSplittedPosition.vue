@@ -72,14 +72,16 @@ onMounted(() => {
 <template>
       <v-dialog class="secundary-dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            size="16"
-            class="no-effects"
-          >              
-            <v-icon>mdi-multicast</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                class="index-slot"
+                variant="elevated"
+                color="blue"
+                style="margin-right: 0.6em; font-weight: 500;"
+            >
+                <v-icon start class="mr-1 ml-0">mdi-multicast</v-icon>
+                <span class="ml-1">Multi-destinations</span>
+            </v-chip>
         </template>
   
         <template v-slot:default="{ isActive }">

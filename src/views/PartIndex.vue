@@ -160,9 +160,8 @@ onMounted(async() => {
                 <v-chip
                     class="index-slot"
                     variant="elevated"
-                    color="blue"
                 >
-                    <v-icon class="mr-1">mdi-cog-outline</v-icon>
+                    <v-icon color="orange" class="mr-1">mdi-cog-outline</v-icon>
                     {{ item.reference + ' ' + item.designation }}
                 </v-chip>
             </template>

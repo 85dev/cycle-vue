@@ -95,7 +95,7 @@ onMounted(async() => {
 <template>
     <v-dialog v-model="reactiveModalValue" persistent class="dialog-width">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Définissez le type et le lieu de stockage des positions`" append-icon="mdi-truck-delivery-outline" style="padding: 0.4em;">
+                <v-card :title="`Répartissez la position sur le lieu de stockage dédié`" append-icon="mdi-truck-delivery-outline" style="padding: 0.4em;">
                     
                     <div class="column-maker" style="margin-left: 6px;">
                         <div>

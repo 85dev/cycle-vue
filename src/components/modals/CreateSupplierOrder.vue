@@ -4,7 +4,6 @@ import { onMounted, ref, defineEmits } from 'vue';
 // Services
 import apiCaller from '../../services/apiCaller.js';
 import dateConverter from '@/services/dateConverter.js';
-import sessionStore from '@/stores/sessionStore.js';
 
 const props = defineProps({
     userId: {
@@ -12,10 +11,12 @@ const props = defineProps({
     },
     clientOrders: {
         type: Array
+    },
+    clientId: {
+        type: String
     }
 })
 
-const userId = ref(0)
 const supplier = ref(null)
 const number = ref(null)
 const supplierList = ref(null)
@@ -28,19 +29,18 @@ const orderPositions = ref([
 const emit = defineEmits(['refreshSupplierOrders'])
 
 async function fetchParts() {
-    const response = await apiCaller.get(`users/${userId.value}/parts`);
+    const response = await apiCaller.get(`users/${props.userId}/clients/${props.clientId}/parts_by_client`);
     parts.value = response;
 }
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`users/${userId.value}/suppliers`)
+    const response = await apiCaller.get(`users/${props.userId}/suppliers`)
     supplierList.value = response
     supplierListDisplayed.value = response.map(supplier => supplier.name)
 }
 
 async function submitSupplierOrder() {
-
-    const supplierOrder = {
+    const payload = {
         supplier_order: {
             number: number.value,
             order_positions: orderPositions.value.map(position => ({
@@ -59,7 +59,7 @@ async function submitSupplierOrder() {
         .map(position => props.clientOrders.find(order => order.number === position.client_order)?.id)
         .filter(id => id !== undefined);
 
-    await apiCaller.post(`users/${userId.value}/suppliers/${selectedSupplierId}/create_supplier_order?${clientOrderIds > 0 ? `client_order_ids=${clientOrderIds.join(',')}` : ''}`, supplierOrder, true)
+    await apiCaller.post(`users/${props.userId}/suppliers/${selectedSupplierId}/create_supplier_order?${clientOrderIds > 0 ? `client_order_ids=${clientOrderIds.join(',')}` : ''}`, payload, true)
 
     emit('refreshSupplierOrders')
 }
@@ -75,9 +75,6 @@ function removeOrderPosition(index) {
 }
 
 onMounted( async () => {
-    sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
-
     await fetchParts()
     await fetchSuppliers()
 })

@@ -1,9 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
-
 // Services
-import apiCaller from '../../services/apiCaller.js';
-import dateConverter from '@/services/dateConverter.js';
 import { statusIcon, statusIconColor, statusText } from '@/services/textIconServices.js'
 
 const props = defineProps({
@@ -21,15 +17,16 @@ const props = defineProps({
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            style="background-color: none; box-shadow: none; margin-bottom: 10px;"
-            size="12"
-            class="no-effects"
-          >              
-            <v-icon>mdi-file-document-arrow-right-outline</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                class="index-slot"
+                variant="text"
+                color="blue"
+                style="margin-right: 0.6em; font-weight: 500;"
+            >
+                <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
+                <span class="mr-1">Consulter</span>
+            </v-chip>
         </template>
   
         <template v-slot:default="{ isActive }">

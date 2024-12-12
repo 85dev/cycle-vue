@@ -166,11 +166,12 @@ onMounted(async() => {
   
       <template v-slot:default="{ isActive }">
         <div style="padding: 0.4em;">
-          <v-card title="Ajouter un nouveau client" append-icon="mdi-account-plus-outline" style="padding: 0.4em;">
+          <v-card title="Ajouter un nouveau client" style="padding: 0.4em;">
             <v-divider style="margin: 0em 1em 1em 1em;"></v-divider>  
             <v-form class="form-container">
             <!-- Client Information Section -->
-            <v-card title="Informations du client" prepend-icon="mdi-account" style="margin: 0.4em">
+            <v-card style="margin: 0.4em">
+              <v-card-title>INFORMATIONS DU CLIENT</v-card-title>
               <v-card-text>
                 <v-row 
                     style="margin-top: -1em;"
@@ -240,7 +241,16 @@ onMounted(async() => {
 
             <!-- Consignment Stocks Section -->
             <v-card flat outlined>
-              <v-card title="Ajout de lieu(x) de stockage consignation" prepend-icon="mdi-warehouse" style="margin: 0.4em;">
+              <v-card style="margin: 0.4em;">
+                <v-card-title>
+                  AJOUT DES LIEUX DE STOCKAGE CONSIGNATION
+                </v-card-title>
+                  <div style="margin-bottom: 0.4em;">
+                      <span class="informative-text" style="display: flex; align-items: center;">
+                          <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
+                          Un stock consignation client concentre les références mises à disposition chez le client, les références ne sont facturées qu'au moment de leurs consommations.
+                      </span>
+                  </div>
                 <v-divider color="transparent" style="margin:0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                 <v-row 
                     v-for="(stock, index) in consignmentStocks" 
@@ -321,7 +331,8 @@ onMounted(async() => {
 
             <!-- Standard Stocks Section -->
             <v-card flat outlined>
-              <v-card title="Ajout de lieu(x) de stockage standard" prepend-icon="mdi-package-variant-closed-check" style="margin: 0.4em;">
+              <v-card style="margin: 0.4em;">
+                <v-card-title>AJOUT DES LIEUX DE STOCKAGE STANDARD</v-card-title>
                 <v-divider color="transparent" style="margin:0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                 <v-row 
                     v-for="(stock, index) in standardStocks" 

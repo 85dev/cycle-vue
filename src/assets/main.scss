@@ -63,6 +63,12 @@ label, input, .v-btn, .v-data-table {
   font-size: 15px;
 }
 
+.v-card-title {
+  font-weight: 700; 
+  font-size: 1em;
+  color: $pr-bg-color;
+}
+
 .v-chip {
   font-weight: 500;
 }

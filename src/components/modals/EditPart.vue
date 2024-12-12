@@ -1,9 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
-
-// Services
-import apiCaller from '../../services/apiCaller.js';
-import dateConverter from '@/services/dateConverter.js';
+import { ref, defineEmits } from 'vue';
 
 const props = defineProps({
     userId: {
@@ -22,15 +18,16 @@ const emit = defineEmits(['refreshPart'])
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            size="16"
-            style="margin-bottom: 6px;"
-            class="no-effects"
-          >              
-          <v-icon>mdi-pencil-outline</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                class="index-slot"
+                variant="text"
+                color="blue"
+                style="margin-right: 0.6em; font-weight: 500;"
+            >
+                <v-icon start class="ml-1">mdi-pencil-outline</v-icon>
+                <span class="mr-1">Editer</span>
+            </v-chip>
         </template>
   
         <template v-slot:default="{ isActive }">

@@ -101,10 +101,15 @@ onMounted(async() => {
                     </v-list-item>                
                 </v-list>
             
-                <v-btn v-bind="activatorProps" v-else-if="props.origin !== 'menu'" style="margin: 1em 0em -0.6em 0em;">
-                    <v-icon style="margin-right: 0.4em">mdi-tag-plus-outline</v-icon>
-                    Ajouter une pièce
-                </v-btn>
+                <v-chip
+                    v-bind="activatorProps" v-else-if="props.origin !== 'menu'"
+                    style="margin: 1em 0em -0.6em 0em;"
+                    variant="elevated"
+                    color="blue"
+                >
+                    <v-icon class='mr-2'>mdi-plus-thick</v-icon>
+                    <span>Ajouter une pièce</span>
+                </v-chip> 
         </template>
   
         <template v-slot:default="{ isActive }">

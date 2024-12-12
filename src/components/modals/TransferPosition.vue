@@ -34,7 +34,7 @@ const reactivePosition = toRefs(props.position)
 
 const subContractorsList = ref([])
 const logisticPlaceList = ref([])
-const modifiedQuantity = ref(props.position.quantity / 2)
+const modifiedQuantity = ref(props.position.quantity)
 
 const selectedClient = ref(null)
 const selectedLogisticPlace = ref(null)
@@ -56,13 +56,17 @@ async function submitTransfer() {
 
     let destinationType = null;
     let destinationName = null;
+    let logisticPlaceId = null;
+    let subContractorId = null;
 
     if (selectedSubcontractor.value) {
         destinationType = "subcontractor";
         destinationName = selectedSubcontractor.value;
+        subContractorId = subContractorsList.value.find(sc => sc.name === selectedSubcontractor.value).id;
     } else if (selectedLogisticPlace.value) {
         destinationType = "logistic_place";
         destinationName = selectedLogisticPlace.value;
+        logisticPlaceId = logisticPlaceList.value.find(lp => lp.name === selectedLogisticPlace.value).id;
     } else if (selectedClient.value) {
         destinationType = "client";
         destinationName = selectedClient.value;
@@ -75,10 +79,11 @@ async function submitTransfer() {
         position_id: props.position.id,
         part_id: props.position.part_id,
         quantity: modifiedQuantity.value,
-        destinationType: destinationType,
-        destinationName: destinationName,
-        subContractorId: props.position.sub_contractor_id || 0,
-        expeditionPositionId: props.position.expedition_position_id || 0
+        destination_type: destinationType,
+        destination_name: destinationName,
+        sub_contractor_id: subContractorId,
+        logistic_place_id: logisticPlaceId,
+        expedition_position_id: props.position.expedition_position_id
     };
 
     const response = await apiCaller.post(`users/${props.userId}/expedition_positions/${props.position.expedition_position_id}/transfer_position`, payload);
@@ -87,6 +92,12 @@ async function submitTransfer() {
 }
 
 onMounted(async() => {
+    modifiedQuantity.value = props.position.quantity
+
+    selectedClient.value = null
+    selectedLogisticPlace.value = null
+    selectedSubcontractor.value = null
+
     await fetchSubcontractors()
     await fetchLogisticPlaces()
 })
@@ -157,7 +168,7 @@ onMounted(async() => {
                                 clearable
                                 :items="logisticPlaceList.map(sc => sc.name) || []"
                                 v-model="selectedLogisticPlace"
-                                label="Sous-traitant"
+                                label="Lieu de stockage"
                                 aria-required="true"
                                 :disabled="selectedSubcontractor || selectedClient"
                             ></v-select>
@@ -169,7 +180,7 @@ onMounted(async() => {
                                 clearable
                                 :items="[props.client]"
                                 v-model="selectedClient"
-                                label="Sous-traitant"
+                                label="Stockage client"
                                 aria-required="true"
                                 :disabled="selectedLogisticPlace || selectedSubcontractor"
                             ></v-select>
