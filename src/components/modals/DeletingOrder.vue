@@ -29,6 +29,9 @@ const props = defineProps({
     }
 })
 
+console.log(props);
+
+
 async function deleteOrder() {
     if (props.orderType === 'client') {
         await apiCaller.deleteData(`users/${props.userId}/client_orders/${props.clientOrderId}`, false);
@@ -46,24 +49,23 @@ async function deleteOrder() {
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
 
-        <v-btn
-            v-bind="activatorProps"
-            icon
-            style="background-color: none; box-shadow: none; margin-bottom: 6px;"
-            size="16"
-            class="no-effects"
-        >              
-          <v-icon color="red">mdi-delete-outline</v-icon>
-        </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                variant="text"
+                color="red"
+            >
+                <v-icon class='mr-2'>mdi-delete-outline</v-icon>
+                <span>Supprimer</span>
+            </v-chip> 
 
         </template>
   
         <template v-slot:default="{ isActive }">
 
-          <v-card title="Suppression d'une commande client">
+          <v-card title="Suppression d'une commande fournisseur">
 
             <v-form style="width: 94%; margin: 0 auto;">
-                <span class="informative-text-m">Vous êtes sur le point de supprimer la commande client <strong>{{ props.orderNumber }}</strong></span>
+                <span class="informative-text-m">Vous êtes sur le point de supprimer la commande fournisseur <strong>{{ props.orderNumber }}</strong></span>
             </v-form>
   
             <v-card-actions style="margin-bottom: 0.8em;">

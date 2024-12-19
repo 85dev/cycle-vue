@@ -1,51 +1,53 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
+import { defineEmits } from 'vue';
 
 // Services
 import apiCaller from '../../services/apiCaller.js';
-import dateConverter from '@/services/dateConverter.js';
 
 const props = defineProps({
     userId: {
-        type: Number
-    },
-    partId: {
-        type: Number
+        type: Number,
+        required: true
     },
     order: {
-        type: Object
+        type: Object,
+        required: true
     }
 })
 
 const emit = defineEmits(['refreshClientOrders'])
+
+async function submitClientOrder() {
+    await apiCaller.get(`users/${props.userId}/client_orders/${props.order.client_order_id || props.order.order_id}/complete_client_order`);
+    emit('refreshClientOrders');
+}
 </script>
 
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            size="16"
-            class="no-effects"
-            style="margin-left: 12px; margin-bottom: 6px"
-          >              
-          <v-icon color="primary">mdi-package-variant-closed-check</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                variant="text"
+                color="success"
+            >
+                <v-icon class='mr-2'>mdi-package-variant-closed-check</v-icon>
+                <span>Archiver</span>
+            </v-chip> 
         </template>
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`La commande client n°${props.order.client_order_number} a-t-elle été livrée ?`" style="padding: 0.4em;">
+                <v-card :title="`La commande client a été livrée ?`" style="padding: 0.4em;">
 
                     <div class="text-modal">
-                        En cliquant sur le bouton <strong>Archiver la commande</strong>,
-                        la commande n'apparaîtra plus dans le tableau des commandes clients.
+                        Si la commande client n°<strong>{{ props.order.client_order_number || props.order.order_number }}</strong> a été livrée,
+                        vous pouvez la finaliser en cliquant sur le bouton ci-dessous.
+    
                     </div>
 
                     <div class="text-modal" style="margin-top: 1em;">
-                        Vous pourrez retrouver cette commande dans les archives
-                        des commandes clients.
+                        Vous pourrez retrouver cette commande dans les commandes clients <strong>finalisées</strong>.
                     </div>
                     <v-card-actions style="margin-bottom: 0.8em;">
 
@@ -58,7 +60,7 @@ const emit = defineEmits(['refreshClientOrders'])
                         ></v-btn>
             
                         <v-btn variant="elevated" @click="submitClientOrder(); isActive.value = false" color="success">
-                            Archiver la commande
+                            Finaliser la commande
                         </v-btn>
 
                     </v-card-actions>

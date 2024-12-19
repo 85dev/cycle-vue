@@ -5,14 +5,22 @@ const props = defineProps({
     loading: Boolean
 })
 
-// Create a dynamic loading from the props received
 const loading = toRef(props, 'loading')
 </script>
 
 <template>
-    <div class="container" v-if="loading">
-        <div class="spinner"></div>
-    </div>
+   <v-overlay
+      v-model="loading"
+      class="container align-center justify-center"
+   >
+      <v-card
+         width="300"
+         class="pa-4 d-flex flex-column align-center justify-center"
+      >
+      <div class="spinner mt-4"/>
+      <span class="informative-text mt-12 mb-2">Chargement des données...</span>
+      </v-card>
+  </v-overlay>
 </template>
 
 <style scoped lang="scss">

@@ -34,7 +34,6 @@ onMounted(async() => {
        
         <v-card title="Liste des fournisseurs" append-icon="mdi-progress-wrench" class="top-card">
             <v-data-table
-                class="parts-table"
                 :loading="loading"
                 loading-text="Recherche..."
                 :headers="supplierHeaders"
@@ -79,9 +78,6 @@ onMounted(async() => {
 </template>
 
 <style scoped lang="scss">
-.parts-table {
-    padding: 12px 24px;
-}
 
 .top-card {
     margin: 0.4em 0.4em;

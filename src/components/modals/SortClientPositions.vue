@@ -100,7 +100,7 @@ onMounted(async() => {
                     <div class="column-maker" style="margin-left: 6px;">
                         <div>
                             <v-icon color="red" style="margin-left: 12px;">mdi-alert-circle-outline</v-icon>
-                            <span class="informative-text" style="margin-left: 6px;">Vous devez répartir les positions sur les lieux de stockage du client, <strong>un seul stock</strong> peut être sélectionné</span>
+                            <span class="informative-text" style="margin-left: 6px;">Vous devez répartir la position sur les lieux de stockage du client, <strong>un seul stock</strong> peut être sélectionné</span>
                         </div>
                     </div>
 
@@ -132,7 +132,7 @@ onMounted(async() => {
                                 variant="underlined"
                                 v-model="item.selectedStSt"
                                 :items="standardStocks.map(ss => ss.address) || []"
-                                label="Stock consignation"
+                                label="Stock standard"
                                 aria-required="true"
                                 :disabled="item.selectedCoSt"
                             >
@@ -146,7 +146,7 @@ onMounted(async() => {
                         <v-spacer></v-spacer>
             
                         <v-btn variant="elevated" @click="submitSortedPositions(); reactiveModalValue = false" color="success">
-                            Répartir les positions
+                            Répartir la position
                         </v-btn>
 
                     </v-card-actions>

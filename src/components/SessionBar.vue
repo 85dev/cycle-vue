@@ -32,6 +32,7 @@ const items = ref([
   { title: 'Tableau de bord', icon: 'mdi-gesture-double-tap', path: '/dashboard' },
   { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
   { title: 'Catalogue des pièces', icon: 'mdi-database-outline', path: '/parts' },
+  { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle-consumptions' },
   // { title: 'Liste des clients', icon: 'mdi-account-tie', path: '/clients' },
   // { title: 'Liste des fournisseurs', icon: 'mdi-cube-send', path: '/suppliers' },
   // { title: 'Liste des sous-traitants', icon: 'mdi-account-wrench-outline', path: '/subcontractors' },
@@ -60,24 +61,30 @@ onMounted(() => {
         >
 
           <div class="aligner">
-            <img :src="Logo" style="margin: 0.6em 0em;" :style="!rail ? 'width: 60px' : 'width: 36px'"/>
+            <img :src="Logo" style="margin: 0.6em 0.2em; padding: 0.1em;" :style="!rail ? 'height: 100px' : 'height: 36px'"/>
           </div>
           <v-list-item
-            title="Menu - Cycle App v0.1.1"
+            title="Menu - Cycle App v0.2.0"
+            style="display: flex; align-items: center; justify-content: center;"
             nav
           >
             <template v-slot:append>
-              <v-btn
-                icon="mdi-chevron-left"
-                variant="text"
-                @click.stop="rail = !rail"
-              ></v-btn>
+                <v-chip
+                  variant="elevated"
+                  class="ma-1 ml-2"
+                  color="blue"
+                  @click.stop="rail = !rail"
+                  style="border-radius: 100%; padding: 0.3em 0.5em; box-shadow: none; display: flex; align-items: center; justify-content: center;"
+                  :style="{ transform: rail ? 'rotate(180deg)' : 'rotate(0deg)' }"
+                >
+                  <v-icon>mdi-chevron-double-right</v-icon>
+                </v-chip>
             </template>
           </v-list-item>
 
           <v-divider style="margin-bottom: 0.4em;"></v-divider>
 
-          <div v-if="!rail">
+          <div v-if="!rail" class="mt-2">
             <v-icon class="informative-text">mdi-airplane-takeoff</v-icon>
             <span class="informative-text" style="margin-left: -0.4em;">Suivi logistique</span>
           </div>
@@ -119,7 +126,7 @@ onMounted(() => {
             <CreateSupplier :origin="'menu'"></CreateSupplier>
             <CreateSubcontractor :origin="'menu'"></CreateSubcontractor>
             <CreateLogisticPlace :origin="'menu'"></CreateLogisticPlace>
-        </div>
+          </div>
 
           <span v-if="!rail">
             <v-icon class="informative-text">mdi-account-outline</v-icon>

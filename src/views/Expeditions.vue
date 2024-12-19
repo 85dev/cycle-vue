@@ -29,6 +29,14 @@ async function fetchDeliveredExpeditions() {
     deliveredExpeditions.value = response
 }
 
+function expeditionStatus(status) {
+    if (status === 'undelivered') {
+        return 'En transit'
+    } else if (status === 'delivered') {
+        return 'Livré'
+    }
+}
+
 async function refreshExpeditions() {
     await fetchExpeditions()
     await fetchDeliveredExpeditions()
@@ -47,14 +55,14 @@ onMounted(async() => {
 <template>
     <v-card class="main-card">
         <CreateExpedition
-            v-if="userId !== 0 && suppliers && suppliers.length > 0"
+            v-if="userId && suppliers && suppliers.length > 0"
             origin="single"
             :user-id="userId"
             :suppliers="suppliers"
             @refresh-expeditions="refreshExpeditions()"
         ></CreateExpedition>
         <v-card style="margin: 1em" class="b1-container">
-            <v-card-title class="d-flex" style="font-weight: 700; font-size: 1em;">
+            <v-card-title class="d-flex">
                 EXPEDITIONS EN COURS
             </v-card-title>
             <v-data-table
@@ -67,12 +75,12 @@ onMounted(async() => {
                 {{ new Date(item.real_departure_time).toLocaleDateString() }}
                 </template>
                 <template v-slot:item.arrival_time="{ item }">
-                {{ new Date(item.arrival_time).toLocaleDateString() }}
+                {{  item.arrival_time ? new Date(item.arrival_time).toLocaleDateString() : 'Pas de date d\'arrivée' }}
                 </template>
                 <template v-slot:item.status="{ item }">
-                    <v-chip variant="elevated" :color="dateConverter.getStatus(item).color" style="margin: 0.2em 0em" outlined>
-                        <v-icon style="margin-right: 4px;" left>{{ dateConverter.getStatus(item).icon }}</v-icon>
-                        {{ dateConverter.getStatus(item).message }}
+                    <v-chip variant="elevated" color="blue" style="margin: 0.2em 0em">
+                        <v-icon class="mr-1">mdi-ferry</v-icon>
+                        {{ expeditionStatus(item.status) }}
                     </v-chip>
                 </template>
                 <template v-slot:item.actions="{ item }">
@@ -99,7 +107,7 @@ onMounted(async() => {
             </div>
         </v-card>
         <v-card style="margin: 0em 1em 0.7em 1em" class="b1-container">
-            <v-card-title class="d-flex" style="font-weight: 700; font-size: 1em;">
+            <v-card-title class="d-flex">
                 EXPEDITIONS TERMINEES
             </v-card-title>
             <v-data-table

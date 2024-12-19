@@ -83,13 +83,14 @@ onMounted( async () => {
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            class="no-effects"
-          >              
-          <v-icon>mdi-plus-circle-outline</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                variant="outlined"
+                color="blue"
+            >
+                <v-icon class='mr-2'>mdi-plus-thick</v-icon>
+                <span>Ajouter une commande fournisseur</span>
+            </v-chip> 
         </template>
   
         <template v-slot:default="{ isActive }">

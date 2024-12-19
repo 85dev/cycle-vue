@@ -1,5 +1,6 @@
 <script setup>
 import apiCaller from '@/services/apiCaller';
+import dateConverter from '@/services/dateConverter';
 import { onMounted, computed, ref } from 'vue'
 import { expeditionPositionHeaders } from '@/models/tableHeaders.js'
 
@@ -23,6 +24,7 @@ const subContractorsList = ref(null)
 const logisticPlaceList = ref(null)
 const clientsList = ref(null)
 const partIds = ref([])
+const arrivalTime = ref(dateConverter.formatISODate(new Date()))
 
 const positionCounts = computed(() => {
   const subcontractorCounts = {};
@@ -110,7 +112,8 @@ async function submitDispatch() {
         references: indices.value.map(index => index.part_reference),
         designations: indices.value.map(index => index.part_designation),
         clients: indices.value.map(index => index.selectedClient || ''),
-        clones: indices.value.map(index => index.clone || false)
+        clones: indices.value.map(index => index.clone || false),
+        arrival_time: arrivalTime.value
     }
 
     const response = await apiCaller.post(`users/${props.userId}/expeditions/${props.expedition.id}/dispatch_expedition`, payload)
@@ -144,8 +147,10 @@ onMounted(async() => {
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Répartition de l'expédition ${props.expedition.number}`" append-icon="mdi-airplane-takeoff" style="padding: 0.4em;">
-
+                <v-card style="padding: 0.4em;">
+                    <v-card-title>
+                        REPARTITION DE L'EXPEDITION <strong>{{ props.expedition.number.toUpperCase() }}</strong>
+                    </v-card-title>
                     <div class="column-maker" style="margin-left: 6px;">
                         <div>
                             <v-icon color="warning" style="margin-left: 12px;">mdi-alert-circle-outline</v-icon>
@@ -157,12 +162,24 @@ onMounted(async() => {
                         </div>
                     </div>
                     
-                    <v-card style="margin: 0.6em;" title="Choix des destinations par position">
+                    <v-card style="margin: 0.6em;">
+                        <v-card-title>
+                            CHOIX DES DESTINATIONS PAR POSITION
+                        </v-card-title>
+                        <v-text-field
+                            v-model="arrivalTime"
+                            type="date"
+                            variant="outlined"
+                            label="Date d'arrivée"
+                            class="mr-4 ml-4"
+                            style="max-width: 160px"
+                            density="compact"
+                        />
                         <v-data-table
                             :item-selectable="true"
                             :items="indices || []"
                             variant="underlined"
-                            density="dense"
+                            density="compact"
                             :headers="expeditionPositionHeaders"
                             v-model="indices"
                         >
@@ -184,6 +201,7 @@ onMounted(async() => {
                             <v-select
                                 class="field-slot"
                                 variant="underlined"
+                                density="compact"
                                 clearable
                                 :items="subContractorsList.map(sc => sc.name) || []"
                                 v-model="item.selectedSubcontractor"
@@ -196,6 +214,7 @@ onMounted(async() => {
                             <v-select
                                 class="field-slot"
                                 clearable
+                                density="compact"
                                 variant="underlined"
                                 :items="logisticPlaceList.map(lp => lp.name) || []"
                                 v-model="item.selectedLogisticPlace"
@@ -208,6 +227,7 @@ onMounted(async() => {
                             <v-select
                                 class="field-slot"
                                 clearable
+                                density="compact"
                                 variant="underlined"
                                 v-model="item.selectedClient"
                                 :items="clientsList.map(lp => lp.name) || []"
@@ -310,5 +330,6 @@ onMounted(async() => {
 
 .field-slot {
     min-width: 120px;
+    padding-top: 0.6em;
 }
 </style>

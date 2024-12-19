@@ -14,7 +14,7 @@ const props = defineProps({
     }
 })
 
-const positionHistory = ref(null)
+const positionHistory = ref([])
 
 async function fetchPartHistory() {
     const response = await apiCaller.get(`users/${props.userId}/client_positions/${props.clientPositionId}/position_history`);
@@ -89,15 +89,15 @@ onMounted(async () => {
                             </v-timeline-item>
 
                             <!-- Expedition -->
-                            <v-timeline-item v-if="positionHistory?.expedition" elevation="6" icon="mdi-truck" icon-color="white" dot-color="orange">
+                            <v-timeline-item v-if="positionHistory?.expedition" elevation="6" icon="mdi-truck" icon-color="white" dot-color="green">
                                 <template v-slot:opposite>
-                                    <v-chip variant="elevated" color="orange">
+                                    <v-chip variant="elevated" color="green">
                                         {{ dateConverter.formatReadableDate(positionHistory.expedition.real_departure_time) }}
                                     </v-chip>
                                 </template>
                                 <template v-slot:default>
                                     <div class="informative-text">
-                                        <v-chip variant="tonal" color="orange" class="mb-2">Expédition</v-chip>
+                                        <v-chip variant="tonal" color="green" class="mb-2">Expédition</v-chip>
                                         <div>
                                             <strong>Numéro:</strong> {{ positionHistory.expedition.number }}
                                         </div>
@@ -108,6 +108,26 @@ onMounted(async () => {
                                             <strong>Date d'arrivée:</strong>
                                             {{ dateConverter.formatReadableDate(positionHistory.expedition.arrival_time) }}
                                         </div>
+                                    </div>
+                                </template>
+                            </v-timeline-item>
+
+                            <v-timeline-item 
+                                v-for="part in positionHistory?.part_histories" 
+                                :key="part.id"
+                                elevation="6" 
+                                :icon="part.event_type === 'logistic_place' ? 'mdi-dolly' : 'mdi-cog'" 
+                                icon-color="white" 
+                                dot-color="orange"
+                            >
+                                <template v-slot:opposite>
+                                    <v-chip variant="elevated" color="orange">
+                                        {{ dateConverter.formatReadableDate(part.start_time) }}
+                                    </v-chip>
+                                </template>
+                                <template v-slot:default>
+                                    <div class="informative-text">
+                                        <v-chip variant="tonal" color="orange" class="mb-2">{{ part.location_name }}</v-chip>
                                     </div>
                                 </template>
                             </v-timeline-item>

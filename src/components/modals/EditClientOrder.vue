@@ -23,15 +23,14 @@ const emit = defineEmits(['refreshClientOrders'])
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-          <v-btn
-            v-bind="activatorProps"
-            icon
-            size="16"
-            style="margin-bottom: 6px"
-            class="no-effects"
-          >              
-          <v-icon>mdi-pencil-outline</v-icon>
-          </v-btn>
+            <v-chip
+                v-bind="activatorProps"
+                variant="text"
+                color="blue"
+            >
+                <v-icon class='mr-2'>mdi-pencil-outline</v-icon>
+                <span>Modifier</span>
+            </v-chip> 
         </template>
   
         <template v-slot:default="{ isActive }">

@@ -57,7 +57,7 @@ async function onLogin(event) {
   <div class="toggle-container">
       <!-- Sign Up Form -->
       <v-card class="login-menu">
-        <img src="../assets/img/cycle_app.svg" style="width: 100px; margin: 2em 0em;"/>
+        <img src="../assets/img/cycle_app.svg" style="height: 160px; margin: 2em 0em;"/>
         <div v-if="toggleMenu" class="aligner">
           <span class="informative-text-l" style="margin-bottom: 1em;">Inscription</span>
           <v-form @submit.prevent="onSignUp" class="form-container">

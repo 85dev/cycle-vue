@@ -25,19 +25,17 @@ const props = defineProps({
 const supplierOrders = ref([])
 const selectedSupplierOrders = ref([])
 const departureDate = ref(dateConverter.formatISODate(new Date()))
-const arrivalDate = ref(dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)))
 const selectedSupplier = ref(null)
 const selectedTransporter = ref(null)
 const number = ref(null)
 const modifiedQuantities = ref([])
 const modifiedPartials = ref({})
 const price = ref(1500)
-const userId = ref(0)
 
 const emit = defineEmits(['refreshExpeditions'])
 
 async function fetchSupplierOrders() {
-    const response = await apiCaller.get(`users/${userId.value}/user_uncompleted_supplier_orders_positions`)
+    const response = await apiCaller.get(`users/${props.userId}/user_uncompleted_supplier_orders_positions`)
 
     supplierOrders.value = response
 }
@@ -46,10 +44,8 @@ async function submitExpedition() {
     const expedition = {
         expedition: {
             real_departure_time: dateConverter.formatISODate(departureDate.value),
-            arrival_time: dateConverter.formatISODate(arrivalDate.value),
             transporter: selectedTransporter.value,
-            number: number.value,
-            price: price.value
+            number: number.value
             }
         }
 
@@ -63,9 +59,6 @@ async function submitExpedition() {
 }
 
 onMounted( async () => {
-    sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
-
     await fetchSupplierOrders()
     selectedSupplier.value = props.suppliers[0].name
     selectedTransporter.value = transporters[0]
@@ -89,7 +82,10 @@ onMounted( async () => {
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Ajouter une expédition`" prepend-icon="mdi-ferry" style="padding: 0.4em;">
+                <v-card style="padding: 0.4em;">
+                    <v-card-title>
+                        ENREGISTRER UNE NOUVELLE EXPÉDITION
+                    </v-card-title>
                     <v-divider style="margin: 0em 1em; padding: 6px;"></v-divider>
 
                         <v-form class="form-container">
@@ -97,20 +93,12 @@ onMounted( async () => {
                             <div v-if="supplierOrders.length > 0">
                             <v-row style="margin: 0.4em 0.6em;">
                                 <v-text-field
-                                variant="underlined"
-                                class="form-part"
-                                v-model="number"
-                                label="Numéro d'expédition"
-                                required
-                                ></v-text-field>
-
-                                <v-text-field
-                                    v-model="price"
-                                    type="number"
                                     variant="underlined"
                                     class="form-part"
-                                    label="Prix estimé de l'expédition"
-                                ></v-text-field>
+                                    v-model="number"
+                                    label="Numéro d'expédition"
+                                    required
+                                />
 
                                 <v-select
                                     label="Fournisseur à l'origine de l'expédition"
@@ -118,8 +106,7 @@ onMounted( async () => {
                                     class="form-part"
                                     :items="props.suppliers.map(supplier => supplier.name)"
                                     v-model="selectedSupplier"
-                                >
-                                </v-select>
+                                />
                             </v-row>
 
                             <v-row style="margin: 0.8em 0.6em 0em 0.6em;">
@@ -139,29 +126,23 @@ onMounted( async () => {
                                     type="date"
                                     required
                                 />
-
-                                <v-text-field
-                                    variant="underlined"
-                                    class="form-part"
-                                    v-model="arrivalDate"
-                                    label="Date d'arrivée estimée"
-                                    type="date"
-                                    required
-                                />
                             </v-row>
                             </div>
 
-                            <span class="informative-text mb-5 mt-0" style="display: flex; align-items: center; color: red">
-                                <v-icon style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
-                                La répartition de l'expédition signifie que l'expédition est arrivée à destination
+                            <span class="informative-text mb-5 mt-0" style="display: flex; align-items: center;">
+                                <v-icon color="warning" style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
+                                La date d'arrivée sera à enregistrer lors de la réception de l'expédition
                             </span>
 
-                            <v-card class="dialog-table" title="Choix des commandes ouvertes à ajouter" append-icon="mdi-multicast">
+                            <v-card class="dialog-table">
+                                <v-card-title>
+                                    CHOIX DES COMMANDES OUVERTES À AJOUTER
+                                </v-card-title>
                                 <v-data-table
                                     v-if="supplierOrders.length > 0"
                                     variant="underlined"
-                                    density="dense"
-                                    items-per-page="3"
+                                    density="compact"
+                                    items-per-page="5"
                                     :headers="expeditionHeaders"
                                     class="form-part"
                                     label="Liste des commandes fournisseurs"
@@ -172,12 +153,13 @@ onMounted( async () => {
                                 >
                                 <template v-slot:item.partial="{ item }">
                                     <v-switch
-                                    style="display: flex; align-items: center;"
-                                    variant="underlined"
-                                    v-model="modifiedPartials[item.id]"
-                                    color="success"
-                                    type="number"
-                                    aria-required="true"
+                                        style="display: flex; align-items: center;"
+                                        variant="underlined"
+                                        v-model="modifiedPartials[item.id]"
+                                        color="success"
+                                        type="number"
+                                        aria-required="true"
+                                        density="compact"
                                     ></v-switch>
                                 </template>
                                 <template v-slot:item.quantity="{ item }">
@@ -188,6 +170,7 @@ onMounted( async () => {
                                         v-model="item.quantity"
                                         label="Reste à livrer"
                                         :disabled="true"
+                                        density="compact"
                                         ></v-text-field>
                                     </div>
                                 </template>
@@ -198,7 +181,7 @@ onMounted( async () => {
                                         label="Quantité expédiée"
                                         v-model="modifiedQuantities[item.id]"
                                         type="number"
-                                        dense
+                                        density="compact"
                                     ></v-text-field>
                                 </template>
                                 </v-data-table>

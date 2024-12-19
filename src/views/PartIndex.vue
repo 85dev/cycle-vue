@@ -144,9 +144,11 @@ onMounted(async() => {
         </div>
         </v-card>
 
-        <v-card title="Catalogue des pièces" append-icon="mdi-progress-wrench" class="top-card" style="margin-bottom: 0.8em;">
+        <v-card class="top-card" style="margin-bottom: 0.8em; margin-top: 0.2em;">
+            <v-card-title>
+                CATALOGUE DES PIECES
+            </v-card-title>
             <v-data-table
-                class="parts-table"
                 :loading="loading"
                 loading-text="Recherche..."
                 density="compact"
@@ -213,17 +215,16 @@ onMounted(async() => {
                         style="margin-right: 0.6em; font-weight: 600;"
                     >
                         <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
-                        <span class="mr-1">Positions à trier</span>
+                        <span class="mr-1">Position à trier</span>
                     </v-chip>
                     <v-chip
                         v-else
                         class="index-slot"
-                        variant="elevated"
+                        variant="outlined"
                         color="success"
-                        style="margin-right: 0.6em; font-weight: 500;"
+                        style="font-weight: 500;"
                     >
-                        <v-icon start class="ml-1">mdi-check-circle-outline</v-icon>
-                        <span class="mr-1">Aucune action requise</span>
+                        <v-icon>mdi-check-circle-outline</v-icon>
                     </v-chip>
                 </div>
             </template>
@@ -233,16 +234,14 @@ onMounted(async() => {
                     <EditPart
                         :user-id="userId"
                         :part-id="item.id"
-                        >
-                    </EditPart>
+                    />
                     <DeletePart
                         :user-id="userId"
                         :part-id="item.id"
                         :designation="item.designation"
                         :reference="item.reference"
                         @refresh-parts="fetchParts()"
-                    ></DeletePart>
-
+                    />
                     <td class="arrow-cell">
                         <v-icon class="hover-arrow">mdi-chevron-right</v-icon>
                     </td>
@@ -257,9 +256,6 @@ onMounted(async() => {
 <style scoped lang="scss">
 @import url(../assets/main.scss);
 
-.parts-table {
-    padding: 12px 24px;
-}
 
 .parts-table .table-row {
     position: relative;

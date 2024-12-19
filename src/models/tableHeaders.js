@@ -103,11 +103,24 @@ const clientStockPositionsHeaders = [
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
+const consumptionPositionsHeaders = [
+  { title: 'Quantité', value: 'quantity' },
+  { title: 'Référence', value: 'reference_and_designation' },
+  { title: 'Période de consommation', value: 'consumption_period'}
+]
+
+const globalConsumptionHeaders = [
+  { title: 'Référence', value: 'part_reference' },
+  { title: 'Quantité à disposition', value: 'current_quantity' },
+  { title: 'Quantité consommée', value: 'quantity' },
+  { title: 'Prix', value: 'price' },
+]
+
 const sortingClientPositionHeaders = [
   { title: 'Quantité', value: 'quantity' },
   { title: 'Référence & désignation', value: 'reference_and_designation' },
-  { title: 'Lieu de stock consignation', value: 'consignment_stock' },                 
-  { title: 'Lieu de stock', value: 'standard_stock' }
+  { title: 'Stock consignation', value: 'consignment_stock' },                 
+  { title: 'Stock standard', value: 'standard_stock' }
 ]
 
 const expeditionPositionHeaders = [
@@ -138,4 +151,4 @@ const expeditionsIndexHeaders = [
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { clientOrdersHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

@@ -81,14 +81,14 @@ async function submitTransfer() {
         quantity: modifiedQuantity.value,
         destination_type: destinationType,
         destination_name: destinationName,
-        sub_contractor_id: subContractorId,
+        subcontractor_id: subContractorId,
         logistic_place_id: logisticPlaceId,
         expedition_position_id: props.position.expedition_position_id
     };
 
     const response = await apiCaller.post(`users/${props.userId}/expedition_positions/${props.position.expedition_position_id}/transfer_position`, payload);
 
-    emit('refresh')
+    response.status === 200 || response.status === 201 ? emit('refresh') : console.error("Erreur lors de la transfert de la position");
 }
 
 onMounted(async() => {

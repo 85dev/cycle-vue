@@ -2,6 +2,7 @@
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 import { ref, onMounted, computed } from 'vue'
+import ArchivateClientOrder from '@/components/modals/ArchivateClientOrder.vue';
 
 const clientOrders = ref([])
 const userId = ref(0)
@@ -12,6 +13,12 @@ const selectedSupplier = ref(null)
 const clients = ref([])
 const suppliers = ref([])
 const runningExpeditions = ref([])
+const kpiData = ref({})
+
+async function fetchKPIs() {
+    const response = await apiCaller.get(`users/${userId.value}/kpi_metrics`)
+    kpiData.value = response
+}
 
 async function fetchClientOrders() {
     const response = await apiCaller.get(`users/${userId.value}/future_user_client_orders`)
@@ -31,6 +38,40 @@ async function fetchSuppliers() {
 async function fetchExpeditions() {
     const response = await apiCaller.get(`users/${userId.value}/undelivered_expeditions`) 
     runningExpeditions.value = response
+}
+
+function getKpiColor(key) {
+  const colors = {
+    runningExpeditions: 'blue-darken-4',
+    totalActiveOrders: 'blue',
+    openSupplierPositions: 'yellow-darken-4'
+  }
+  return colors[key] || 'grey'
+}
+
+function getKpiIcon(key) {
+  const icons = {
+    runningExpeditions: 'mdi-ferry',
+    totalActiveOrders: 'mdi-package-variant',
+    openSupplierPositions: 'mdi-factory'
+  }
+  return icons[key] || 'mdi-chart-box-outline'
+}
+
+function formatMetricValue(value, key) {
+  if (key === 'onTimeDeliveryRate') {
+    return `${value}%`
+  }
+  return value
+}
+
+function formatKpiLabel(key) {
+  const labels = {
+    runningExpeditions: 'Expédition(s) en cours',
+    totalActiveOrders: 'Commande(s) client active(s)',
+    openSupplierPositions: 'Commande(s) fournisseur ouverte(s)'
+  }
+  return labels[key] || key
 }
 
 const filteredOrders = computed(() => {
@@ -92,35 +133,81 @@ function daysLeft(date) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
 }
 
-onMounted(async() => {
-    sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
-
+async function refreshAllData() {
     await fetchClientOrders()
     await fetchClients()
     await fetchExpeditions()
     await fetchSuppliers()
+    await fetchKPIs()
+}
+
+onMounted(async() => {
+    sessionStore.actions.initializeAuthState()
+    userId.value = sessionStore.getters.getUserID();
+
+  await refreshAllData()
 })
 </script>
 
 <template>
     <div class="main-card">
               <div class="b1-hand-container">
-                <v-card class="b1-container" style="margin: 0.6em;">
+                <v-card class="b1-container">
+                  <v-card-title class="d-flex">
+                    INDICATEURS D'ACTIVITÉ COURANTE
+                  </v-card-title>
+                  <v-row class="mb-1 mt-0 justify-center">
+                    <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="4" md="3">
+                      <v-card
+                        elevation="3"
+                        class="kpi-card"
+                        :color="getKpiColor(key)"
+                      >
+                        <v-card-text class="pa-2">
+                          <div class="d-flex flex-column align-center">
+                            <div class="kpi-icon mb-1">
+                              <v-icon size="24" color="white" :icon="getKpiIcon(key)"></v-icon>
+                            </div>
+                            <div class="text-h6 white--text font-weight-bold mb-1">
+                              {{ formatMetricValue(metric, key) }}
+                            </div>
+                            <div class="informative-text-l" style="color: white;">
+                              {{ formatKpiLabel(key) }}
+                            </div>
+                          </div>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-card>
+                <v-card class="b1-container">
                   <v-card-title class="d-flex">
                     PLANNING DES COMMANDES CLIENT
                   </v-card-title>
                   <v-card v-if="clientOrders && clientOrders.length > 0" style="margin:2px 10px;">
-                  <span class="informative-text">
-                    <v-chip
-                      class="mt-2"
-                      variant="tonal"
-                      color="secondary"
-                    >
-                      <v-icon start class="ml-0">mdi-sort</v-icon>
-                      Filtrer par dates et par client
-                    </v-chip>
-                  </span>
+                    <div class="d-flex justify-space-between align-center">
+                      <span class="informative-text">
+                        <v-chip
+                          class="mt-1"
+                          variant="tonal"
+                          color="secondary"
+                        >
+                          <v-icon start class="ml-0">mdi-sort</v-icon>
+                          Filtrer par dates et par client
+                        </v-chip>
+                      </span>
+                      <span class="informative-text">
+                        <v-chip
+                          class="mt-1"
+                          variant="tonal"
+                          :color="(startDate && endDate) || selectedClient ? 'blue' : 'secondary'"
+                        >
+                          <v-icon start class="ml-0">mdi-file-document-outline</v-icon>
+                          <span v-if="(startDate && endDate) || selectedClient">Résultats de la recherche : {{ filteredOrders.length }}</span>
+                          <span v-else>Commandes client en cours : {{ filteredOrders.length }}</span>
+                        </v-chip>
+                      </span>
+                    </div>
                   <div class="space-between">
                     <div class="d-flex ml-4 mt-1" style="margin-bottom: -16px">
                     <v-select
@@ -131,7 +218,7 @@ onMounted(async() => {
                       :items="dateOptions"
                       variant="underlined"
                       class="mr-2"
-                      style="max-width: 16vw; min-width: 10vw;"
+                      style="max-width: 16vw; min-width: 12vw;"
                       required
                     />
 
@@ -142,7 +229,7 @@ onMounted(async() => {
                       label="Date de fin"
                       :items="dateOptions"
                       variant="underlined"
-                      style="max-width: 16vw; min-width: 10vw;"
+                      style="max-width: 16vw; min-width: 12vw;"
                       class="mr-2"
                       required
                     />
@@ -154,7 +241,7 @@ onMounted(async() => {
                       label="Client"
                       :items="clientOptions"
                       variant="underlined"
-                      style="max-width: 16vw; min-width: 10vw;"
+                      style="max-width: 16vw; min-width: 12vw;"
                       required
                     />
                   </div>
@@ -173,7 +260,7 @@ onMounted(async() => {
                   v-if="filteredOrders && filteredOrders.length > 0"
                   style="overflow-x: scroll;"
                   direction="horizontal"
-                  line-thickness="8"
+                  line-thickness="4"
                   line-color="orange"
                 >
                     <v-timeline-item
@@ -185,16 +272,24 @@ onMounted(async() => {
                         dot-color="blue"
                     > 
                     <template v-slot:opposite>
+                      <div class="d-flex flex-column align-center">
                       <v-chip style="height: fit-content;" class="d-flex align-center text-body-2 mb-1 mt-2" variant="text">
                           <span class="mr-2" style="margin-left: 2px; display: flex; flex-direction: column;">Date de livraison : <strong>{{ formatDate(order.position_delivery_date) }}</strong></span>
                       </v-chip>
                       <v-chip
+                        class="mb-1"
                         variant="tonal"
-                        color="orange"
+                        color="primary"
                       >
                         <v-icon class="mr-2 ml-1">mdi-truck-alert-outline</v-icon>
                         {{ daysLeft(order.position_delivery_date) }} jour(s) avant livraison
                       </v-chip>  
+                      <ArchivateClientOrder 
+                        :userId="userId" 
+                        :order="order" 
+                        @refreshClientOrders="refreshAllData()" 
+                        />
+                      </div>
                     </template>
                         <template v-slot:default>
                             <div
@@ -208,11 +303,11 @@ onMounted(async() => {
                                   <span class="mr-3">{{ order.client_name }}</span>
                                 </v-chip>
 
-                                <v-card style="width: fit-content;" class="mt-1">
+                                <v-card style="width: fit-content;" class="mt-1 d-flex flex-column">
                                   <v-chip 
-                                    class="text-body-2" 
+                                    class="text-body-2 mt-1" 
                                     variant="text" 
-                                    style="margin-bottom: -14px"
+                                    style="margin-bottom: -12px"
                                   >
                                   <v-icon class="mr-1">mdi-file-document-outline</v-icon>
                                   <span style="margin-left: 2px; display: flex; align-items: center;">
@@ -257,12 +352,12 @@ onMounted(async() => {
                       color="secondary"
                     >
                       <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                      <span>Pas de commande client en cours</span>
+                      <span>Pas de commande(s) client à venir </span>
                     </v-chip>
                   </div>
                 </v-card>
-                <v-card class="b1-container" style="margin: 0.6em;">
-                  <v-card-title class="d-flex" style="font-weight: 700; font-size: 1em;">
+                <v-card class="b1-container">
+                  <v-card-title class="d-flex">
                     EXPEDITIONS EN COURS
                   </v-card-title>
                   <v-card v-if="runningExpeditions && runningExpeditions.length > 0" style="margin:2px 10px;">
@@ -286,7 +381,7 @@ onMounted(async() => {
                           :items="supplierOptions"
                           variant="underlined"
                           class="mr-2"
-                          style="max-width: 16vw; min-width: 10vw;"
+                          style="max-width: 16vw; min-width: 12vw;"
                           required
                         />
                       </div>
@@ -304,8 +399,8 @@ onMounted(async() => {
                     v-if="filteredExpeditions && filteredExpeditions.length > 0" 
                     style="overflow-x: scroll;" 
                     direction="horizontal" 
-                    line-thickness="8" 
-                    line-color="blue">
+                    line-thickness="4" 
+                    line-color="blue-darken-4">
                     <v-timeline-item
                       v-for="expedition in filteredExpeditions"
                       :key="expedition.id"
@@ -321,12 +416,12 @@ onMounted(async() => {
                           variant="text"
                         >
                           <span class="mr-2" style="margin-left: 2px; display: flex; flex-direction: column;">
-                            Arrivée prévue : <strong>{{ formatDate(expedition.arrival_time) }}</strong>
+                            Arrivée prévue : <strong>{{ expedition.arrival_time ? formatDate(expedition.arrival_time) : 'Date non renseignée' }}</strong>
                           </span>
                         </v-chip>
-                        <v-chip variant="tonal" color="red">
+                        <v-chip v-if="expedition.arrival_time" variant="tonal" color="primary">
                           <v-icon class="mr-2 ml-1">mdi-clock-outline</v-icon>
-                          {{ daysLeft(expedition.arrival_time) }} jour(s) avant départ
+                          {{ daysLeft(expedition.arrival_time) }} jour(s) avant arrivée
                         </v-chip>
                       </template>
                       <template v-slot:default>
@@ -342,6 +437,18 @@ onMounted(async() => {
                             </v-chip>
 
                             <v-card class="d-flex flex-column mt-1">
+                              <v-chip
+                                v-if="expedition.real_departure_time"
+                                class="text-body-2"
+                                variant="text"
+                                style="margin-bottom: -14px"
+                              >
+                                <v-icon class="mr-1">mdi-truck-check-outline</v-icon>
+                                <span style="margin-left: 2px; display: flex; align-items: center;">
+                                  Date de départ : 
+                                  <strong style="margin-left: 4px;">{{ formatDate(expedition.real_departure_time) }}</strong>
+                                </span>
+                              </v-chip>
                               <v-chip
                                 class="text-body-2"
                                 variant="text"
@@ -375,7 +482,7 @@ onMounted(async() => {
                       color="secondary"
                     >
                       <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                      Pas d'expéditions en cours ou à venir
+                      Aucune expédition en cours ou à venir
                     </v-chip>
                   </div>
                 </v-card>
@@ -386,5 +493,22 @@ onMounted(async() => {
 
 <style lang="scss" scoped>
 @import url(../assets/main.scss);
+
+.kpi-card {
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+.kpi-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 </style>
