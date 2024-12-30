@@ -70,12 +70,11 @@ onMounted(() => {
           >
             <template v-slot:append>
                 <v-chip
-                  variant="elevated"
+                  variant="text"
                   class="ma-1 ml-2"
-                  color="blue"
                   @click.stop="rail = !rail"
                   style="border-radius: 100%; padding: 0.3em 0.5em; box-shadow: none; display: flex; align-items: center; justify-content: center;"
-                  :style="{ transform: rail ? 'rotate(180deg)' : 'rotate(0deg)' }"
+                  :style="{ transform: rail ? 'rotate(0deg)' : 'rotate(180deg)' }"
                 >
                   <v-icon>mdi-chevron-double-right</v-icon>
                 </v-chip>

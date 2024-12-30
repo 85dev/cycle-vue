@@ -58,8 +58,6 @@ const positionCounts = computed(() => {
 });
 
 function handleSplitUpdate({ id, splitted_positions }) {
-    console.log(id, splitted_positions);
-    
     const originalIndex = indices.value.findIndex(item => item.id === id);
     if (originalIndex !== -1) {
         indices.value.splice(originalIndex, 1, ...splitted_positions);

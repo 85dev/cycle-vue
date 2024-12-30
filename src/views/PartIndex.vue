@@ -92,7 +92,7 @@ onMounted(async() => {
         @refresh-parts="fetchParts()"
         ></CreatePart>
 
-        <v-card class="top-card" style="margin-top: 1.4em;">
+        <v-card class="b1-container" style="margin-top: 1.4em;">
             <div class="d-flex flex-column">
                 <span class="informative-text">
                     <v-chip
@@ -144,7 +144,7 @@ onMounted(async() => {
         </div>
         </v-card>
 
-        <v-card class="top-card" style="margin-bottom: 0.8em; margin-top: 0.2em;">
+        <v-card class="b1-container" style="margin-bottom: 0.8em; margin-top: 0.2em;">
             <v-card-title>
                 CATALOGUE DES PIECES
             </v-card-title>

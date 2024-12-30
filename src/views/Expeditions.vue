@@ -61,7 +61,7 @@ onMounted(async() => {
             :suppliers="suppliers"
             @refresh-expeditions="refreshExpeditions()"
         ></CreateExpedition>
-        <v-card style="margin: 1em" class="b1-container">
+        <v-card class="b1-container mt-3">
             <v-card-title class="d-flex">
                 EXPEDITIONS EN COURS
             </v-card-title>
@@ -106,7 +106,7 @@ onMounted(async() => {
               </v-chip>
             </div>
         </v-card>
-        <v-card style="margin: 0em 1em 0.7em 1em" class="b1-container">
+        <v-card class="b1-container mb-3">
             <v-card-title class="d-flex">
                 EXPEDITIONS TERMINEES
             </v-card-title>

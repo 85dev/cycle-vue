@@ -28,8 +28,10 @@ const deleteRow = (index) => {
 async function fetchParts() {
     const stock = stocks.value.find(stock => stock.address === selectedStock.value)
     const clientId = clients.value.find(client => client.name === selectedClient.value).id
-    const response = await apiCaller.get(`users/${userId.value}/clients/${clientId}/consignment_stocks/${stock.id}/parts_by_client_and_consignment_stock`);
-    parts.value = response;
+    if (stock && clientId) {
+        const response = await apiCaller.get(`users/${userId.value}/clients/${clientId}/consignment_stocks/${stock.id}/parts_by_client_and_consignment_stock`);
+        parts.value = response;
+    }
 }
 
 async function fetchClients() {
@@ -39,7 +41,7 @@ async function fetchClients() {
 }
 
 async function fetchStocks() {
-    const clientId = clients.value.find(client => client.name === selectedClient.value).id
+    const clientId = clients.value.find(client => client.name === selectedClient.value)?.id
     const response = await apiCaller.get(`users/${userId.value}/clients/${clientId}/fetch_consignment_stocks_by_client`);
     stocks.value = response;
     stocksListDisplayed.value = response.map(stock => stock.address)
@@ -98,7 +100,7 @@ onMounted(async() => {
 
 <template>
     <div class="main-card">
-        <v-card class="b1-container" style="padding: 0.4em;">
+        <v-card class="b1-container mt-3 mb-3">
             <v-card-title>
                 ENREGISTRER DES CONSOMMATIONS EN STOCK CONSIGNATION CLIENT
             </v-card-title>

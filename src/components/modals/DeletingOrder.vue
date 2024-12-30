@@ -29,9 +29,6 @@ const props = defineProps({
     }
 })
 
-console.log(props);
-
-
 async function deleteOrder() {
     if (props.orderType === 'client') {
         await apiCaller.deleteData(`users/${props.userId}/client_orders/${props.clientOrderId}`, false);

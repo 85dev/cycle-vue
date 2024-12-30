@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
+import { onMounted, ref, defineEmits, computed } from 'vue';
 import sessionStore from '@/stores/sessionStore.js' // Import the new store
 
 // Components
@@ -12,28 +12,55 @@ import autocomplete from '@/services/addressAutocomplete.js'
 const userId = ref(null)
 const address = ref(null)
 const name = ref(null)
-const contactEmail = ref(null)
-const contactName = ref(null)
 const autocompletedAddresses = ref([])
 const clientLoading = ref(false)
+const contacts = ref([{ email: '', first_name: '', last_name: '', role: '' }]);
 
 // For stock adding purposes
-const consignmentStocks = ref([{ address: '', contact_name: '', contact_email: '', autocompleteOptions: [], loading: false }]);
-const standardStocks = ref([{ address: '', contact_name: '', contact_email: '', autocompleteOptions: [], loading: false }]);
+const consignmentStocks = ref([{ address: '', autocompleteOptions: [], loading: false }]);
+const standardStocks = ref([{ address: '', autocompleteOptions: [], loading: false }]);
 
 const emit = defineEmits(['refreshClients'])
 
-function validateClientData() {
-    if (!name.value || !address.value || !contactEmail.value || !contactName.value) {
-        return false;
-    }
-    const isConsignmentValid = consignmentStocks.value.every(stock =>
-        stock.address && stock.contact_name && stock.contact_email
-    );
-    const isStandardValid = standardStocks.value.every(stock =>
-        stock.address && stock.contact_name && stock.contact_email
-    );
-    return isConsignmentValid && isStandardValid;
+const allowSubmit = computed(() => {
+  // Check if there's at least one stock
+  const hasStocks = consignmentStocks.value.length > 0 || standardStocks.value.length > 0;
+  
+  // Check if there's at least one contact with required fields
+  const hasValidContact = contacts.value.some(contact => 
+    contact.email && 
+    contact.first_name && 
+    contact.last_name && 
+    contact.role
+  );
+  
+  // Check if basic client info exists
+  const hasBasicInfo = name.value && address.value;
+
+  return hasStocks && hasValidContact && hasBasicInfo;
+});
+
+const getSubmitTooltip = computed(() => {
+  const missing = [];
+  
+  if (!name.value || !address.value) {
+    missing.push("informations de la société");
+  }
+  
+  if (!contacts.value.some(c => c.email && c.first_name && c.last_name && c.role)) {
+    missing.push("au moins un contact");
+  }
+  
+  if (!(consignmentStocks.value.length > 0 || standardStocks.value.length > 0)) {
+    missing.push("au moins un stock");
+  }
+  
+  return `Veuillez ajouter : ${missing.join(', ')}`;
+});
+
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 const props = defineProps({
@@ -105,23 +132,22 @@ function removeStandardStock(index) {
   standardStocks.value.splice(index, 1);
 }
 
+function addContact() {
+  contacts.value.push({ email: '', first_name: '', last_name: '', role: '' });
+}
+
+function removeContact(index) {
+  contacts.value.splice(index, 1);
+}
+
 async function submitClient() {
     const client = {
         client: {
             name: name.value,
             address: address.value,
-            contactEmail: contactEmail.value,
-            contactName: contactName.value,
-            consignmentStocks: consignmentStocks.value.map(({ address, contact_name, contact_email }) => ({
-                address,
-                contact_name,
-                contact_email
-            })),
-            standardStocks: standardStocks.value.map(({ address, contact_name, contact_email }) => ({
-                address,
-                contact_name,
-                contact_email
-            })),
+            contacts: contacts.value.map(({ email, first_name, last_name, role }) => ({ email, first_name, last_name, role, contactable_type: "client" })),
+            consignment_stocks: consignmentStocks.value.map(({ address }) => ({ address })),
+            standard_stocks: standardStocks.value.map(({ address }) => ({ address})),
         }
     }
 
@@ -166,48 +192,36 @@ onMounted(async() => {
   
       <template v-slot:default="{ isActive }">
         <div style="padding: 0.4em;">
-          <v-card title="Ajouter un nouveau client" style="padding: 0.4em;">
+          <v-card style="padding: 0.4em;">
+            <v-card-title>
+              AJOUTER UN NOUVEAU CLIENT
+            </v-card-title>
             <v-divider style="margin: 0em 1em 1em 1em;"></v-divider>  
             <v-form class="form-container">
             <!-- Client Information Section -->
             <v-card style="margin: 0.4em">
-              <v-card-title>INFORMATIONS DU CLIENT</v-card-title>
+              <v-card-title>INFORMATIONS DE LA SOCIÉTÉ</v-card-title>
               <v-card-text>
                 <v-row 
                     style="margin-top: -1em;"
                     no-gutters
                 >
-                  <v-col cols="12" md="6">
+                  <v-col cols="6">
                     <v-text-field
                       variant="underlined"
-                      label="Nom du client"
+                      label="Nom de la société"
                       v-model="name"
                       class="mr-2"
                       required
                     ></v-text-field>
+                  </v-col>
+                  <v-col cols="6">
                     <v-text-field
                       variant="underlined"
                       v-model="address"
                       @input="fetchAddressAutocomplete(address, 'client')"
                       class="mr-2"
                       label="Adresse"
-                      required
-                    ></v-text-field>
-                  </v-col>
-
-                  <v-col cols="12" md="6">
-                    <v-text-field
-                      variant="underlined"
-                      v-model="contactName"
-                      class="mr-2"
-                      label="Nom du contact principal"
-                      required
-                    ></v-text-field>
-                    <v-text-field
-                      variant="underlined"
-                      v-model="contactEmail"
-                      class="mr-2"
-                      label="Email du contact"
                       required
                     ></v-text-field>
                   </v-col>
@@ -239,186 +253,219 @@ onMounted(async() => {
               </v-card-text>
             </v-card>
 
-            <!-- Consignment Stocks Section -->
+            <!-- Contacts Section -->
             <v-card flat outlined>
               <v-card style="margin: 0.4em;">
-                <v-card-title>
-                  AJOUT DES LIEUX DE STOCKAGE CONSIGNATION
-                </v-card-title>
-                  <div style="margin-bottom: 0.4em;">
+                <v-card-title>CONTACTS PROFESSIONNELS</v-card-title>
+                <div style="margin-bottom: 0.4em;">
                       <span class="informative-text" style="display: flex; align-items: center;">
                           <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
-                          Un stock consignation client concentre les références mises à disposition chez le client, les références ne sont facturées qu'au moment de leurs consommations.
+                          Les personnes suivantes seront ajoutées comme contacts de la société.
                       </span>
                   </div>
                 <v-divider color="transparent" style="margin:0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                 <v-row 
+                    v-for="(contact, index) in contacts" 
+                    :key="'contact-' + index" 
+                    class="mb-4 align-center"
+                    no-gutters
+                    style="margin-top: -2em; padding: 0em 0.8em"
+                >
+                  <v-col cols="12" md="3">
+                    <v-text-field
+                      v-model="contact.email"
+                      label="Email"
+                      :rules="[validateEmail]"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="3">
+                    <v-text-field
+                      v-model="contact.first_name"
+                      label="Prénom"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="3">
+                    <v-text-field
+                      v-model="contact.last_name"
+                      label="Nom"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="2">
+                    <v-text-field
+                      v-model="contact.role"
+                      label="Rôle"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="1" class="d-flex justify-end">
+                    <v-btn @click="removeContact(index)" icon small>
+                      <v-icon>mdi-delete-outline</v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+                <div class="aligner">
+                  <v-btn @click="addContact" variant="elevated">
+                    <v-icon start>mdi-plus-circle-outline</v-icon>
+                    Ajouter contact
+                  </v-btn>
+                </div>
+              </v-card>
+            </v-card>
+
+            <div style="margin-bottom: 0.4em;">
+              <span class="informative-text" style="display: flex; align-items: center;">
+                <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
+                Un stock consignation client concentre les références mises à disposition chez le client, les références ne sont facturées qu'au moment de leurs consommations.
+              </span>
+            </div>
+
+            <!-- Consignment Stocks Section -->
+            <v-row no-gutters>
+              <!-- Left Column: Consignment Stocks -->
+              <v-col cols="12" md="6" class="pr-2">
+                <v-card outlined style="margin: 0.4em;">
+                  <v-card-title>
+                    AJOUT DES LIEUX DE STOCKAGE CONSIGNATION
+                  </v-card-title>
+                  <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
+                  
+                  <v-row 
                     v-for="(stock, index) in consignmentStocks" 
                     :key="'consignment-' + index" 
                     class="mb-4 align-center"
                     no-gutters
                     style="margin-top: -2em; padding: 0em 0.8em"
-                    >
-                  <v-col cols="12" md="4">
-                    <v-text-field
-                      v-model="stock.address"
-                      label="Adresse"
-                      @input="fetchAddressAutocomplete(stock.address, 'consignment', index)"
-                      required
-                      variant="underlined"
-                      class="mr-2"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="3">
-                    <v-text-field
-                      v-model="stock.contact_name"
-                      label="Nom du contact"
-                      required
-                      variant="underlined"
-                      class="mr-2"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="3">
-                    <v-text-field
-                      v-model="stock.contact_email"
-                      label="Email du contact"
-                      required
-                      variant="underlined"
-                      clearable
-                      class="mr-2"
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="2" class="d-flex justify-end">
-                    <v-btn @click="removeConsignmentStock(index)" icon small>
+                  >
+                    <v-col cols="12" md="10">
+                      <v-text-field
+                        v-model="stock.address"
+                        label="Adresse"
+                        @input="fetchAddressAutocomplete(stock.address, 'consignment', index)"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="2" class="d-flex justify-end">
+                      <v-btn @click="removeConsignmentStock(index)" icon small>
                         <v-icon>mdi-delete-outline</v-icon>
-                    </v-btn>
-                  </v-col>
-                  <v-col cols="12">
-                    <v-chip-group
-                      v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
-                      active-class="primary--text"
-                      column
-                      style="display: flex; flex-wrap: wrap; margin-top: -0.6em; margin-bottom: 0.6em;"
-                    >
-                      <v-chip
-                        v-for="(address, idx) in stock.autocompleteOptions"
-                        :key="'consignment-address-' + idx"
-                        @click="selectAddress(address, 'consignment', index)"
-                        style="margin: 0.2em;"
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-chip-group
+                        v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
+                        active-class="primary--text"
+                        column
+                        style="display: flex; flex-wrap: wrap; margin-top: -0.6em; margin-bottom: 0.6em;"
                       >
-                        {{ address }}
-                        <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
-                      </v-chip>
-                    </v-chip-group>
-                  </v-col>
+                        <v-chip
+                          v-for="(address, idx) in stock.autocompleteOptions"
+                          :key="'consignment-address-' + idx"
+                          @click="selectAddress(address, 'consignment', index)"
+                          style="margin: 0.2em;"
+                        >
+                          {{ address }}
+                          <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
+                        </v-chip>
+                      </v-chip-group>
+                    </v-col>
                     <div v-if="stock.loading" class="aligner" style="margin-top: 1em; margin-bottom: 3em; width: 100%;">
-                        <SpinnLoader :loading="stock.loading"></SpinnLoader>
+                      <SpinnLoader :loading="stock.loading"></SpinnLoader>
                     </div>
-                </v-row>
-
-
-
-                <div class="aligner">
+                  </v-row>
+                  <div class="aligner">
                     <v-btn @click="addConsignmentStock" variant="elevated">
-                        <v-icon start>mdi-plus-circle-outline</v-icon>
-                        Ajouter position
+                      <v-icon start>mdi-plus-circle-outline</v-icon>
+                      Ajouter position
                     </v-btn>
-                </div>
-              </v-card>
-            </v-card>
+                  </div>
+                </v-card>
+              </v-col>
 
-            <!-- Standard Stocks Section -->
-            <v-card flat outlined>
-              <v-card style="margin: 0.4em;">
-                <v-card-title>AJOUT DES LIEUX DE STOCKAGE STANDARD</v-card-title>
-                <v-divider color="transparent" style="margin:0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
-                <v-row 
+              <!-- Right Column: Standard Stocks -->
+              <v-col cols="12" md="6" class="pl-2">
+                <v-card outlined style="margin: 0.4em;">
+                  <v-card-title>AJOUT DES LIEUX DE STOCKAGE STANDARD</v-card-title>
+                  <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
+                  
+                  <v-row 
                     v-for="(stock, index) in standardStocks" 
                     :key="'standard-' + index" 
                     class="mb-4 align-center" 
-                    style="margin-top: -2em; padding: 0em 0.8em"
                     no-gutters
-                    >
-                  <v-col cols="12" md="4">
-                    <v-text-field
-                      v-model="stock.address"
-                      label="Adresse"
-                      @input="fetchAddressAutocomplete(stock.address, 'standard', index)"
-                      required
-                      class="mr-2"
-                      variant="underlined"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="3">
-                    <v-text-field
-                      v-model="stock.contact_name"
-                      label="Nom du contact"
-                      required
-                      class="mr-2"
-                      variant="underlined"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="3">
-                    <v-text-field
-                      v-model="stock.contact_email"
-                      label="Email du contact"
-                      required
-                      class="mr-2"
-                      variant="underlined"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                  <v-col cols="12" md="2" class="d-flex justify-end">
-                    <v-btn @click="removeStandardStock(index)" icon small>
+                    style="margin-top: -2em; padding: 0em 0.8em"
+                  >
+                    <v-col cols="12" md="10">
+                      <v-text-field
+                        v-model="stock.address"
+                        label="Adresse"
+                        @input="fetchAddressAutocomplete(stock.address, 'standard', index)"
+                        required
+                        class="mr-2"
+                        variant="underlined"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="2" class="d-flex justify-end">
+                      <v-btn @click="removeStandardStock(index)" icon small>
                         <v-icon>mdi-delete-outline</v-icon>
-                    </v-btn>
-                  </v-col>
-                  <v-col cols="12">
-                    <v-chip-group
-                      v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
-                      active-class="primary--text"
-                      column
-                      style="display: flex; flex-wrap: wrap; margin: 0.4em 0em;"
-                    >
-                      <v-chip
-                        v-for="(address, idx) in stock.autocompleteOptions"
-                        :key="'standard-address-' + idx"
-                        @click="selectAddress(address, 'standard', index)"
-                        style="margin: 0.2em;"
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-chip-group
+                        v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
+                        active-class="primary--text"
+                        column
+                        style="display: flex; flex-wrap: wrap; margin: 0.4em 0em;"
                       >
-                        {{ address }}
-                        <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
-                      </v-chip>
-                    </v-chip-group>
-                  </v-col>
-                  <div v-if="stock.loading" class="aligner" style="margin-top: 1em; width: 100%; margin-bottom: 3em;">
-                    <SpinnLoader :loading="stock.loading"></SpinnLoader>
-                </div>
-            </v-row>
-
-
-
-                <div class="aligner">
+                        <v-chip
+                          v-for="(address, idx) in stock.autocompleteOptions"
+                          :key="'standard-address-' + idx"
+                          @click="selectAddress(address, 'standard', index)"
+                          style="margin: 0.2em;"
+                        >
+                          {{ address }}
+                          <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
+                        </v-chip>
+                      </v-chip-group>
+                    </v-col>
+                    <div v-if="stock.loading" class="aligner" style="margin-top: 1em; width: 100%; margin-bottom: 3em;">
+                      <SpinnLoader :loading="stock.loading"></SpinnLoader>
+                    </div>
+                  </v-row>
+                  <div class="aligner">
                     <v-btn @click="addStandardStock" variant="elevated">
-                        <v-icon start>mdi-plus-circle-outline</v-icon>
-                        Ajouter position
+                      <v-icon start>mdi-plus-circle-outline</v-icon>
+                      Ajouter position
                     </v-btn>
-                </div>
-         
-              </v-card>
-            </v-card>
+                  </div>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-form>
   
             <v-card-actions style="margin-top: 1em;">
               <v-spacer></v-spacer>
               <v-btn color="red" text @click="isActive.value = false">Fermer</v-btn>
-              <v-btn variant="elevated" color="success" @click="submitClient(); isActive.value = false">
-                Ajouter
-              </v-btn>
+                <v-btn variant="elevated" color="success" @click="submitClient(); isActive.value = false">
+                  Ajouter
+                </v-btn>
             </v-card-actions>
           </v-card>
         </div>

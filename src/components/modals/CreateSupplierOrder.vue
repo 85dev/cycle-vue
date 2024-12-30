@@ -14,6 +14,12 @@ const props = defineProps({
     },
     clientId: {
         type: String
+    },
+    referenceAndDesignation: {
+        type: String
+    },
+    partPrice: {
+        type: Number
     }
 })
 
@@ -22,9 +28,7 @@ const number = ref(null)
 const supplierList = ref(null)
 const supplierListDisplayed = ref(null)
 const parts = ref(null)
-const orderPositions = ref([
-    { part: null, price: null, quantity: null, delivery_date: null }
-])
+const orderPositions = ref([])
 
 const emit = defineEmits(['refreshSupplierOrders'])
 
@@ -65,7 +69,7 @@ async function submitSupplierOrder() {
 }
 
 function addOrderPosition() {
-    orderPositions.value.push({ part: null, price: null, quantity: null, delivery_date: null });
+    orderPositions.value.push({ part: props.referenceAndDesignation, price: props.partPrice, quantity: null, delivery_date: dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)) });
 }
 
 function removeOrderPosition(index) {
@@ -77,6 +81,10 @@ function removeOrderPosition(index) {
 onMounted( async () => {
     await fetchParts()
     await fetchSuppliers()
+
+    supplier.value = supplierList.value[0].name
+
+    addOrderPosition()
 })
 </script>
 

@@ -21,8 +21,6 @@ const props = defineProps({
     }
 })
 
-console.log(props.position);
-
 const emit = defineEmits('transferSplitPositions')
 
 // Reactive array to store split positions

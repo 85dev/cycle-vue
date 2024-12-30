@@ -624,10 +624,12 @@ onMounted(async () => {
             <span>
               <!-- MODALS -->
               <CreateSupplierOrder
-                v-if="dataFromSearch.client_orders && userId && dataFromSearch.client"
+                v-if="dataFromSearch.client_orders && userId && dataFromSearch.client && dataFromSearch.reference && dataFromSearch.designation"
                 :user-id="userId"
                 :client-id="dataFromSearch.client.id"
                 :client-orders="dataFromSearch.client_orders"
+                :part-price="dataFromSearch.current_supplier_price || 0"
+                :reference-and-designation="`${dataFromSearch.reference} ${dataFromSearch.designation}`"
                 @refresh-supplier-orders="refreshAllData()"
                >
               </CreateSupplierOrder>

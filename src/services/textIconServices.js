@@ -2,7 +2,7 @@ function statusIcon(status) {
     switch (status) {
       case 'transit':
         return 'mdi-ferry';
-      case 'partial_sent_and_in_production':
+      case 'partial_sent_and_production':
         return 'mdi-truck-delivery-outline';
       case 'production':
         return 'mdi-factory';
@@ -21,7 +21,7 @@ function statusText(status) {
     switch (status) {
         case 'transit':
           return 'Transit';
-        case 'partial_sent_and_in_production':
+        case 'partial_sent_and_production':
           return 'Partiel envoyé & production';
         case 'production':
           return 'Production';
@@ -40,7 +40,7 @@ function statusIconColor(status) {
     switch (status) {
         case 'transit':
           return 'primary';
-        case 'partial_sent_and_in_production':
+        case 'partial_sent_and_production':
           return 'orange';
         case 'production':
           return 'orange';
