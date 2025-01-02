@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
 import { useRouter } from 'vue-router'
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
 const router = useRouter()
 
@@ -13,6 +14,7 @@ const loginPassword = ref('')
 const toggleMenu = ref(false)
 const showLoginPassword = ref(false)
 const showSignUpPassword = ref(false)
+const loading = ref(false)
 
 // Methods for signup, login, and reset
 async function onSignUp(event) {
@@ -44,9 +46,13 @@ async function onLogin(event) {
     },
   }
   try {
-    await sessionStore.actions.loginUser(data)
+    loading.value = true;
 
-    router.push('/dashboard')
+    setTimeout(async() => {
+      await sessionStore.actions.loginUser(data)
+      router.push('/dashboard')
+    }, 1500);
+
   } catch (error) {
     console.error(error)
   }
@@ -54,6 +60,7 @@ async function onLogin(event) {
 </script>
 
 <template>
+  <SpinnLoader :loading="loading" text="Connexion..."/>
   <div class="toggle-container">
       <!-- Sign Up Form -->
       <v-card class="login-menu">

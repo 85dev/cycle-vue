@@ -2,7 +2,8 @@
 import { toRef } from 'vue';
 
 const props = defineProps({
-    loading: Boolean
+    loading: { type: Boolean, required: true },
+    text: { type: String }
 })
 
 const loading = toRef(props, 'loading')
@@ -10,6 +11,7 @@ const loading = toRef(props, 'loading')
 
 <template>
    <v-overlay
+      persistent
       v-model="loading"
       class="container align-center justify-center"
    >
@@ -18,7 +20,12 @@ const loading = toRef(props, 'loading')
          class="pa-4 d-flex flex-column align-center justify-center"
       >
       <div class="spinner mt-4"/>
-      <span class="informative-text mt-12 mb-2">Chargement des données...</span>
+      <span v-if="!props.text" class="informative-text mt-12 mb-2">
+         Chargement des données...
+      </span>
+      <span v-else class="informative-text mt-12 mb-2">
+         {{ props.text }}
+      </span>
       </v-card>
   </v-overlay>
 </template>

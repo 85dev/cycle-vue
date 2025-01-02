@@ -15,7 +15,7 @@ const props = defineProps({
     supplierOrderId: {
         type: Number,
     },
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -31,9 +31,9 @@ const props = defineProps({
 
 async function deleteOrder() {
     if (props.orderType === 'client') {
-        await apiCaller.deleteData(`users/${props.userId}/client_orders/${props.clientOrderId}`, false);
+        await apiCaller.deleteData(`companies/${props.selectedCompanyId}/client_orders/${props.clientOrderId}`, false);
     } else if (props.orderType === 'supplier') {
-        await apiCaller.deleteData(`users/${props.userId}/supplier_orders/${props.supplierOrderId}`, false);
+        await apiCaller.deleteData(`companies/${props.selectedCompanyId}/supplier_orders/${props.supplierOrderId}`, false);
     }
 
     emit("orderRefresh");

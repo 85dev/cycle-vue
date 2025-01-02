@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 
 // Services
 import apiCaller from '@/services/apiCaller'
@@ -18,12 +18,13 @@ import SortClientPositionsModal from '@/components/modals/SortClientPositions.vu
 import PositionHistory from '@/components/modals/PositionHistory.vue';
 import TransferPosition from '@/components/modals/TransferPosition.vue';
 import HandleConsignmentConsumption from '@/components/modals/HandleConsignmentConsumption.vue';
-
-// Table headers
-import { clientOrdersHeaders, consumptionPositionsHeaders, supplierOrdersHeaders, clientStockPositionsHeaders, expeditionsListHeaders, subcontractorHeaders, logisticplacesHeaders } from '@/models/tableHeaders.js'
 import SpinnLoader from '@/components/SpinnLoader.vue';
 
-const userId = ref(null)
+// Constant data
+import { clientOrdersHeaders, consumptionPositionsHeaders, supplierOrdersHeaders, clientStockPositionsHeaders, expeditionsListHeaders, subcontractorHeaders, logisticplacesHeaders } from '@/models/tableHeaders.js'
+import CardTitle from '@/components/CardTitle.vue';
+
+const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const dataFromSearch = ref({})
 const currentPartId = ref(null)
 const route = useRoute();
@@ -32,12 +33,12 @@ const loading = ref(false);
 const clientPositionModal = ref(false);
 
 async function fetchSupplierOrders() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/supplier_orders_positions`);
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/supplier_orders_positions`);
   dataFromSearch.value.supplier_orders = response
 }
 
 async function fetchUnsortedClientPositions() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/unsorted_client_positions`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/unsorted_client_positions`)
   dataFromSearch.value.unsorted_client_positions = response
 
   if (response.length > 0) {
@@ -46,39 +47,45 @@ async function fetchUnsortedClientPositions() {
 }
 
 async function fetchConsignmentStockPositions() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/consignment_stocks_positions_by_client`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/consignment_stocks_positions_by_client`)
   dataFromSearch.value.consignment_stock_positions = response
 }
 
 async function fetchStandardStockPositions() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/standard_stocks_positions_by_client`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/standard_stocks_positions_by_client`)
   dataFromSearch.value.standard_stock_positions = response
 }
 
 async function fetchSuppliers() {
-  const response = await apiCaller.get(`users/${userId.value}/suppliers`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
   dataFromSearch.value.suppliers = response
 }
 
 async function fetchClientOrders() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/client_orders`);
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/client_orders`);
   dataFromSearch.value.client_orders = response
 }
 
 async function fetchExpeditions() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/supplier_order_indexes_by_part`);
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/supplier_order_indexes_by_part`);
   dataFromSearch.value.expeditions = response
 }
 
 async function fetchSubContractors() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/expedition_position_by_sub_contractor`);
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/expedition_position_by_sub_contractor`);
   dataFromSearch.value.positions_by_sub_contractors = response
 }
 
 async function fetchLogisticPlaces() {
-  const response = await apiCaller.get(`users/${userId.value}/parts/${currentPartId.value}/expedition_position_by_logistic_place`);
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/expedition_position_by_logistic_place`);
   dataFromSearch.value.positions_by_logistic_place = response
 }
+
+watch(selectedCompany, async (newCompany, oldCompany) => {
+  if (newCompany?.id !== oldCompany?.id) {
+    router.push('/dashboard');
+  }
+});
 
 async function refreshAllData() {
     loading.value = true;
@@ -97,9 +104,9 @@ async function refreshAllData() {
 onMounted(async () => {
   currentPartId.value = route.params.id
   sessionStore.actions.initializeAuthState();
-  userId.value = sessionStore.getters.getUserID();
+  selectedCompany.value = sessionStore.getters.getSelectedCompany();
 
-  const response = await apiCaller.get(`users/${userId.value}/part_related_data/${currentPartId.value}`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
   dataFromSearch.value = response;
 
   await refreshAllData();
@@ -115,24 +122,24 @@ onMounted(async () => {
     <div class="part-content-container">
 
         <SortClientPositionsModal
-          v-if="clientPositionModal && dataFromSearch.client"
+          v-if="selectedCompany && clientPositionModal && dataFromSearch.client"
           :open-modal="clientPositionModal"
           :part-id="currentPartId"
-          :user-id="userId"
+          :selected-company-id="selectedCompany.id"
           :client="dataFromSearch.client"
           :client-positions="dataFromSearch.unsorted_client_positions"
           @refreshClientPositions="refreshAllData"
         />
 
-        <v-card class="b1-container" style="padding: 6px 12px; margin-top: 0.7em; margin-bottom: 0em">
-          <v-card-title>
-            INFORMATIONS SUR LA PIECE
-          </v-card-title>
-          <div class="d-flex align-center">
-              <v-icon class="ml-2" size="22" color="blue">mdi-cog-outline</v-icon>
+        <v-card class="b1-container">
+          <CardTitle 
+              title="Informations sur la pièce"
+              icon="mdi-cog-outline"
+            />
+          <div class="d-flex align-center ml-5">
               <span class="informative-text ml-1">Technique et générale : </span>
-            </div>
-          <v-row class="pa-1 mb-0" style="margin-bottom: -2.4em;" align="center" justify="space-between">
+          </div>
+          <v-row class="pr-2 pl-2 mb-0" style="margin-bottom: -2.4em;" align="center" justify="space-between">
             <v-col cols="12" md="6" class="d-flex flex-column mb-0">
               <div v-if="dataFromSearch.material">
                 <v-chip variant="elevated" class="text-body-2 mt-1">
@@ -174,7 +181,6 @@ onMounted(async () => {
           </v-row>
           <div v-if="dataFromSearch.current_client_price || dataFromSearch.current_supplier_price" class="ml-1 mb-4">
             <div class="d-flex align-center">
-              <v-icon class="ml-2" size="22" color="blue">mdi-finance</v-icon>
               <span class="informative-text ml-1">Financier : </span>
             </div>
               <v-chip class="aligner mt-1" style="width: fit-content;" variant="elevated">
@@ -199,7 +205,7 @@ onMounted(async () => {
           </div>
 
           <div class="d-flex">
-            <v-card class="pa-1 flex-grow-1 mr-1">
+            <v-card class="pa-1 flex-grow-1 ma-3">
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
@@ -237,7 +243,7 @@ onMounted(async () => {
               </div>
             </v-card>
 
-            <v-card class="pa-1 flex-grow-1 ml-1">
+            <v-card class="pa-1 flex-grow-1 ma-3">
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
@@ -283,9 +289,10 @@ onMounted(async () => {
           
         <div v-if="dataFromSearch.consignment_stock_positions">
           <div class="b1-top-content mt-0 mb-2">
-            <v-card-title>
-              STOCK CONSIGNATION CLIENT
-            </v-card-title>
+            <CardTitle 
+              title="Stock consignation client"
+              icon="mdi-dolly"
+            />
             <v-chip
              @click="router.push({ name: `HandleConsumptions` });"
              variant="outlined" 
@@ -295,7 +302,7 @@ onMounted(async () => {
             </v-chip>
           </div>
           <!-- Consignment Stock Positions -->
-          <v-expansion-panels>
+          <v-expansion-panels class="pa-2">
             <v-expansion-panel
               v-for="stock in dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0)"
               :key="'consignment-' + stock.id"
@@ -343,13 +350,13 @@ onMounted(async () => {
                             <span style="margin-left: 2px;">Quantité à disposition : <strong>{{ stock.current_quantity }}</strong></span>
                           </v-chip>
                           <HandleConsignmentConsumption
-                            v-if="userId && stock && dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client.id && stock.current_quantity !== undefined" 
+                            v-if="selectedCompany && stock && dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client.id && stock.current_quantity !== undefined" 
                             :part-reference="dataFromSearch.reference"
+                            :selected-company-id="selectedCompany.id" 
                             origin="single"
                             :part-designation="dataFromSearch.designation"
                             :part-price="dataFromSearch.client_price || 0"
                             :current-quantity="stock.current_quantity"
-                            :user-id="userId"
                             :stock="stock"
                             :client-id="dataFromSearch.client.id"
                             @refreshConsignment="refreshAllData()"
@@ -381,8 +388,8 @@ onMounted(async () => {
                       </template>
                       <template v-slot:item.actions="{item}">
                           <PositionHistory
-                            v-if="userId && currentPartId && item.id"
-                            :user-id="userId"
+                            v-if="selectedCompany && currentPartId && item.id"
+                            :selected-company-id="selectedCompany.id"
                             :client-position-id="item.id"
                           />
                       </template>
@@ -423,7 +430,7 @@ onMounted(async () => {
             </v-expansion-panel>
           </v-expansion-panels>
         </div>
-        <div class="ml-5" v-if="dataFromSearch.consignment_stock_positions">
+        <div class="ml-5 mb-2" style="margin-top: -0.5em" v-if="dataFromSearch.consignment_stock_positions">
           <div v-if="dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
             <v-chip
                 variant="tonal"
@@ -435,12 +442,12 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="mt-1" v-if="dataFromSearch.standard_stock_positions && dataFromSearch.standard_stock_positions.length > 0">
-            <v-card-title>
-              STOCK STANDARD CLIENT
-            </v-card-title>
-
-            <v-expansion-panels>
+        <div class="mt-3" v-if="dataFromSearch.standard_stock_positions">
+          <CardTitle 
+              title="Stock standard client"
+              icon="mdi-dolly"
+            />
+            <v-expansion-panels class="pa-2">
               <v-expansion-panel
                 v-for="stock in dataFromSearch.standard_stock_positions.filter(stock => stock.client_positions.length > 0)"
                 :key="'standard-' + stock.id"
@@ -501,10 +508,10 @@ onMounted(async () => {
                         <template v-slot:item.actions="{item}">
                           <div class="actions-slot">
                             <PositionHistory
-                              v-if="userId && currentPartId && item.id"
-                              :user-id="userId"
-                              :client-position-id="item.id"
-                            />
+                            v-if="selectedCompany && currentPartId && item.id"
+                            :selected-company-id="selectedCompany.id"
+                            :client-position-id="item.id"
+                          />
                           </div>
                         </template>
                       </v-data-table>           
@@ -514,7 +521,7 @@ onMounted(async () => {
               </v-expansion-panel>
             </v-expansion-panels>
           </div>
-          <div class="ml-5" v-if="dataFromSearch.standard_stock_positions">
+          <div class="ml-5 mb-2" v-if="dataFromSearch.standard_stock_positions">
             <div v-if="dataFromSearch.standard_stock_positions && dataFromSearch.standard_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
               <v-chip
                 variant="tonal"
@@ -529,14 +536,16 @@ onMounted(async () => {
 
         <v-card class="b1-container">
           <div class="b1-top-content mt-0 mb-2">
-            <v-card-title>
-              COMMANDE CLIENT
-            </v-card-title>
+            <CardTitle 
+              title="Commande client"
+              icon="mdi-cube-send"
+            />
             <span>
               <!-- MODALS -->
                <CreateClientOrder
-                v-if="dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client"
+                v-if="selectedCompany && dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client"
                 :part-id="currentPartId"
+                :selected-company-id="selectedCompany.id"
                 :part-name="`${dataFromSearch.reference} ${dataFromSearch.designation}`"
                 :client="dataFromSearch.client"
                 @refresh-client-orders="refreshAllData()"
@@ -579,28 +588,27 @@ onMounted(async () => {
             <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
                   <EditClientOrder
-                    v-if="userId && item && currentPartId"
-                    :user-id="userId"
+                    v-if="selectedCompany && item && currentPartId"
+                    :selected-company-id="selectedCompany.id"
                     :part-id="currentPartId"
                     :order="item"
                     @order-refresh="refreshAllData()"
-                  ></EditClientOrder>
+                  />
                   <ArchivateClientOrder
-                    v-if="userId && item"
-                    :user-id="userId"
+                    v-if="selectedCompany && item"
+                    :selected-company-id="selectedCompany.id"
                     :order="item"
                     @refresh-client-orders="refreshAllData()"
-                  ></ArchivateClientOrder>
+                  />
                   <DeletingOrder
                     style="margin-left: -1.2em;"
-                    v-if="userId && item"
-                    :user-id="userId"
+                    v-if="selectedCompany && item"
+                    :selected-company-id="selectedCompany.id"
                     :client-order-id="item.id"
                     :order-number="item.client_order_number"
                     order-type="client"
                     @order-refresh="refreshAllData()"
-                  >
-                  </DeletingOrder>
+                  />
                 </div>
             </template>
             </v-data-table>
@@ -618,14 +626,15 @@ onMounted(async () => {
 
         <v-card class="b1-container">
           <div class="b1-top-content mt-0 mb-2">
-            <v-card-title>
-              COMMANDE FOURNISSEUR
-            </v-card-title>
+            <CardTitle
+              title="Commande fournisseur" 
+              icon="mdi-factory"
+            />
             <span>
               <!-- MODALS -->
               <CreateSupplierOrder
-                v-if="dataFromSearch.client_orders && userId && dataFromSearch.client && dataFromSearch.reference && dataFromSearch.designation"
-                :user-id="userId"
+                v-if="dataFromSearch.client_orders && selectedCompany && dataFromSearch.client && dataFromSearch.reference && dataFromSearch.designation"
+                :selected-company-id="selectedCompany.id"
                 :client-id="dataFromSearch.client.id"
                 :client-orders="dataFromSearch.client_orders"
                 :part-price="dataFromSearch.current_supplier_price || 0"
@@ -688,12 +697,14 @@ onMounted(async () => {
             <template v-slot:item.actions="{ item }">
               <div class="actions-slot">
                   <SupplierOrderDetails
+                    v-if="selectedCompany && item"
                     :order="item"
-                    :user-id="userId"
+                    :selected-company-id="selectedCompany.id"
                   >
                   </SupplierOrderDetails>
                   <DeletingOrder
-                      :user-id="userId"
+                      v-if="selectedCompany && item"
+                      :selected-company-id="selectedCompany.id"
                       :supplier-order-id="item.id"
                       :order-number="item.orderNumber"
                       order-type="supplier"
@@ -717,9 +728,10 @@ onMounted(async () => {
 
         <v-card class="b1-container">
           <div class="b1-top-content mt-0 mb-2">
-            <v-card-title>
-              PROGRAMME DES EXPEDITIONS
-            </v-card-title>
+            <CardTitle
+              title="Programme des expéditions" 
+              icon="mdi-ferry"
+            />
             <v-chip
                 variant="outlined"
                 color="blue"
@@ -791,9 +803,10 @@ onMounted(async () => {
 
         <v-card class="b1-container">
           <div class="b1-top-content">
-            <v-card-title>
-              STOCK CHEZ SOUS-TRAITANT
-            </v-card-title>
+            <CardTitle
+              title="Stock sous-traitant(s)" 
+              icon="mdi-turbine"
+            />
           </div>
           <div class="b1-middle-content">
             <v-data-table
@@ -818,14 +831,13 @@ onMounted(async () => {
             <template v-slot:item.actions="{ item }">
               <div class="actions-slot">
                 <TransferPosition
-                  v-if="userId && item && dataFromSearch.client.name"
+                  v-if="selectedCompany && item && dataFromSearch.client.name"
                   origin="subcontractor"
                   :client="dataFromSearch.client.name"
-                  :user-id="userId" 
+                  :selected-company-id="selectedCompany.id" 
                   :position="item"
                   @refresh="refreshAllData()"
-                >
-                </TransferPosition>
+                />
               </div>
             </template>
             </v-data-table>
@@ -843,9 +855,10 @@ onMounted(async () => {
 
         <v-card class="b1-container" style="margin-bottom: 0.6em;">
           <div class="b1-top-content">
-            <v-card-title>
-              STOCK SUR LIEU DE STOCKAGE
-            </v-card-title>
+            <CardTitle
+              title="Stock lieu(x) de stockage" 
+              icon="mdi-warehouse"
+            />
           </div>
           <div class="b1-middle-content">
             <v-data-table
@@ -871,14 +884,13 @@ onMounted(async () => {
             <template v-slot:item.actions="{ item }">
               <div class="actions-slot">
                 <TransferPosition
-                  v-if="userId && item && dataFromSearch.client.name"
+                  v-if="selectedCompany && item && dataFromSearch.client.name"
                   origin="logistic_place"
                   :client="dataFromSearch.client.name"
-                  :user-id="userId" 
+                  :selected-company-id="selectedCompany.id" 
                   :position="item"
                   @refresh="refreshAllData()"
-                >
-                </TransferPosition>
+                />
               </div>
             </template>
             </v-data-table>

@@ -4,8 +4,9 @@ import sessionStore from '@/stores/sessionStore.js' // Import the new store
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
+import CardTitle from '../CardTitle.vue';
 
-const userId = ref(null)
+const selectedCompany = ref(null)
 const client = ref(null)
 const clientsList = ref(null)
 const clientsListDisplayed = ref(null)
@@ -30,21 +31,21 @@ const props = defineProps({
 })
 
 async function fetchSubContractors() {
-    const response = await apiCaller.get(`users/${userId.value}/subcontractors_index`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/subcontractors_index`)
 
     subcontractorsList.value = response
     subcontractorsListDisplayed.value = response.map(client => client.name)
 }
 
 async function fetchClients() {
-    const response = await apiCaller.get(`users/${userId.value}/clients`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients`)
 
     clientsList.value = response
     clientsListDisplayed.value = response.map(client => client.name)
 }
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`users/${userId.value}/suppliers`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
 
     suppliersList.value = response
     suppliersListDisplayed.value = response.map(supplier => supplier.name)
@@ -70,8 +71,7 @@ async function submitPart() {
         },
     };
 
-
-    await apiCaller.post(`users/${userId.value}/parts`, payload, true)
+    await apiCaller.post(`companies/${selectedCompany.value.id}/parts`, payload, true)
 
     emit('refreshParts')
 }
@@ -79,11 +79,14 @@ async function submitPart() {
 onMounted(async() => {
     sessionStore.actions.initializeAuthState();  // Load user and auth token from localStorage
 
-    // Set the userId from sessionStore
-    userId.value = sessionStore.getters.getUserID();
-    await fetchClients()
-    await fetchSuppliers()
-    await fetchSubContractors()
+    // Set the selectedCompany from sessionStore
+    selectedCompany.value = sessionStore.getters.getSelectedCompany();
+    
+    if (selectedCompany.value) {
+        await fetchClients()
+        await fetchSuppliers()
+        await fetchSubContractors()
+    }
 })
 </script>
 
@@ -114,7 +117,11 @@ onMounted(async() => {
   
         <template v-slot:default="{ isActive }">
             <div style="padding: 0.4em;">
-                <v-card title="Ajouter une nouvelle pièce" style="padding: 0.4em;">
+                <v-card>
+                    <CardTitle 
+                        title="Ajouter une nouvelle pièce"
+                        icon="mdi-cog"
+                    ></CardTitle>
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
                         <v-form class="form-container" style="margin-top:0.4em;">
@@ -199,12 +206,12 @@ onMounted(async() => {
                             </v-row>
                         </v-form>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 
                         <v-btn
-                            color="red"
+                            variant="text"
                             text="FERMER"
                             @click="isActive.value = false"
                         ></v-btn>

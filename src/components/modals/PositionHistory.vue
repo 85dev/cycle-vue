@@ -2,9 +2,10 @@
 import { onMounted, ref, computed } from 'vue';
 import apiCaller from '@/services/apiCaller';
 import dateConverter from '@/services/dateConverter';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -32,7 +33,7 @@ const totalDuration = computed(() => {
 const positionHistory = ref([])
 
 async function fetchPartHistory() {
-    const response = await apiCaller.get(`users/${props.userId}/client_positions/${props.clientPositionId}/position_history`);
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/client_positions/${props.clientPositionId}/position_history`);
     positionHistory.value = response
 }
 
@@ -61,7 +62,10 @@ onMounted(async () => {
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
                     <v-card-title class="d-flex justify-space-between align-center">
-                        <span>HISTORIQUE DE LA POSITION</span>
+                        <CardTitle 
+                            title="Historique de la position"
+                            icon="mdi-history"
+                        />
                         <div v-if="totalDuration">
                             <v-chip color="blue" class="mr-2">
                                 <v-icon start class="ml-1">mdi-calendar</v-icon>

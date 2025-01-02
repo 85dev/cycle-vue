@@ -109,6 +109,35 @@ const consumptionPositionsHeaders = [
   { title: 'Période de consommation', value: 'consumption_period'}
 ]
 
+const searchCompanyHeaders = [
+  { title: 'Nom de l\'entreprise', value: 'name' },
+  { title: 'Adresse', value: 'address' },
+  { title: 'Structure légale', value: 'legal_structure' },
+  { title: 'SIREN', value: 'registration_number' },
+];
+
+const accessRequestsHeaders = [
+  { title: 'Société', value: 'company_name' },
+  { title: 'Demandé par', value: 'requester_email' },
+  { title: 'Rôle demandé', value: 'is_owner' },
+  { title: 'Statut', value: 'request_status' },
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const handleAccountHeaders = [
+  { title: 'Email', value: 'user_email' },
+  { title: 'Statut de l\'accès', value: 'account_status' },
+  { title: 'Rôle', value: 'is_owner' },
+  { title: 'Date de création de l\'accès', value: 'account_created_at' },
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const pendingRequestsHeaders = [
+  { title: 'Société', value: 'company_name' },
+  { title: 'Rôle', value: 'is_owner' },
+  { title: 'Demandé le', value: 'created_at' }
+]
+
 const globalConsumptionHeaders = [
   { title: 'Référence', value: 'part_reference' },
   { title: 'Quantité à disposition', value: 'current_quantity' },
@@ -151,4 +180,4 @@ const expeditionsIndexHeaders = [
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { clientOrdersHeaders, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

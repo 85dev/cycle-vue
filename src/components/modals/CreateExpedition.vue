@@ -1,19 +1,21 @@
 <script setup>
+// Vue essentials
 import { onMounted, ref, defineEmits } from 'vue';
 
 // Services
-import apiCaller from '../../services/apiCaller.js';
+import apiCaller from '@/services/apiCaller.js';
 import dateConverter from '@/services/dateConverter.js';
+import CardTitle from '../CardTitle.vue';
+
+// Constant data
 import { expeditionHeaders } from '@/models/tableHeaders.js'
-import { transporters } from '@/models/preselectionData.js';
-import sessionStore from '@/stores/sessionStore.js';
 
 const props = defineProps({
     suppliers: {
         type: Array,
         required: true
     },
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -28,40 +30,48 @@ const departureDate = ref(dateConverter.formatISODate(new Date()))
 const selectedSupplier = ref(null)
 const selectedTransporter = ref(null)
 const number = ref(null)
+const transporters = ref([])
 const modifiedQuantities = ref([])
 const modifiedPartials = ref({})
-const price = ref(1500)
 
 const emit = defineEmits(['refreshExpeditions'])
 
 async function fetchSupplierOrders() {
-    const response = await apiCaller.get(`users/${props.userId}/user_uncompleted_supplier_orders_positions`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/company_uncompleted_supplier_orders_positions`)
 
     supplierOrders.value = response
+}
+
+async function fetchTransporters() {
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/transporters_index`)
+
+    transporters.value = response
 }
 
 async function submitExpedition() {
     const expedition = {
         expedition: {
             real_departure_time: dateConverter.formatISODate(departureDate.value),
-            transporter: selectedTransporter.value,
             number: number.value
             }
         }
 
+    const selectedTransporterId = transporters.value.find(tr => tr.name === selectedTransporter.value)?.id;
     const selectedSupplierId = props.suppliers.find(c => c.name === selectedSupplier.value)?.id;
     const quantities = selectedSupplierOrders.value.map(orderId => modifiedQuantities.value[orderId]);
     const partials = selectedSupplierOrders.value.map(orderId => modifiedPartials.value[orderId] || false);
 
-    await apiCaller.post(`users/${props.userId}/create_expedition?supplier_order_position_ids=${selectedSupplierOrders.value}&supplier_order_position_quantities=${quantities}&supplier_order_position_partials=${partials}&supplier_id=${selectedSupplierId}`, expedition, true)
+    await apiCaller.post(`companies/${props.selectedCompanyId}/create_expedition?supplier_order_position_ids=${selectedSupplierOrders.value}&supplier_order_position_quantities=${quantities}&supplier_order_position_partials=${partials}&supplier_id=${selectedSupplierId}&transporter_id=${selectedTransporterId}`, expedition, true)
 
     emit('refreshExpeditions')
 }
 
 onMounted( async () => {
+    await fetchTransporters()   
     await fetchSupplierOrders()
+
     selectedSupplier.value = props.suppliers[0].name
-    selectedTransporter.value = transporters[0]
+    selectedTransporter.value = transporters.value[0].name
 })
 </script>
 
@@ -83,9 +93,10 @@ onMounted( async () => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <v-card-title>
-                        ENREGISTRER UNE NOUVELLE EXPÉDITION
-                    </v-card-title>
+                    <CardTitle 
+                        title="Enregistrer une nouvelle expédition"
+                        icon="mdi-ferry"
+                    />
                     <v-divider style="margin: 0em 1em; padding: 6px;"></v-divider>
 
                         <v-form class="form-container">
@@ -114,7 +125,7 @@ onMounted( async () => {
                                     variant="underlined"
                                     class="form-part"
                                     label="Transporteur"
-                                    :items="transporters"
+                                    :items="transporters.map(tr => tr.name)"
                                     v-model="selectedTransporter"
                                 />
 
@@ -129,15 +140,16 @@ onMounted( async () => {
                             </v-row>
                             </div>
 
-                            <span class="informative-text mb-5 mt-0" style="display: flex; align-items: center;">
+                            <span v-if="supplierOrders.length > 0" class="informative-text mb-5 mt-0" style="display: flex; align-items: center;">
                                 <v-icon color="warning" style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
                                 La date d'arrivée sera à enregistrer lors de la réception de l'expédition
                             </span>
 
                             <v-card class="dialog-table">
-                                <v-card-title>
-                                    CHOIX DES COMMANDES OUVERTES À AJOUTER
-                                </v-card-title>
+                                <CardTitle 
+                                    title="Choix des commandes à ajouter"
+                                    icon=mdi-package-variant-closed-plus
+                                />
                                 <v-data-table
                                     v-if="supplierOrders.length > 0"
                                     variant="underlined"

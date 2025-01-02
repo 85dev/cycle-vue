@@ -4,6 +4,7 @@ import sessionStore from '@/stores/sessionStore.js' // Import the new store
 
 // Components
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import CardTitle from '../CardTitle.vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -98,7 +99,11 @@ onMounted(async() => {
   
         <template v-slot:default="{ isActive }">
             <div style="padding: 0.4em;">
-                <v-card title="Ajouter un nouveau fournisseur" append-icon="mdi-account-plus-outline" style="padding: 0.4em;">
+                <v-card style="padding: 0.4em;">
+                    <CardTitle 
+                        title="Ajouter un nouveau fournisseur"
+                        icon="mdi-factory"
+                     ></CardTitle>
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
                         <v-form class="form-container">

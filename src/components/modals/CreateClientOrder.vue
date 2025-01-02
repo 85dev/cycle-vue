@@ -4,7 +4,7 @@ import { onMounted, ref, defineEmits } from 'vue';
 // Services
 import apiCaller from '../../services/apiCaller.js';
 import dateConverter from '@/services/dateConverter.js';
-import sessionStore from '@/stores/sessionStore.js';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
     partId: {
@@ -15,13 +15,16 @@ const props = defineProps({
     },
     partName: {
         type: String
+    },
+    selectedCompanyId: {
+        type: Number,
+        required: true
     }
 })
 
 const number = ref(null)
 const clientContact = ref(null)
 const parts = ref(null)
-const userId = ref(0)
 const today = new Date();
 const deliveryDate = new Date(today);
 
@@ -32,7 +35,7 @@ const orderPositions = ref([
 const emit = defineEmits(['refreshClientOrders'])
 
 async function fetchParts() {
-    const response = await apiCaller.get(`users/${userId.value}/parts`);
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/parts`);
     parts.value = response;
 }
 
@@ -51,7 +54,7 @@ async function submitClientOrder() {
             }
         }
 
-    await apiCaller.post(`users/${userId.value}/clients/${props.client.id}/create_client_order`, clientOrder, true)
+    await apiCaller.post(`companies/${props.selectedCompanyId}/clients/${props.client.id}/create_client_order`, clientOrder, true)
 
     emit('refreshClientOrders')
 }
@@ -67,9 +70,6 @@ function removeOrderPosition(index) {
 }
 
 onMounted( async () => {
-    sessionStore.actions.initializeAuthState();
-    userId.value = sessionStore.getters.getUserID();
-
     await fetchParts()
 
     deliveryDate.setDate(today.getDate() + 60);
@@ -93,7 +93,11 @@ onMounted( async () => {
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Ajouter une commande client`" style="padding: 0.4em;">
+                <v-card style="padding: 0.4em;">
+                    <CardTitle
+                        title="Ajouter une commande client" 
+                        icon="mdi-cube-send"
+                    />
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
                         <v-form class="form-container">
@@ -184,7 +188,7 @@ onMounted( async () => {
                             </div>
 
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 

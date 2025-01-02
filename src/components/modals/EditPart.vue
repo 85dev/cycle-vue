@@ -2,7 +2,7 @@
 import { ref, defineEmits } from 'vue';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number
     },
     partId: {

@@ -8,6 +8,7 @@ import SpinnLoader from '@/components/SpinnLoader.vue';
 // Services
 import apiCaller from '@/services/apiCaller.js';
 import autocomplete from '@/services/addressAutocomplete.js'
+import CardTitle from '../CardTitle.vue';
 
 const userId = ref(null)
 const address = ref(null)
@@ -193,9 +194,10 @@ onMounted(async() => {
       <template v-slot:default="{ isActive }">
         <div style="padding: 0.4em;">
           <v-card style="padding: 0.4em;">
-            <v-card-title>
-              AJOUTER UN NOUVEAU CLIENT
-            </v-card-title>
+            <CardTitle
+              title="Ajouter un nouveau client"
+              icon="mdi-account-plus-outline"
+            />
             <v-divider style="margin: 0em 1em 1em 1em;"></v-divider>  
             <v-form class="form-container">
             <!-- Client Information Section -->

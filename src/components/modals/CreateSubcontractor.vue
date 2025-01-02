@@ -4,6 +4,7 @@ import sessionStore from '@/stores/sessionStore.js'; // Import the store
 
 // Components
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import CardTitle from '../CardTitle.vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -99,7 +100,11 @@ onMounted(() => {
 
     <template v-slot:default="{ isActive }">
       <div style="padding: 0.4em;">
-        <v-card title="Ajouter un nouveau sous-traitant" append-icon="mdi-account-plus-outline" style="padding: 0.4em;">
+        <v-card style="padding: 0.4em;">
+          <CardTitle 
+            title="Ajouter un nouveau sous-traitant"
+            icon="mdi-account-plus-outline" 
+          />
           <v-divider style="margin: 0em 1em;"></v-divider>
 
           <v-form class="form-container">

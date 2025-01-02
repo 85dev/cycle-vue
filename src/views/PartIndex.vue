@@ -1,6 +1,6 @@
 <script setup>
 // Services
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import sessionStore from '@/stores/sessionStore';
 import { partHeaders } from '@/models/tableHeaders';
 import { useRouter } from 'vue-router';
@@ -10,10 +10,13 @@ import apiCaller from '@/services/apiCaller';
 import DeletePart from '@/components/modals/DeletePart.vue';
 import CreatePart from '@/components/modals/CreatePart.vue';
 import EditPart from '@/components/modals/EditPart.vue';
+import CardTitle from '@/components/CardTitle.vue';
 
 const userParts = ref(null)
 const filteredParts = ref(null)
-const userId = ref(null)
+const selectedCompany = computed(() => {
+  return sessionStore.getters.getSelectedCompany()
+})
 const router = useRouter();
 const searchKeyword = ref(null)
 const loading = ref(false)
@@ -30,7 +33,7 @@ function routeToPart(event, {item}) {
 
 async function fetchParts() {
     loading.value = true
-    const response = await apiCaller.get(`users/${userId.value}/parts`);
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts`);
 
     userParts.value = response;
     filteredParts.value = response;
@@ -39,14 +42,17 @@ async function fetchParts() {
 }
 
 async function fetchClients() {
-    const response = await apiCaller.get(`users/${userId.value}/clients`);
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients`);
 
     clients.value = response;
 }
 
 // Watch function to filter parts based on searchKeyword
-
 watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
+    if (newClientName == null && newKeyword == null) {
+        return;
+    }
+    
     if (timeout) {
         clearTimeout(timeout);
     }
@@ -56,12 +62,10 @@ watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
     timeout = setTimeout(() => {
         let filtered = userParts.value;
 
-        // Filter by selected client
         if (newClientName) {
             filtered = filtered.filter(part => part.client_name === newClientName);
         }
 
-        // Filter by search keyword
         if (newKeyword) {
             const keyword = newKeyword.toLowerCase();
             filtered = filtered.filter(part =>
@@ -73,23 +77,34 @@ watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
         filteredParts.value = filtered;
         loading.value = false;
     }, 800); // Set a debounce delay of 300ms
-
 });
+
+watch(() => selectedCompany.value, // Watching the computed value's reactive property
+    async (newCompany, oldCompany) => {
+        if (newCompany && newCompany.id !== oldCompany?.id) {
+            await fetchClients();
+            await fetchParts();
+        }
+    },
+    { immediate: true }
+);
 
 onMounted(async() => {
     sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
+    selectedCompany.value = sessionStore.getters.getSelectedCompany();
 
-    await fetchParts()
-    await fetchClients()
+    if (selectedCompany.value) {
+        await fetchParts()
+        await fetchClients()
+    }
 })
 </script>
 
 <template>
     <div class="main-card">
         <CreatePart 
-        :origin="'single'"
-        @refresh-parts="fetchParts()"
+            :origin="'single'"
+            @refresh-parts="fetchParts()"
         ></CreatePart>
 
         <v-card class="b1-container" style="margin-top: 1.4em;">
@@ -145,9 +160,10 @@ onMounted(async() => {
         </v-card>
 
         <v-card class="b1-container" style="margin-bottom: 0.8em; margin-top: 0.2em;">
-            <v-card-title>
-                CATALOGUE DES PIECES
-            </v-card-title>
+            <CardTitle
+                title="Catalogue des pièces"
+                icon="mdi-list-box-outline"
+            />
             <v-data-table
                 :loading="loading"
                 loading-text="Recherche..."
@@ -232,11 +248,13 @@ onMounted(async() => {
                 
                 <div class="actions-slot">
                     <EditPart
-                        :user-id="userId"
+                        v-if="selectedCompany && item"
+                        :selected-company-id="selectedCompany.id"
                         :part-id="item.id"
                     />
                     <DeletePart
-                        :user-id="userId"
+                        v-if="selectedCompany && item"
+                        :selected-company-id="selectedCompany.id"
                         :part-id="item.id"
                         :designation="item.designation"
                         :reference="item.reference"

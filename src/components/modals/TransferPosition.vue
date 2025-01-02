@@ -10,7 +10,7 @@ import { transferHeaders } from '@/models/tableHeaders';
 
 // Internal logic
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -41,13 +41,13 @@ const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
 
 async function fetchSubcontractors() {
-    const response = await apiCaller.get(`users/${props.userId}/subcontractors_index`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/subcontractors_index`)
 
     subContractorsList.value = response
 }
 
 async function fetchLogisticPlaces() {
-    const response = await apiCaller.get(`users/${props.userId}/logistic_places`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/logistic_places`)
 
     logisticPlaceList.value = response
 }
@@ -86,7 +86,7 @@ async function submitTransfer() {
         expedition_position_id: props.position.expedition_position_id
     };
 
-    const response = await apiCaller.post(`users/${props.userId}/expedition_positions/${props.position.expedition_position_id}/transfer_position`, payload);
+    const response = await apiCaller.post(`companies/${props.selectedCompanyId}/expedition_positions/${props.position.expedition_position_id}/transfer_position`, payload);
 
     response.status === 200 || response.status === 201 ? emit('refresh') : console.error("Erreur lors de la transfert de la position");
 }

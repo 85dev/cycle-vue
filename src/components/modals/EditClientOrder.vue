@@ -6,7 +6,7 @@ import apiCaller from '../../services/apiCaller.js';
 import dateConverter from '@/services/dateConverter.js';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number
     },
     partId: {

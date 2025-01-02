@@ -15,7 +15,8 @@ const props = defineProps({
     directionValue: {
         type: Number,
         default: 0, // Default direction set to 0 degrees (down)
-    },})
+    },
+})
 
 // Computed property for dynamically styling the arrow
 const arrowStyle = computed(() => ({

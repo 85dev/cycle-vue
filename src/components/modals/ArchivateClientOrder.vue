@@ -5,7 +5,7 @@ import { defineEmits } from 'vue';
 import apiCaller from '../../services/apiCaller.js';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -18,7 +18,7 @@ const props = defineProps({
 const emit = defineEmits(['refreshClientOrders'])
 
 async function submitClientOrder() {
-    await apiCaller.get(`users/${props.userId}/client_orders/${props.order.client_order_id || props.order.order_id}/complete_client_order`);
+    await apiCaller.get(`companies/${props.selectedCompanyId}/client_orders/${props.order.client_order_id || props.order.order_id}/complete_client_order`);
     emit('refreshClientOrders');
 }
 </script>
@@ -49,7 +49,7 @@ async function submitClientOrder() {
                     <div class="text-modal" style="margin-top: 1em;">
                         Vous pourrez retrouver cette commande dans les commandes clients <strong>finalisées</strong>.
                     </div>
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 

@@ -7,7 +7,7 @@ import dateConverter from '@/services/dateConverter.js';
 import { statusIcon, statusIconColor, statusText } from '@/services/textIconServices.js'
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number
     },
     order: {

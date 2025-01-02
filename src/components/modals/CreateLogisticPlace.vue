@@ -4,6 +4,7 @@ import sessionStore from '@/stores/sessionStore.js'; // Import the new store
 
 // Components
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import CardTitle from '../CardTitle.vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -91,7 +92,11 @@ onMounted(async () => {
 
     <template v-slot:default="{ isActive }">
       <div style="padding: 0.4em;">
-        <v-card title="Ajouter un nouveau lieu logistique" append-icon="mdi-domain-plus" style="padding: 0.4em;">
+        <v-card style="padding: 0.4em;">
+          <CardTitle 
+            title="Ajouter un nouveau lieu logistique" 
+            icon="mdi-domain-plus"
+          />
           <v-divider style="margin: 0em 1em;"></v-divider>
 
           <v-form class="form-container">
@@ -152,7 +157,7 @@ onMounted(async () => {
             ></v-text-field>
           </v-form>
 
-          <v-card-actions style="margin-bottom: 0.8em;">
+          <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="red" text="FERMER" @click="isActive.value = false"></v-btn>
             <v-btn variant="elevated" color="success" @click="submitLogisticPlace(); isActive.value = false">

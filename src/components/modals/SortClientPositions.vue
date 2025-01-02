@@ -4,7 +4,7 @@ import { onMounted, ref, watch } from 'vue'
 import { sortingClientPositionHeaders } from '@/models/tableHeaders.js'
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -32,7 +32,7 @@ const consignmentStocks = ref([])
 const mappedClientPositions = ref([]);
 
 async function fetchUnsortedClientPositions() {
-  const response = await apiCaller.get(`users/${props.userId}/parts/${props.partId}/unsorted_client_positions`)
+  const response = await apiCaller.get(`companies/${props.selectedCompanyId}/parts/${props.partId}/unsorted_client_positions`)
 
   mappedClientPositions.value =     
     response.map(position => ({
@@ -43,12 +43,12 @@ async function fetchUnsortedClientPositions() {
 }
 
 async function fetchStandardStocks() {
-    const response = await apiCaller.get(`users/${props.userId}/clients/${props.client.id}/fetch_standard_stocks_by_client`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.client.id}/fetch_standard_stocks_by_client`)
     standardStocks.value = response
 }
 
 async function fetchConsignmentStocks() {
-    const response = await apiCaller.get(`users/${props.userId}/clients/${props.client.id}/fetch_consignment_stocks_by_client`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.client.id}/fetch_consignment_stocks_by_client`)
     consignmentStocks.value = response
 }
 
@@ -79,7 +79,7 @@ async function submitSortedPositions() {
         }),
     };
 
-    const response = await apiCaller.post(`users/${props.userId}/clients/${props.client.id}/sort_client_positions`, payload)
+    const response = await apiCaller.post(`companies/${props.selectedCompanyId}/clients/${props.client.id}/sort_client_positions`, payload)
     
     emit('refreshClientPositions')
 }

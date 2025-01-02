@@ -53,11 +53,6 @@ onMounted(async() => {
                     {{ item.name }}
                 </v-chip>
             </template>
-            <template v-slot:item.actions="{ item }">
-                <div class="actions-slot">
-
-                </div>  
-            </template>
             </v-data-table>
     
         </v-card>

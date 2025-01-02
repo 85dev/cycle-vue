@@ -4,9 +4,10 @@ import { onMounted, ref, defineEmits } from 'vue';
 // Services
 import apiCaller from '../../services/apiCaller.js';
 import dateConverter from '@/services/dateConverter.js';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number
     },
     clientOrders: {
@@ -33,12 +34,12 @@ const orderPositions = ref([])
 const emit = defineEmits(['refreshSupplierOrders'])
 
 async function fetchParts() {
-    const response = await apiCaller.get(`users/${props.userId}/clients/${props.clientId}/parts_by_client`);
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.clientId}/parts_by_client`);
     parts.value = response;
 }
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`users/${props.userId}/suppliers`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/suppliers`)
     supplierList.value = response
     supplierListDisplayed.value = response.map(supplier => supplier.name)
 }
@@ -63,7 +64,7 @@ async function submitSupplierOrder() {
         .map(position => props.clientOrders.find(order => order.number === position.client_order)?.id)
         .filter(id => id !== undefined);
 
-    await apiCaller.post(`users/${props.userId}/suppliers/${selectedSupplierId}/create_supplier_order?${clientOrderIds > 0 ? `client_order_ids=${clientOrderIds.join(',')}` : ''}`, payload, true)
+    await apiCaller.post(`companies/${props.selectedCompanyId}/suppliers/${selectedSupplierId}/create_supplier_order?${clientOrderIds > 0 ? `client_order_ids=${clientOrderIds.join(',')}` : ''}`, payload, true)
 
     emit('refreshSupplierOrders')
 }
@@ -103,7 +104,11 @@ onMounted( async () => {
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Ajouter une commande fournisseur`" style="padding: 0.4em;">
+                <v-card style="padding: 0.4em;">
+                    <CardTitle
+                        title="Ajouter une commande fournisseur" 
+                        icon="mdi-factory"
+                    />
                     <v-divider style="margin: 0em 1em; padding: 6px;"></v-divider>
 
                         <v-form class="form-container">

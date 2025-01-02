@@ -1,16 +1,19 @@
 <script setup>
-import { ref, defineEmits, onMounted } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import apiCaller from '@/services/apiCaller';
 import dateConverter from '@/services/dateConverter';
 import sessionStore from '@/stores/sessionStore';
 import { globalConsumptionHeaders } from '@/models/tableHeaders';
+import CardTitle from '@/components/CardTitle.vue';
 
 const consumptionRows = ref([])
 const parts = ref([])
 const number =ref('')
 const beginDate = ref(dateConverter.formatISODate(new Date()))
 const endDate = ref(dateConverter.formatISODate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)))
-const userId = ref(0)
+const selectedCompany = computed(() => {
+  return sessionStore.getters.getSelectedCompany()
+})
 const selectedRows = ref([])
 
 const clients = ref([])
@@ -29,20 +32,20 @@ async function fetchParts() {
     const stock = stocks.value.find(stock => stock.address === selectedStock.value)
     const clientId = clients.value.find(client => client.name === selectedClient.value).id
     if (stock && clientId) {
-        const response = await apiCaller.get(`users/${userId.value}/clients/${clientId}/consignment_stocks/${stock.id}/parts_by_client_and_consignment_stock`);
+        const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients/${clientId}/consignment_stocks/${stock.id}/parts_by_client_and_consignment_stock`);
         parts.value = response;
     }
 }
 
 async function fetchClients() {
-    const response = await apiCaller.get(`users/${userId.value}/clients`);
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients`);
     clients.value = response;
     clientsListDisplayed.value = response.map(client => client.name)
 }
 
 async function fetchStocks() {
     const clientId = clients.value.find(client => client.name === selectedClient.value)?.id
-    const response = await apiCaller.get(`users/${userId.value}/clients/${clientId}/fetch_consignment_stocks_by_client`);
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients/${clientId}/fetch_consignment_stocks_by_client`);
     stocks.value = response;
     stocksListDisplayed.value = response.map(stock => stock.address)
 }
@@ -62,14 +65,18 @@ async function submitConsumption() {
         }))
     }
 
-    const response = await apiCaller.post(`users/${userId.value}/consignment_stocks/${stock.id}/create_consignment_consumption`, payload, true)
+    const response = await apiCaller.post(`companies/${selectedCompany.value.id}/consignment_stocks/${stock.id}/create_consignment_consumption`, payload, true)
 
     if (response.status === 200 || response.status === 201) {
-        selectedRows.value = []
-        consumptionRows.value = []
-        selectedStock.value = null
-        selectedClient.value = null
+        resetData()
     }
+}
+
+function resetData() {
+    selectedRows.value = []
+    consumptionRows.value = []
+    selectedStock.value = null
+    selectedClient.value = null
 }
 
 function handleClientChange() {
@@ -90,9 +97,19 @@ async function handleStockChange() {
     selectedRows.value = []
 }
 
+watch(() => selectedCompany.value, // Watching the computed value's reactive property
+    async (newCompany, oldCompany) => {
+        if (newCompany && newCompany.id !== oldCompany?.id) {
+            resetData()
+            await fetchClients(); // Trigger refresh on change
+        }
+    },
+    { immediate: true }
+);
+
 onMounted(async() => {
     sessionStore.actions.initializeAuthState(); 
-    userId.value = sessionStore.getters.getUserID()
+    selectedCompany.value = sessionStore.getters.getSelectedCompany()
 
     await fetchClients()
 })
@@ -101,9 +118,10 @@ onMounted(async() => {
 <template>
     <div class="main-card">
         <v-card class="b1-container mt-3 mb-3">
-            <v-card-title>
-                ENREGISTRER DES CONSOMMATIONS EN STOCK CONSIGNATION CLIENT
-            </v-card-title>
+            <CardTitle
+                title="Enregistrer des consommations en stock consignation client"
+                icon="mdi-cart-check"
+            />
             <v-divider style="margin: 0em 1em;" class="mb-2"></v-divider>
 
             <span class="informative-text" v-show="!selectedClient || !selectedStock">
@@ -162,9 +180,10 @@ onMounted(async() => {
             </div>
 
             <v-card v-if="selectedStock && selectedClient && consumptionRows.length > 0" class="mt-4">
-                <v-card-title>
-                    SELECTION DES RÉFÉRENCES CONSOMMÉES
-                </v-card-title>
+                <CardTitle
+                    title="Sélectionnez les références consommées"
+                    icon="mdi-cog-outline"
+                />
                 <v-card class="ma-2">
                     <v-divider class="mb-2"/>
                     <span v-if="!number || !beginDate || !endDate" class="informative-text">
@@ -271,9 +290,10 @@ onMounted(async() => {
                 style="width: fit-content;"
             >
                 <v-icon class="mr-1">mdi-information-outline</v-icon>
-                Renseignez les champs client et stock pour pouvoir enregistrer les consommations
+                Renseignez les champs pour pouvoir enregistrer les consommations
             </v-chip>
-            <div class="mb-1 mt-3" style="display: flex; justify-content: flex-end; align-items: flex-end; width: 100%;">
+            <v-card-actions>
+                <v-spacer></v-spacer>
                 <v-btn
                     color="success"
                     variant="elevated"
@@ -281,8 +301,8 @@ onMounted(async() => {
                     @click="submitConsumption"
                 >
                     Enregistrer
-                </v-btn>       
-            </div>
+                </v-btn>  
+            </v-card-actions> 
         </v-card>
     </div>
 </template>

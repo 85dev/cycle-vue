@@ -5,13 +5,14 @@ import { onMounted, computed, ref } from 'vue'
 import { expeditionPositionHeaders } from '@/models/tableHeaders.js'
 
 import HandleSplittedPosition from './HandleSplittedPosition.vue';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
     expedition: {
         type: Object,
         required: true
     },
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     }
@@ -65,7 +66,7 @@ function handleSplitUpdate({ id, splitted_positions }) {
 }
 
 async function fetchExpeditionIndices() {
-    const response = await apiCaller.get(`users/${props.userId}/expeditions/${props.expedition.id}/supplier_orders`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/expeditions/${props.expedition.id}/supplier_orders`)
 
     indices.value = response
 
@@ -85,19 +86,19 @@ async function fetchExpeditionIndices() {
 }
 
 async function fetchClients() {
-    const response = await apiCaller.get(`users/${props.userId}/clients_by_part_ids?part_ids=${partIds.value}`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients_by_part_ids?part_ids=${partIds.value}`)
 
     clientsList.value = response
 }
 
 async function fetchSubcontractors() {
-    const response = await apiCaller.get(`users/${props.userId}/subcontractors_index`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/subcontractors_index`)
 
     subContractorsList.value = response
 }
 
 async function fetchLogisticPlaces() {
-    const response = await apiCaller.get(`users/${props.userId}/logistic_places`)
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/logistic_places`)
 
     logisticPlaceList.value = response
 }
@@ -114,7 +115,7 @@ async function submitDispatch() {
         arrival_time: arrivalTime.value
     }
 
-    const response = await apiCaller.post(`users/${props.userId}/expeditions/${props.expedition.id}/dispatch_expedition`, payload)
+    const response = await apiCaller.post(`companies/${props.selectedCompanyId}/expeditions/${props.expedition.id}/dispatch_expedition`, payload)
 
     emit('refreshExpeditions')
 }
@@ -146,9 +147,10 @@ onMounted(async() => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <v-card-title>
-                        REPARTITION DE L'EXPEDITION <strong>{{ props.expedition.number.toUpperCase() }}</strong>
-                    </v-card-title>
+                    <CardTitle 
+                        :title="`Répartition de l'expédition ${props.expedition.number}`"
+                        icon="mdi-multicast"
+                    />
                     <div class="column-maker" style="margin-left: 6px;">
                         <div>
                             <v-icon color="warning" style="margin-left: 12px;">mdi-alert-circle-outline</v-icon>
@@ -156,7 +158,7 @@ onMounted(async() => {
                         </div>
                         <div>
                             <v-icon color="success" style="margin-left: 12px;">mdi-progress-question</v-icon>
-                            <span class="informative-text" style="margin-left: 6px;"><strong>Si une position a plusieurs destinations</strong>, gérez le dans le menu <strong>multi-destinations</strong></span>
+                            <span class="informative-text" style="margin-left: 6px;"><strong>Si une position a plusieurs destinations</strong>, gérez le en cliquant sur <strong>multi-destinations</strong></span>
                         </div>
                     </div>
                     

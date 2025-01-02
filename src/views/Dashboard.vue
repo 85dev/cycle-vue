@@ -1,11 +1,15 @@
 <script setup>
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import ArchivateClientOrder from '@/components/modals/ArchivateClientOrder.vue';
+import CardTitle from '@/components/CardTitle.vue';
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
+const selectedCompany = computed(() => {
+  return sessionStore.getters.getSelectedCompany()
+})
 const clientOrders = ref([])
-const userId = ref(0)
 const startDate = ref(null)
 const endDate = ref(null)
 const selectedClient = ref(null)
@@ -16,27 +20,27 @@ const runningExpeditions = ref([])
 const kpiData = ref({})
 
 async function fetchKPIs() {
-    const response = await apiCaller.get(`users/${userId.value}/kpi_metrics`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/kpi_metrics`)
     kpiData.value = response
 }
 
 async function fetchClientOrders() {
-    const response = await apiCaller.get(`users/${userId.value}/future_user_client_orders`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/future_company_client_orders`)
     clientOrders.value = response
 }
 
 async function fetchClients() {
-    const response = await apiCaller.get(`users/${userId.value}/clients`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients`)
     clients.value = response
 }
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`users/${userId.value}/suppliers`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
     suppliers.value = response
 }
 
 async function fetchExpeditions() {
-    const response = await apiCaller.get(`users/${userId.value}/undelivered_expeditions`) 
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/undelivered_expeditions`) 
     runningExpeditions.value = response
 }
 
@@ -133,6 +137,15 @@ function daysLeft(date) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
 }
 
+watch(() => selectedCompany.value, // Watching the computed value's reactive property
+    async (newCompany, oldCompany) => {
+        if (newCompany && newCompany.id !== oldCompany?.id) {
+            await refreshAllData(); // Trigger refresh on change
+        }
+    },
+    { immediate: true }
+);
+
 async function refreshAllData() {
     await fetchClientOrders()
     await fetchClients()
@@ -142,20 +155,23 @@ async function refreshAllData() {
 }
 
 onMounted(async() => {
-    sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
+    await sessionStore.actions.initializeAuthState()
+    selectedCompany.value = await sessionStore.getters.getSelectedCompany();
 
-  await refreshAllData()
+    if (selectedCompany.value) {
+      await refreshAllData()
+    }
 })
 </script>
 
 <template>
-    <div class="main-card">
+    <div v-if="selectedCompany" class="main-card mb-3">
               <div class="b1-hand-container">
                 <v-card class="b1-container">
-                  <v-card-title class="d-flex">
-                    INDICATEURS D'ACTIVITÉ COURANTE
-                  </v-card-title>
+                  <CardTitle
+                        title="Indicateurs d'activité courante"
+                        icon="mdi-cube-send"
+                  />
                   <v-row class="mb-1 mt-0 justify-center">
                     <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="4" md="3">
                       <v-card
@@ -181,9 +197,10 @@ onMounted(async() => {
                   </v-row>
                 </v-card>
                 <v-card class="b1-container">
-                  <v-card-title class="d-flex">
-                    PLANNING DES COMMANDES CLIENT
-                  </v-card-title>
+                  <CardTitle
+                        title="Planning des commandes client"
+                        icon="mdi-human-dolly"
+                  />
                   <v-card v-if="clientOrders && clientOrders.length > 0" style="margin:2px 10px;">
                     <div class="d-flex justify-space-between align-center">
                       <span class="informative-text">
@@ -357,9 +374,10 @@ onMounted(async() => {
                   </div>
                 </v-card>
                 <v-card class="b1-container">
-                  <v-card-title class="d-flex">
-                    EXPEDITIONS EN COURS
-                  </v-card-title>
+                  <CardTitle
+                        title="Planning des commandes client"
+                        icon="mdi-ferry"
+                  />
                   <v-card v-if="runningExpeditions && runningExpeditions.length > 0" style="margin:2px 10px;">
                     <span class="informative-text">
                       <v-chip
@@ -488,7 +506,9 @@ onMounted(async() => {
                 </v-card>
             </div>
     </div>
-
+    <div v-else class="main-card mb-3">
+      <SpinnLoader style="z-index: -3;" :loading="!selectedCompany" text="Renseignez un compte entreprise ou créez un compte"></SpinnLoader>
+    </div>
 </template>
 
 <style lang="scss" scoped>

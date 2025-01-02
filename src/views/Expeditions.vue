@@ -1,31 +1,36 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+// Vue essentials
+import { computed, onMounted, ref, watch } from 'vue'
+
+// Services & stores
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 
+// Components & constant data
 import { expeditionsIndexHeaders } from '@/models/tableHeaders'
-import dateConverter from '@/services/dateConverter';
 import DispatchExpedition from '@/components/modals/DispatchExpedition.vue';
 import CreateExpedition from '@/components/modals/CreateExpedition.vue';
 import ExpeditionDetails from '@/components/modals/ExpeditionDetails.vue';
+import CardTitle from '@/components/CardTitle.vue';
 
-const userId = ref(null)
+// Internal component logic
+const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany()})
 const runningExpeditions = ref(null)
 const deliveredExpeditions = ref(null)
 const suppliers = ref([])
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`users/${userId.value}/suppliers`)
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
     suppliers.value = response
 }
 
 async function fetchExpeditions() {
-    const response = await apiCaller.get(`users/${userId.value}/undelivered_expeditions`) 
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/undelivered_expeditions`) 
     runningExpeditions.value = response
 }
 
 async function fetchDeliveredExpeditions() {
-    const response = await apiCaller.get(`users/${userId.value}/delivered_expeditions`) 
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/delivered_expeditions`) 
     deliveredExpeditions.value = response
 }
 
@@ -43,9 +48,13 @@ async function refreshExpeditions() {
     await fetchSuppliers()
 }
 
+watch(selectedCompany, () => {
+    refreshExpeditions()
+})
+
 onMounted(async() => {
     sessionStore.actions.initializeAuthState()
-    userId.value = sessionStore.getters.getUserID();
+    selectedCompany.value = sessionStore.getters.getSelectedCompany();
 
     await refreshExpeditions()
 })
@@ -55,16 +64,17 @@ onMounted(async() => {
 <template>
     <v-card class="main-card">
         <CreateExpedition
-            v-if="userId && suppliers && suppliers.length > 0"
+            v-if="selectedCompany && suppliers && suppliers.length > 0"
             origin="single"
-            :user-id="userId"
+            :selected-company-id="selectedCompany.id"
             :suppliers="suppliers"
             @refresh-expeditions="refreshExpeditions()"
         ></CreateExpedition>
         <v-card class="b1-container mt-3">
-            <v-card-title class="d-flex">
-                EXPEDITIONS EN COURS
-            </v-card-title>
+            <CardTitle
+                title="Expeditions en cours"
+                icon="mdi-ferry"
+            />
             <v-data-table
             v-if="runningExpeditions && runningExpeditions.length > 0"
             :headers="expeditionsIndexHeaders"
@@ -86,7 +96,8 @@ onMounted(async() => {
                 <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
                     <DispatchExpedition 
-                        :user-id="userId"
+                        v-if="selectedCompany && item"
+                        :selected-company-id="selectedCompany.id"
                         :expedition="item"
                         @refresh-expeditions="refreshExpeditions()"
                     >
@@ -107,9 +118,10 @@ onMounted(async() => {
             </div>
         </v-card>
         <v-card class="b1-container mb-3">
-            <v-card-title class="d-flex">
-                EXPEDITIONS TERMINEES
-            </v-card-title>
+            <CardTitle
+                title="Expeditions arrivées à destination"
+                icon="mdi-package-variant-closed-check"
+            />
             <v-data-table
                 v-if="deliveredExpeditions && deliveredExpeditions.length > 0"
                 no-data-text="Aucune expédition passée enregsitrée"

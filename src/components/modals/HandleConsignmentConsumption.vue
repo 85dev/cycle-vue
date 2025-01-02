@@ -4,7 +4,7 @@ import apiCaller from '@/services/apiCaller';
 import dateConverter from '@/services/dateConverter';
 
 const props = defineProps({
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -57,7 +57,7 @@ const deleteRow = (index) => {
 };
 
 async function fetchParts() {
-    const response = await apiCaller.get(`users/${props.userId}/clients/${props.clientId}/parts_by_client`);
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.clientId}/parts_by_client`);
     parts.value = response;
 }
 
@@ -74,7 +74,7 @@ async function submitConsumption() {
         }))
     }
 
-    const response = await apiCaller.post(`users/${props.userId}/consignment_stocks/${props.stock.id}/create_consignment_consumption`, payload, true)
+    const response = await apiCaller.post(`companies/${props.selectedCompanyId}/consignment_stocks/${props.stock.id}/create_consignment_consumption`, payload, true)
     emit('refreshConsignment')
 }
 
@@ -194,7 +194,7 @@ onMounted(async() => {
                             Ajouter une ligne
                         </v-btn>
                     </div>
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 
@@ -204,7 +204,7 @@ onMounted(async() => {
                             @click="isActive.value = false"
                         ></v-btn>
             
-                        <v-btn 
+                        <v-btn
                             variant="elevated"
                             color="success"
                             @click="submitConsumption(); isActive.value = false"

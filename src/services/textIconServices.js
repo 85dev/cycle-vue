@@ -55,4 +55,43 @@ function statusIconColor(status) {
     }
 }
 
-export { statusIcon, statusIconColor, statusText }
+function getStatusRequestColor(status) {
+  switch (status) {
+    case 'pending':
+      return 'warning'; // Yellow chip for pending
+    case 'accepted':
+      return 'success'; // Green chip for accepted
+    case 'rejected':
+      return 'error'; // Red chip for rejected
+    default:
+      return 'secondary'; // Default color if status is unknown
+  }
+}
+
+function getStatusRequestIcon(status) {
+  switch (status) {
+    case 'pending':
+      return 'mdi-progress-clock'; // Clock icon for pending
+    case 'accepted':
+      return 'mdi-check-circle-outline'; // Check icon for accepted
+    case 'rejected':
+      return 'mdi-close-circle-outline'; // Close icon for rejected
+    default:
+      return 'mdi-alert-circle-outline'; // Default icon for unknown status
+  }
+}
+
+function formatStatusRequest(status) {
+  switch (status) {
+    case 'pending':
+      return 'En attente'; // Translate or format status
+    case 'accepted':
+      return 'Accepté';
+    case 'rejected':
+      return 'Rejeté';
+    default:
+      return 'Inconnu'; // Default if the status is not recognized
+  }
+}
+
+export { statusIcon, statusIconColor, statusText, getStatusRequestColor, getStatusRequestIcon, formatStatusRequest }

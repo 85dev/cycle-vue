@@ -13,7 +13,7 @@ const props = defineProps({
         type: Number,
         required: true
     },
-    userId: {
+    selectedCompanyId: {
         type: Number,
         required: true
     },
@@ -26,7 +26,7 @@ const props = defineProps({
 })
 
 async function deletePart() {
-    await apiCaller.deleteData(`users/${props.userId}/parts/${props.partId}`, false);
+    await apiCaller.deleteData(`companies/${props.selectedCompanyId}/parts/${props.partId}`, false);
     emit("refreshParts");
 }
 
