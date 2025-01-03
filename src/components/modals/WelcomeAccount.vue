@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, toRefs } from 'vue';
+import { computed, onMounted, ref, toRefs } from 'vue';
 import dateConverter from '@/services/dateConverter.js';
 import { pendingRequestsHeaders } from '@/models/tableHeaders.js';
 import CreateCompany from './CreateCompany.vue';
@@ -11,6 +11,7 @@ import router from '@/router';
 import SpinnLoader from '../SpinnLoader.vue';
 
 const loading = ref(false)
+const userId = ref(0)
 
 const props = defineProps({
   showOverlay: {
@@ -35,13 +36,23 @@ function logoutUser() {
 
 const { showOverlay } = toRefs(props);
 
-const emits = defineEmits(['update:showOverlay']);
+const emit = defineEmits(['update:showOverlay', 'refreshSession']);
 
 const closeOverlay = () => {
-  emits('update:showOverlay', false);
+  emit('update:showOverlay', false);
 };
 
+function refreshParent() {
+  emit('refreshSession')
+}
+
 const hasPendingRequests = computed(() => props.pendingRequests.length > 0);
+
+onMounted(() => {
+  userId.value = sessionStore.getters.getUserID()
+
+  userId.value === 0 || userId.value === null ? router.push('/login') : null;
+})
 </script>
 
 <template>
@@ -110,7 +121,9 @@ const hasPendingRequests = computed(() => props.pendingRequests.length > 0);
         <v-container>
           <v-row>
             <v-col class="d-flex align-center justify-center">
-              <CreateCompany />
+              <CreateCompany 
+                @refresh-parent="refreshParent()"
+              />
             </v-col>
             <v-col class="d-flex align-center justify-center">
               <JoinCompany />

@@ -1,10 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
-import { useRouter } from 'vue-router'
 import SpinnLoader from '@/components/SpinnLoader.vue';
-
-const router = useRouter()
+import Popup from '@/components/Popup.vue';
 
 // Form input states
 const signUpEmail = ref('')
@@ -17,6 +15,8 @@ const showLoginPassword = ref(false)
 const showSignUpPassword = ref(false)
 const showConfirmPassword = ref(false);
 const loading = ref(false)
+
+const loginError = ref(false)
 
 const getEmailRules = () => [
   (v) => !!v || 'Email requis',
@@ -54,8 +54,7 @@ async function onSignUp(event) {
     },
   }
   try {
-    await sessionStore.actions.registerUser(data)
-    router.push('/dashboard')
+    sessionStore.actions.registerUser(data)
   } catch (error) {
     console.error(error)
   }
@@ -74,13 +73,10 @@ async function onLogin(event) {
     },
   }
   try {
-    loading.value = true;
-
-    setTimeout(async() => {
-      await sessionStore.actions.loginUser(data)
-      router.push('/dashboard')
-    }, 1500);
-
+    const response = sessionStore.actions.loginUser(data)
+    if (!response.ok) {
+      loginError.value = true
+    }
   } catch (error) {
     console.error(error)
   }
@@ -88,6 +84,12 @@ async function onLogin(event) {
 </script>
 
 <template>
+  <Popup 
+    alertText="Mauvais email ou mot de passe"
+    :snackbar="loginError"
+    alertType="error"
+    visibility-time="5000"
+  />
   <SpinnLoader :loading="loading" text="Connexion..."/>
   <div class="toggle-container">
       <!-- Sign Up Form -->

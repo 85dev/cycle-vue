@@ -5,6 +5,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import ArchivateClientOrder from '@/components/modals/ArchivateClientOrder.vue';
 import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import router from '@/router';
 
 const selectedCompany = computed(() => {
   return sessionStore.getters.getSelectedCompany()
@@ -19,6 +20,7 @@ const suppliers = ref([])
 const runningExpeditions = ref([])
 const kpiData = ref({})
 const loading = ref(false)
+const userId = ref(0)
 
 async function fetchKPIs() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/kpi_metrics`)
@@ -162,10 +164,15 @@ async function refreshAllData() {
 
 onMounted(async() => {
     await sessionStore.actions.initializeAuthState()
+    userId.value = await sessionStore.getters.getUserID();
     selectedCompany.value = await sessionStore.getters.getSelectedCompany();
 
     if (selectedCompany.value) {
       await refreshAllData()
+    }
+
+    if (!userId.value) {
+      router.push('/login')
     }
 })
 </script>

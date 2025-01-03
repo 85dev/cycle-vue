@@ -88,7 +88,7 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
 onMounted(async() => {
     await fetchData()
 
-    if (userId.value === 0) {
+    if (!userId.value) {
       router.push('/login')
     }
 })
@@ -97,13 +97,14 @@ onMounted(async() => {
 
 <template>
     <SpinnLoader :loading="loading" text="Déconnexion..."/>
-      <WelcomeAccount
-        v-if="userId !== 0 && showOverlay && pendingRequests"
-        v-model:show-overlay="showOverlay"
-        :pending-requests="pendingRequests"
-        @close="showOverlay = false"
-      />
-    
+    <WelcomeAccount
+      v-if="showOverlay && pendingRequests"
+      v-model:show-overlay="showOverlay"
+      :pending-requests="pendingRequests"
+      @refresh-session="fetchData()"
+      @close="showOverlay = false"
+    />
+  
     <v-card v-if="selectedCompany"
         class="informative-text-m" 
         id="info-company-bar">

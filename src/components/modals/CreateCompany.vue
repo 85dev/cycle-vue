@@ -11,6 +11,8 @@ import CardTitle from '../CardTitle.vue';
 // Vue essentials
 import { ref, watch, onMounted } from 'vue';
 
+const emit = defineEmits(['refreshParent'])
+
 // internal logic
 const userId = ref(0)
 const autocompletedAddresses = ref([])
@@ -58,6 +60,9 @@ async function submitCompany() {
     };
 
     const response = await apiCaller.post(`users/${userId.value}/companies`, payload, false)
+    if (response.ok) {
+        emit('refreshParent')
+    }
 }
 
 watch(() => company.value.address, (newAddress) => {

@@ -1,5 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_URL
 
+import router from '@/router';
 // Services
 import apiCaller from '@/services/apiCaller'
 
@@ -42,7 +43,7 @@ const getters = {
     return user.value.email;
   },
   getUserID() {
-    return user.value.id;
+    return user.value.id || 0;
   },
   isLoggedIn() {
     return authToken.value !== null;
@@ -93,6 +94,7 @@ const actions = {
       const data = await response.json()
       if (response.ok) {
         actions.setUserInfo(data, response.headers.get('Authorization'))
+        router.push('/dashboard')
       } else {
         throw new Error(data.message || 'Error registering user')
       }
@@ -137,20 +139,56 @@ const actions = {
   },
 
   async fetchPendingAccounts() {
-    const response = await apiCaller.get(`accounts/${user.value.id}/pending_requests`);
-    pendingRequests.value = response;
-    localStorage.setItem('pending_requests', JSON.stringify(response)); // Persist to localStorage
-
-    return response;
+    if (user.value.id !== 0) { // Check if userId is not 0
+      const response = await apiCaller.get(`accounts/${user.value.id}/pending_requests`);
+      pendingRequests.value = response;
+      localStorage.setItem('pending_requests', JSON.stringify(response)); // Persist to localStorage
+  
+      return response;
+    } else {
+      console.warn('fetchPendingAccounts: userId is 0. Skipping fetch.');
+      return []; // Return an empty array if userId is 0
+    }
   },
 
+  async loginUserWithToken(payload) {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${payload.auth_token}`, // Ensure the token is included in the Authorization header
+      },
+    };
+  
+    try {
+      const response = await fetch(`${BASE_URL}member_data`, {
+        method: 'GET',
+        headers: config.headers,
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to login with token');
+      }
+  
+      const data = await response.json();
+      actions.setUserInfoFromToken(data);
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error during login with token:', error);
+      throw error; // Re-throw the error for the caller to handle
+    }
+  },
+  
   async fetchAccessRequestAccounts() {
-    const response = await apiCaller.get(`accounts/${user.value.id}/access_requests`);
-    accessRequests.value = response;
-    localStorage.setItem('access_requests', JSON.stringify(response)); // Persist to localStorage
-
-    return response;
-},
+    if (user.value.id !== 0) { // Check if userId is not 0
+      const response = await apiCaller.get(`accounts/${user.value.id}/access_requests`);
+      accessRequests.value = response;
+      localStorage.setItem('access_requests', JSON.stringify(response)); // Persist to localStorage
+  
+      return response;
+    } else {
+      console.warn('fetchAccessRequestAccounts: userId is 0. Skipping fetch.');
+      return []; // Return an empty array if userId is 0
+    }
+  },
 
   async loginUser(payload) {
     try {
@@ -162,9 +200,11 @@ const actions = {
         body: JSON.stringify(payload),
       })
       const data = await response.json()
-      actions.setUserInfo(data, response.headers.get('Authorization'))
-
-      await actions.fetchUserCompanies()
+      if (response.ok) {
+        actions.setUserInfo(data, response.headers.get('Authorization'))
+        router.push('/dashboard')
+        await actions.fetchUserCompanies()
+      }
     } catch (error) {
       console.error('Error:', error)
       throw error
