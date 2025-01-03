@@ -1,64 +1,70 @@
 <script setup>
-// Vue built-in functions
-import { toRefs, toRef } from 'vue'
+import { ref, watch } from 'vue';
 
-// Function to send to the parent components
-const emit = defineEmits(['updateSnackbar'])
-let timeout = null;
+// Emits for parent communication
+const emit = defineEmits(['updateSnackbar']);
 
+// Props for configuration
 const props = defineProps({
   alertText: String,
   snackbar: Boolean,
   alertType: String,
-  visibilityTime: Number
-})
+  visibilityTime: Number,
+});
 
-// Declare dynamic variables from props
-const snackbar = toRef(props, 'snackbar')
-const { alertText } = toRefs(props);
+// Local state
+const snackbarState = ref(props.snackbar);
 
-function handleIcon(alert) {
-  switch (alert) {
-    case 'error':
-      return 'mdi-error';
-    case 'warning':
-      return 'mdi-warning';
-    case 'success':
-      return 'mdi-check-circle';
-    default:
-      console.log('issue for :' + alert);// Default case
+// Watch for prop changes to sync the state
+watch(
+  () => props.snackbar,
+  (newVal) => {
+    snackbarState.value = newVal;
+    if (newVal) startAutoCloseTimer();
+  }
+);
+
+// Watch for local state changes to emit updates
+watch(snackbarState, (newVal) => {
+  emit('updateSnackbar', newVal);
+});
+
+// Handle auto-closing
+let autoCloseTimeout = null;
+function startAutoCloseTimer() {
+  if (autoCloseTimeout) clearTimeout(autoCloseTimeout);
+
+  if (props.visibilityTime > 0) {
+    autoCloseTimeout = setTimeout(() => {
+      snackbarState.value = false;
+    }, props.visibilityTime);
   }
 }
 
-// Handle visibility time of the snackbar
-function visibility() {
-
-  timeout !== null ? clearTimeout(timeout) : undefined;
-
-  timeout = setTimeout(() => {
-    emit('updateSnackbar', !snackbar.value)
-    // By default, snackbar apparition lasts 5 seconds
-  }, props.visibilityTime ? props.visibilityTime : 5000)
+// Handle manual close
+function closeSnackbar() {
+  snackbarState.value = false;
 }
 </script>
 
-<template class="text-center">
-    <v-snackbar
-      v-model="snackbar"
-      :style="visibility()"
-      :color="props.alertType"
-      multi-line
-    >
-      {{ alertText }} 
-      <v-icon>{{ handleIcon(props.alertType) }}</v-icon>
-      <template v-slot:actions>
-        <v-btn
-          color="white"
-          icon
-          @click="$emit('updateSnackbar', !snackbar)"
-        >
-          <v-icon>mdi-close-thick</v-icon>
-        </v-btn>
-      </template>
-    </v-snackbar>
-  </template>
+<template>
+  <v-snackbar
+    v-model="snackbarState"
+    elevation="24"
+    :color="props.alertType"
+    multi-line
+  >
+    <div class="informative-text-m" style="color: white">{{ alertText }}</div>
+
+    <template v-slot:actions>
+      <v-btn
+        color="white"
+        icon
+        variant="text"
+        @click="closeSnackbar"
+      >
+        <v-icon>mdi-close-thick</v-icon>
+      </v-btn>
+    </template>
+  </v-snackbar>
+</template>

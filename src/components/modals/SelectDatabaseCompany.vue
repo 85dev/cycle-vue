@@ -50,14 +50,17 @@ onMounted(() => {
         v-bind="activatorProps"
         icon
         variant="elevated"
-        color="white"
+        color="blue"
         class="top-right-btn mr-2"
       >
-        <Microloader :loading="loading" color="white"></Microloader>
-        <div v-if="!loading">
-          <v-icon>mdi-account-sync-outline</v-icon>
-          Changer de compte entreprise
+        <div style="padding-top: 4.6vh;">
+          <Microloader :loading="loading" color="white"></Microloader>
+          <div v-if="!loading">
+            <v-icon>mdi-account-sync-outline</v-icon>
+            Changer de compte entreprise
+          </div>
         </div>
+        
       </v-card>
       <v-list v-else variant="elevated" density="compact" nav style="width: 100%; transition: all 0.2s; margin-top: -0.80em;">
           <v-list-item color="blue" v-bind="activatorProps" style="display: flex;" nav>
@@ -118,10 +121,10 @@ onMounted(() => {
 
 .top-right-btn {
   position: fixed;
-  bottom: 0vh;
-  right: -0.45vw;
+  top: 0vh;
+  right: -0.7vw;
   font-size: 0.9em;
-  border-radius: 10px 0 0 0;
+  border-radius: 0 0 0 10px;
   padding: 8px 12px;
   z-index: 1;
 }

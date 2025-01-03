@@ -15,8 +15,16 @@ const showLoginPassword = ref(false)
 const showSignUpPassword = ref(false)
 const showConfirmPassword = ref(false);
 const loading = ref(false)
+const snackbarVisible = ref(false);
+const snackbarMessage = ref('');
+const snackbarType = ref('');
 
-const loginError = ref(false)
+// Function to trigger the snackbar
+function triggerSnackbar(message, type) {
+  snackbarMessage.value = message;
+  snackbarType.value = type;
+  snackbarVisible.value = true;
+}
 
 const getEmailRules = () => [
   (v) => !!v || 'Email requis',
@@ -73,23 +81,27 @@ async function onLogin(event) {
     },
   }
   try {
-    const response = sessionStore.actions.loginUser(data)
-    if (!response.ok) {
-      loginError.value = true
+    const response = await sessionStore.actions.loginUser(data);
+
+    if (response !== undefined) {
+      triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger success snackbar
+    } else {
+      triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger error snackbar
     }
   } catch (error) {
-    console.error(error)
+    console.error('Login failed:', error);
+    triggerSnackbar('An unexpected error occurred.', 'error'); // Handle unexpected errors
   }
 }
 </script>
 
 <template>
-  <Popup 
-    alertText="Mauvais email ou mot de passe"
-    :snackbar="loginError"
-    alertType="error"
-    visibility-time="5000"
-  />
+    <Popup
+      :alertText="snackbarMessage"
+      :snackbar="snackbarVisible"
+      :alertType="snackbarType"
+      @updateSnackbar="(value) => (snackbarVisible = value)"
+    />
   <SpinnLoader :loading="loading" text="Connexion..."/>
   <div class="toggle-container">
       <!-- Sign Up Form -->
@@ -176,10 +188,6 @@ async function onLogin(event) {
 
 <style scoped lang="scss">
 @import url(../assets/main.scss);
-
-* {
-  transition: all 0.2s;
-}
 
 .toggle-container {
   position: absolute;

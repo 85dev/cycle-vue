@@ -169,7 +169,17 @@ onMounted(async() => {
                   <Microloader class="mt-4 mb-4" :loading="loadingData"/>
                 </div>
               </div>
+          </div>
 
+          <div v-if="!rail && (accessRequests || pendingRequests)">
+            <v-icon class="informative-text">mdi-account-reactivate-outline</v-icon>
+            <span class="informative-text" style="margin-left: -0.4em;">Gestion des accès</span>
+            <div class="mt-2" v-if="accessRequests">
+              <AccessRequests :access-requests="accessRequests" />
+              </div>
+              <div v-if="pendingRequests">
+                <PendingRequests :pending-requests="pendingRequests"/>
+              </div>
           </div>
 
           <div v-if="!rail" class="mt-0">
@@ -212,12 +222,6 @@ onMounted(async() => {
               @updateLoading="updateLoading($event)"
               origin="menu" 
             />
-            <div v-if="accessRequests">
-              <AccessRequests :access-requests="accessRequests" />
-            </div>
-            <div v-if="pendingRequests">
-              <PendingRequests :pending-requests="pendingRequests"/>
-            </div>
             <div v-if="!rail" class="mt-1">
               <v-icon class="informative-text">mdi-database-plus-outline</v-icon>
               <span class="informative-text" style="margin-left: -0.4em;">Ajout de données</span>
@@ -239,8 +243,8 @@ onMounted(async() => {
           <span v-if="!rail">
             <v-icon class="informative-text">mdi-account-outline</v-icon>
             <span class="informative-text" style="margin-left: -0.4em;">Session utilisateur</span>
-            <div class="informative-text">
-              <v-chip variant="elevated" color="blue">
+            <div class="informative-text" style="margin-left: 0em; padding-left: 0em;">
+              <v-chip class="ml-2" variant="elevated" color="blue">
                 <v-icon class="mr-1">mdi-account-outline</v-icon>
                 {{ userEmail }}
               </v-chip>
@@ -262,13 +266,13 @@ onMounted(async() => {
             <v-divider class="mb-3 mr-1 ml-1"></v-divider>
             <div class="d-flex align-center flex-column">
             <!-- Access Requests -->
-            <v-chip :variant="(accessRequests && accessRequests.length === 0) ? 'outlined' : 'elevated'" @click="rail = true" :color="(accessRequests && accessRequests.length === 0) ? 'secondary' : 'blue'">
+            <v-chip :variant="(accessRequests && accessRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(accessRequests && accessRequests.length === 0) ? 0 : 4" @click="rail = true" :color="(accessRequests && accessRequests.length === 0) ? 'secondary' : 'warning'">
               <v-icon>mdi-account-multiple-check-outline</v-icon>
               <span v-if="accessRequests && accessRequests.length > 0"><strong>{{ accessRequests.length }}</strong></span>
               <span v-else>{{ accessRequests.length }}</span>
             </v-chip>
             <!-- Pending Requests -->
-            <v-chip class="mt-2" @click="rail = true" :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'warning'">
+            <v-chip class="mt-2" @click="rail = true" :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(pendingRequests && pendingRequests.length === 0) ? 0 : 4" :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'warning'">
               <v-icon>mdi-account-clock-outline</v-icon>
               <span v-if="pendingRequests && pendingRequests.length > 0"><strong>{{ pendingRequests.length }}</strong></span>
               <span v-else>{{ pendingRequests.length }}</span>
@@ -310,7 +314,7 @@ onMounted(async() => {
   font-size: 0.9em; 
   top: 0; 
   right: 0; 
-  z-index: 1; 
+  z-index: 2; 
   padding: 8px 12px;
   border-radius: 0 0 0 10px; 
 }

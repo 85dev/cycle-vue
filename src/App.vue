@@ -6,13 +6,15 @@ import SessionBar from './components/SessionBar.vue';
 import { onMounted, computed } from 'vue';
 import router from './router';
 
-const userId = computed(() => { return sessionStore.getters.getUserID()})
+const userId = computed(() => { return sessionStore.getters.getUserID() })
+const authToken = computed(() => { return sessionStore.getters.getAuthToken() })
 
 onMounted(() => {
   userId.value = sessionStore.getters.getUserID()
+  authToken.value = sessionStore.getters.getAuthToken()
 
   if (userId.value) {
-    sessionStore.actions.loginUserWithToken()
+    sessionStore.actions.loginUserWithToken(authToken.value)
   } else {
     sessionStore.actions.resetUserInfo()
     router.push('/login')

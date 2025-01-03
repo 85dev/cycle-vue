@@ -9,24 +9,12 @@ import { ref, watch } from 'vue'
 
 // Core data
 const userAccount = ref(null)
-const user = ref(
-  localStorage.getItem('user') 
-    ? JSON.parse(localStorage.getItem('user')) 
-    : { id: null, username: null, email: null }
-);
+const user = ref(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : { id: null, username: null, email: null });
 const authToken = ref(localStorage.getItem('auth_token') || null);
 const accessToken = ref(localStorage.getItem('access_token') || null);
 const refreshToken = ref(localStorage.getItem('refresh_token') || null);
-const pendingRequests = ref(
-  localStorage.getItem('pending_requests') 
-    ? JSON.parse(localStorage.getItem('pending_requests')) 
-    : []
-);
-const accessRequests = ref(
-  localStorage.getItem('access_requests') 
-    ? JSON.parse(localStorage.getItem('access_requests')) 
-    : []
-);
+const pendingRequests = ref(localStorage.getItem('pending_requests') ? JSON.parse(localStorage.getItem('pending_requests')) : []);
+const accessRequests = ref(localStorage.getItem('access_requests') ? JSON.parse(localStorage.getItem('access_requests')) : []);
 const companies = ref([]);
 const selectedCompany = ref(localStorage.getItem('selected_company') ? JSON.parse(localStorage.getItem('selected_company')) : null);
 const isOwner = ref(localStorage.getItem('is_owner') === 'true'); // Load from localStorage
@@ -43,7 +31,7 @@ const getters = {
     return user.value.email;
   },
   getUserID() {
-    return user.value.id || 0;
+    return user.value?.id || 0;
   },
   isLoggedIn() {
     return authToken.value !== null;
@@ -95,6 +83,7 @@ const actions = {
       if (response.ok) {
         actions.setUserInfo(data, response.headers.get('Authorization'))
         router.push('/dashboard')
+        return response
       } else {
         throw new Error(data.message || 'Error registering user')
       }
@@ -150,35 +139,9 @@ const actions = {
       return []; // Return an empty array if userId is 0
     }
   },
-
-  async loginUserWithToken(payload) {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${payload.auth_token}`, // Ensure the token is included in the Authorization header
-      },
-    };
-  
-    try {
-      const response = await fetch(`${BASE_URL}member_data`, {
-        method: 'GET',
-        headers: config.headers,
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to login with token');
-      }
-  
-      const data = await response.json();
-      actions.setUserInfoFromToken(data);
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Error during login with token:', error);
-      throw error; // Re-throw the error for the caller to handle
-    }
-  },
   
   async fetchAccessRequestAccounts() {
-    if (user.value.id !== 0) { // Check if userId is not 0
+    if (user.value?.id) {
       const response = await apiCaller.get(`accounts/${user.value.id}/access_requests`);
       accessRequests.value = response;
       localStorage.setItem('access_requests', JSON.stringify(response)); // Persist to localStorage
@@ -202,8 +165,11 @@ const actions = {
       const data = await response.json()
       if (response.ok) {
         actions.setUserInfo(data, response.headers.get('Authorization'))
-        router.push('/dashboard')
         await actions.fetchUserCompanies()
+        router.push('/dashboard')
+        return { success: true, message: 'Login successful', data };
+      } else {
+        return { success: false, message: data.message || 'Login failed' };
       }
     } catch (error) {
       console.error('Error:', error)
@@ -212,22 +178,24 @@ const actions = {
   },
 
   async loginUserWithToken(token) {
-    try {
-      const response = await fetch(`${BASE_URL}member_data`, {
-        method: 'GET',
-        headers: {
-          Authorization: token,
-        },
-      })
-      const data = await response.json()
-      if (response.ok) {
-        actions.setUserInfoFromToken(data)
-      } else {
-        throw new Error(data.message || 'Error logging in with token')
+    if (!accessToken.value && !refreshToken.value) {
+      try {
+        const response = await fetch(`${BASE_URL}member_data`, {
+          method: 'GET',
+          headers: {
+            Authorization: token,
+          },
+        })
+        const data = await response.json()
+        if (response.ok) {
+          actions.setUserInfoFromToken(data)
+        } else {
+          throw new Error(data.message || 'Error logging in with token')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        throw error
       }
-    } catch (error) {
-      console.error('Error:', error)
-      throw error
     }
   },
 
@@ -253,7 +221,6 @@ const actions = {
       if (userAccount.value.status === 'accepted' || userAccount.value.is_owner) {
         selectedCompany.value = company; // Update reactive state
         isOwner.value = userAccount.value.is_owner; // Update ownership status
-  
         localStorage.setItem('selected_company', JSON.stringify(company)); // Persist in localStorage
       } else {
         selectedCompany.value = null; 
@@ -267,41 +234,30 @@ const actions = {
 
   async setPreselectedCompany(company) {
     selectedCompany.value = company;
-
     localStorage.setItem('selected_company', JSON.stringify(company));
 
-    // Re-fetch and reinitialize the session data for the selected company
-    await actions.initializeAuthState();
-
-    // Re-trigger the necessary data fetching functions
     await actions.fetchPendingAccounts();
     await actions.fetchAccessRequestAccounts();
   },
 
   // Mutations (actions that directly modify state)
   setUserInfo(data, token) {
-    // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify(data.user));  // Store the user data, not resource_owner
-    localStorage.setItem('auth_token', token);  // Persist the auth token
-    
-    // Update reactive state
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('auth_token', token);
+
     user.value = data.user;
     authToken.value = token;
   },
   
 
   setUserInfoFromToken(data) {
-    // Store token and refresh token in localStorage
     localStorage.setItem('resource_owner', JSON.stringify(data.resource_owner));
     localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('auth_token', data.token);  // Persist the access token
+    localStorage.setItem('auth_token', data.token);
   
-    // Update reactive state
     accessToken.value = data.token;
     refreshToken.value = data.refresh_token;
     user.value = data.resource_owner;
-
-    console.log(localStorage);
   },
 
   resetUserInfo() {

@@ -18,7 +18,7 @@ const props = defineProps({
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-            <v-chip :variant="(accessRequests && accessRequests.length === 0) ? 'outlined' : 'elevated'" v-bind="activatorProps" class="ml-2 mb-2" :color="(accessRequests && accessRequests.length === 0) ? 'secondary' : 'blue' ">
+            <v-chip :variant="(accessRequests && accessRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(accessRequests && accessRequests.length === 0) ? 0 : 4" v-bind="activatorProps" class="ml-2 mb-2" :color="(accessRequests && accessRequests.length === 0) ? 'secondary' : 'warning' ">
                 <v-icon class="mr-2">mdi-account-multiple-check-outline</v-icon>
                 {{ accessRequests.length }} demande(s) à valider
             </v-chip>
