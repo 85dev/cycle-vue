@@ -1,10 +1,16 @@
 <script setup>
-import { computed, toRefs } from 'vue';
+import { computed, ref, toRefs } from 'vue';
 import dateConverter from '@/services/dateConverter.js';
 import { pendingRequestsHeaders } from '@/models/tableHeaders.js';
 import CreateCompany from './CreateCompany.vue';
 import JoinCompany from './JoinCompany.vue';
 import CardTitle from '../CardTitle.vue';
+
+import sessionStore from '@/stores/sessionStore';
+import router from '@/router';
+import SpinnLoader from '../SpinnLoader.vue';
+
+const loading = ref(false)
 
 const props = defineProps({
   showOverlay: {
@@ -16,6 +22,16 @@ const props = defineProps({
     default: () => [],
   },
 });
+
+function logoutUser() {
+  loading.value = true;
+
+  setTimeout(() => {
+    sessionStore.actions.resetUserInfo()
+    loading.value = false;
+    router.push('/login')
+  }, 300);
+}
 
 const { showOverlay } = toRefs(props);
 
@@ -29,6 +45,7 @@ const hasPendingRequests = computed(() => props.pendingRequests.length > 0);
 </script>
 
 <template>
+  <SpinnLoader :loading="loading" text="Déconnexion..." />
   <v-overlay
     v-model="showOverlay"
     persistent
@@ -70,15 +87,15 @@ const hasPendingRequests = computed(() => props.pendingRequests.length > 0);
                 {{ item.company_name }}
               </v-chip>
             </template>
-            <template v-slot:item.is_owner="{ item }">
+            <template v-slot:item.requested_owner_rights="{ item }">
               <v-chip
                 :variant="'elevated'"
-                :color="item.is_owner ? 'warning' : 'blue'"
+                :color="item.requested_owner_rights? 'warning' : 'blue'"
               >
                 <v-icon class="mr-2">
-                  {{ item.is_owner ? 'mdi-account-key-outline' : 'mdi-account-child-outline' }}
+                  {{ item.requested_owner_rights? 'mdi-account-key-outline' : 'mdi-account-child-outline' }}
                 </v-icon>
-                {{ item.is_owner ? 'Propriétaire' : 'Non-propriétaire' }}
+                {{ item.requested_owner_rights? 'Propriétaire' : 'Non-propriétaire' }}
               </v-chip>
             </template>
             <template v-slot:item.created_at="{ item }">
@@ -100,6 +117,10 @@ const hasPendingRequests = computed(() => props.pendingRequests.length > 0);
             </v-col>
           </v-row>
         </v-container>
+        <v-chip @click="logoutUser" variant="elevated" color="white" class="mb-2 mt-4">
+          <v-icon class="mr-1">mdi-logout</v-icon>
+            Déconnexion
+        </v-chip>
       </div>
     </v-card>
   </v-overlay>

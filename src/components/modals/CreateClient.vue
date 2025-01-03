@@ -41,24 +41,6 @@ const allowSubmit = computed(() => {
   return hasStocks && hasValidContact && hasBasicInfo;
 });
 
-const getSubmitTooltip = computed(() => {
-  const missing = [];
-  
-  if (!name.value || !address.value) {
-    missing.push("informations de la société");
-  }
-  
-  if (!contacts.value.some(c => c.email && c.first_name && c.last_name && c.role)) {
-    missing.push("au moins un contact");
-  }
-  
-  if (!(consignmentStocks.value.length > 0 || standardStocks.value.length > 0)) {
-    missing.push("au moins un stock");
-  }
-  
-  return `Veuillez ajouter : ${missing.join(', ')}`;
-});
-
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -202,7 +184,10 @@ onMounted(async() => {
             <v-form class="form-container">
             <!-- Client Information Section -->
             <v-card style="margin: 0.4em">
-              <v-card-title>INFORMATIONS DE LA SOCIÉTÉ</v-card-title>
+            <CardTitle
+              title="Informations de la société"
+              icon="mdi-card-account-details-outline"
+            />
               <v-card-text>
                 <v-row 
                     style="margin-top: -1em;"
@@ -258,7 +243,10 @@ onMounted(async() => {
             <!-- Contacts Section -->
             <v-card flat outlined>
               <v-card style="margin: 0.4em;">
-                <v-card-title>CONTACTS PROFESSIONNELS</v-card-title>
+                <CardTitle
+                  title="Contacts"
+                  icon="mdi-account-multiple-outline"
+                />
                 <div style="margin-bottom: 0.4em;">
                       <span class="informative-text" style="display: flex; align-items: center;">
                           <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
@@ -323,7 +311,7 @@ onMounted(async() => {
                 <div class="aligner">
                   <v-btn @click="addContact" variant="elevated">
                     <v-icon start>mdi-plus-circle-outline</v-icon>
-                    Ajouter contact
+                    Ajouter
                   </v-btn>
                 </div>
               </v-card>
@@ -341,9 +329,10 @@ onMounted(async() => {
               <!-- Left Column: Consignment Stocks -->
               <v-col cols="12" md="6" class="pr-2">
                 <v-card outlined style="margin: 0.4em;">
-                  <v-card-title>
-                    AJOUT DES LIEUX DE STOCKAGE CONSIGNATION
-                  </v-card-title>
+                  <CardTitle
+                    title="Lieux de stockage consignation"
+                    icon="mdi-package-variant-closed-check"
+                  />
                   <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                   
                   <v-row 
@@ -394,7 +383,7 @@ onMounted(async() => {
                   <div class="aligner">
                     <v-btn @click="addConsignmentStock" variant="elevated">
                       <v-icon start>mdi-plus-circle-outline</v-icon>
-                      Ajouter position
+                      Ajouter
                     </v-btn>
                   </div>
                 </v-card>
@@ -403,7 +392,10 @@ onMounted(async() => {
               <!-- Right Column: Standard Stocks -->
               <v-col cols="12" md="6" class="pl-2">
                 <v-card outlined style="margin: 0.4em;">
-                  <v-card-title>AJOUT DES LIEUX DE STOCKAGE STANDARD</v-card-title>
+                  <CardTitle
+                    title="Lieux de stockage standard"
+                    icon="mdi-dolly"
+                  />
                   <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                   
                   <v-row 
@@ -454,18 +446,25 @@ onMounted(async() => {
                   <div class="aligner">
                     <v-btn @click="addStandardStock" variant="elevated">
                       <v-icon start>mdi-plus-circle-outline</v-icon>
-                      Ajouter position
+                      Ajouter
                     </v-btn>
                   </div>
                 </v-card>
               </v-col>
             </v-row>
           </v-form>
+
+          <div style="margin-bottom: 0.4em;">
+            <span class="informative-text" style="display: flex; align-items: center;">
+              <v-icon color="warning" style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
+              Au moins un lieu de stockage (consignation ou standard) doit être enregistré pour valider la fiche client.
+            </span>
+          </div>
   
             <v-card-actions style="margin-top: 1em;">
               <v-spacer></v-spacer>
               <v-btn color="red" text @click="isActive.value = false">Fermer</v-btn>
-                <v-btn variant="elevated" color="success" @click="submitClient(); isActive.value = false">
+                <v-btn variant="elevated" :disabled="!allowSubmit" color="success" @click="submitClient(); isActive.value = false">
                   Ajouter
                 </v-btn>
             </v-card-actions>

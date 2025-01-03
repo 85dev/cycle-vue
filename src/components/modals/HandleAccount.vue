@@ -8,11 +8,11 @@ import sessionStore from '@/stores/sessionStore';
 import { handleAccountHeaders } from '@/models/tableHeaders';
 import { getStatusRequestColor, getStatusRequestIcon, formatStatusRequest } from '@/services/textIconServices';
 import dateConverter from '@/services/dateConverter'
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import CardTitle from '../CardTitle.vue';
 
 const accounts = ref([])
-const selectedCompany = ref(null)
+const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany()})
 const isOwner = ref(false)
 const userEmail = ref(null)
 
@@ -20,6 +20,10 @@ async function fetchUsers() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/users`)
     accounts.value = response
 }
+
+watch(selectedCompany, async () => {
+    await fetchUsers()
+})
 
 onMounted(async() => {
     isOwner.value = sessionStore.getters.isOwner()

@@ -18,6 +18,7 @@ const clients = ref([])
 const suppliers = ref([])
 const runningExpeditions = ref([])
 const kpiData = ref({})
+const loading = ref(false)
 
 async function fetchKPIs() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/kpi_metrics`)
@@ -147,11 +148,16 @@ watch(() => selectedCompany.value, // Watching the computed value's reactive pro
 );
 
 async function refreshAllData() {
+  loading.value = true;
+  
+  setTimeout(async() => {
     await fetchClientOrders()
     await fetchClients()
     await fetchExpeditions()
     await fetchSuppliers()
     await fetchKPIs()
+    loading.value = false;
+  }, 300);
 }
 
 onMounted(async() => {
@@ -165,8 +171,9 @@ onMounted(async() => {
 </script>
 
 <template>
+    <SpinnLoader :loading="loading" />
     <div v-if="selectedCompany" class="main-card mb-3">
-              <div class="b1-hand-container">
+              <div class="b1-hand-container mt-1 mb-1">
                 <v-card class="b1-container">
                   <CardTitle
                         title="Indicateurs d'activité courante"
@@ -505,9 +512,6 @@ onMounted(async() => {
                   </div>
                 </v-card>
             </div>
-    </div>
-    <div v-else class="main-card mb-3">
-      <SpinnLoader style="z-index: -3;" :loading="!selectedCompany" text="Renseignez un compte entreprise ou créez un compte"></SpinnLoader>
     </div>
 </template>
 

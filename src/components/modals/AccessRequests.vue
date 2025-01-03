@@ -18,7 +18,7 @@ const props = defineProps({
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-            <v-chip variant="elevated" v-bind="activatorProps" class="ml-2 mb-2" color="blue">
+            <v-chip :variant="(accessRequests && accessRequests.length === 0) ? 'outlined' : 'elevated'" v-bind="activatorProps" class="ml-2 mb-2" :color="(accessRequests && accessRequests.length === 0) ? 'secondary' : 'blue' ">
                 <v-icon class="mr-2">mdi-account-multiple-check-outline</v-icon>
                 {{ accessRequests.length }} demande(s) à valider
             </v-chip>
@@ -51,13 +51,13 @@ const props = defineProps({
                                 {{ item.requester_email }}
                             </v-chip> 
                         </template>
-                        <template v-slot:item.is_owner="{ item }">
+                        <template v-slot:item.requested_owner_rights="{ item }">
                             <v-chip
                                 :variant="'elevated'"
-                                :color="item.is_owner ? 'warning' : 'blue'"
+                                :color="item.requested_owner_rights ? 'warning' : 'blue'"
                             >
-                                <v-icon class="mr-2">{{ item.is_owner ? 'mdi-account-key-outline' : 'mdi-account-child-outline' }}</v-icon>
-                                {{ item.is_owner ? 'Propriétaire' : 'Non-propriétaire' }}
+                                <v-icon class="mr-2">{{ item.requested_owner_rights ? 'mdi-account-key-outline' : 'mdi-account-child-outline' }}</v-icon>
+                                {{ item.requested_owner_rights ? 'Propriétaire' : 'Non-propriétaire' }}
                             </v-chip>
                         </template>
                         <template v-slot:item.request_status="{ item }">

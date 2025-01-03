@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
 import { useRouter } from 'vue-router'
 import SpinnLoader from '@/components/SpinnLoader.vue';
@@ -9,12 +9,40 @@ const router = useRouter()
 // Form input states
 const signUpEmail = ref('')
 const signUpPassword = ref('')
+const confirmPassword = ref('');
 const loginEmail = ref('')
 const loginPassword = ref('')
 const toggleMenu = ref(false)
 const showLoginPassword = ref(false)
 const showSignUpPassword = ref(false)
+const showConfirmPassword = ref(false);
 const loading = ref(false)
+
+const getEmailRules = () => [
+  (v) => !!v || 'Email requis',
+  (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email invalide'
+];
+
+const getConfirmPasswordRules = () => [
+  (v) => !!v || 'Confirmation requise',
+  (v) => v === signUpPassword.value || 'Les mots de passe doivent correspondre',
+];
+
+const getPasswordRules = () => [
+  (v) => !!v || 'Mot de passe requis',
+  (v) => v.length >= 10 || 'Le mot de passe doit contenir au moins 10 caractères',
+  (v) => /[!@#$%^&*]/.test(v) || 'Le mot de passe doit contenir au moins un caractère spécial (!@#$%^&*)',
+];
+
+const isSignUpValid = computed(() => {
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpEmail.value);
+  const isPasswordValid = 
+    signUpPassword.value.length >= 10 &&
+    /[!@#$%^&*]/.test(signUpPassword.value);
+  const isConfirmPasswordValid = signUpPassword.value === confirmPassword.value;
+
+  return isEmailValid && isPasswordValid && isConfirmPasswordValid;
+});
 
 // Methods for signup, login, and reset
 async function onSignUp(event) {
@@ -72,6 +100,7 @@ async function onLogin(event) {
               variant="underlined"
               class="field-input"
               v-model="signUpEmail"
+              :rules="getEmailRules()"
               label="Email"
               type="email"
               required
@@ -79,6 +108,7 @@ async function onLogin(event) {
             <v-text-field
               variant="underlined"
               class="field-input"
+              :rules="getPasswordRules()"
               v-model="signUpPassword"
               label="Mot de passe"
               :append-icon="showSignUpPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -86,10 +116,21 @@ async function onLogin(event) {
               :type="showSignUpPassword ? 'text' : 'password'"
               required
             ></v-text-field>
-            <v-chip variant="elevated" color="blue" type="submit" @click="onSignUp" style="margin-bottom: 1em; font-size: 1em;">
+            <v-text-field
+              variant="underlined"
+              class="field-input"
+              v-model="confirmPassword"
+              :rules="getConfirmPasswordRules()"
+              label="Confirmer le mot de passe"
+              :append-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="() => (showConfirmPassword = !showConfirmPassword)"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              required
+          ></v-text-field>
+            <v-btn variant="elevated" :disabled="!isSignUpValid" type="submit" @click="onSignUp" style="margin-bottom: 1em;">
               <v-icon class="mr-1">mdi-account-plus-outline</v-icon>
               S'inscrire
-            </v-chip>
+            </v-btn>
           </v-form>
         </div>
 
@@ -115,10 +156,10 @@ async function onLogin(event) {
               :type="showLoginPassword ? 'text' : 'password'"
               required
             ></v-text-field>
-            <v-chip variant="elevated" color="blue" @click="onLogin" style="margin-bottom: 1em; font-size: 1em;">
+            <v-btn variant="elevated" :disabled="loginPassword === '' || loginEmail === ''" @click="onLogin" style="margin-bottom: 1em;">
               <v-icon class="mr-1">mdi-account-arrow-right-outline</v-icon>
               Se connecter
-            </v-chip>
+            </v-btn>
           </v-form>
         </div>
       </v-card>
@@ -133,6 +174,10 @@ async function onLogin(event) {
 
 <style scoped lang="scss">
 @import url(../assets/main.scss);
+
+* {
+  transition: all 0.2s;
+}
 
 .toggle-container {
   position: absolute;

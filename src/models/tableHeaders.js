@@ -119,7 +119,7 @@ const searchCompanyHeaders = [
 const accessRequestsHeaders = [
   { title: 'Société', value: 'company_name' },
   { title: 'Demandé par', value: 'requester_email' },
-  { title: 'Rôle demandé', value: 'is_owner' },
+  { title: 'Rôle demandé', value: 'requested_owner_rights' },
   { title: 'Statut', value: 'request_status' },
   { title: 'Actions', value: 'actions', sortable: false }
 ]
@@ -134,7 +134,7 @@ const handleAccountHeaders = [
 
 const pendingRequestsHeaders = [
   { title: 'Société', value: 'company_name' },
-  { title: 'Rôle', value: 'is_owner' },
+  { title: 'Rôle', value: 'requested_owner_rights' },
   { title: 'Demandé le', value: 'created_at' }
 ]
 

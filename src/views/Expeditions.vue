@@ -12,12 +12,14 @@ import DispatchExpedition from '@/components/modals/DispatchExpedition.vue';
 import CreateExpedition from '@/components/modals/CreateExpedition.vue';
 import ExpeditionDetails from '@/components/modals/ExpeditionDetails.vue';
 import CardTitle from '@/components/CardTitle.vue';
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
 // Internal component logic
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany()})
 const runningExpeditions = ref(null)
 const deliveredExpeditions = ref(null)
 const suppliers = ref([])
+const loading = ref(false)
 
 async function fetchSuppliers() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
@@ -43,9 +45,14 @@ function expeditionStatus(status) {
 }
 
 async function refreshExpeditions() {
-    await fetchExpeditions()
-    await fetchDeliveredExpeditions()
-    await fetchSuppliers()
+    loading.value = true;
+
+    setTimeout(async() => {
+        await fetchExpeditions()
+        await fetchDeliveredExpeditions()
+        await fetchSuppliers()
+        loading.value = false;
+    }, 300);
 }
 
 watch(selectedCompany, () => {
@@ -62,6 +69,7 @@ onMounted(async() => {
 </script>
 
 <template>
+    <SpinnLoader :loading="loading" />
     <v-card class="main-card">
         <CreateExpedition
             v-if="selectedCompany && suppliers && suppliers.length > 0"

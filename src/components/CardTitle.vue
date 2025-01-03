@@ -7,6 +7,9 @@ const props = defineProps({
     icon: {
         type: String,
         required: true
+    },
+    color: {
+        type: String,
     }
 })
 </script>
@@ -14,7 +17,7 @@ const props = defineProps({
 <template>
    <v-card-title class="card-title">
     <span class="informative-text">
-        <v-chip variant="elevated" color="white">
+        <v-chip variant="elevated" :color="props.color ? props.color: 'white'">
             <v-icon class="mr-2">{{ props.icon }}</v-icon>
             {{ props.title }}
         </v-chip>

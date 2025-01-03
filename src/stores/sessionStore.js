@@ -16,11 +16,19 @@ const user = ref(
 const authToken = ref(localStorage.getItem('auth_token') || null);
 const accessToken = ref(localStorage.getItem('access_token') || null);
 const refreshToken = ref(localStorage.getItem('refresh_token') || null);
-const pendingRequests = ref([]);
-const accessRequests = ref([]);
+const pendingRequests = ref(
+  localStorage.getItem('pending_requests') 
+    ? JSON.parse(localStorage.getItem('pending_requests')) 
+    : []
+);
+const accessRequests = ref(
+  localStorage.getItem('access_requests') 
+    ? JSON.parse(localStorage.getItem('access_requests')) 
+    : []
+);
 const companies = ref([]);
 const selectedCompany = ref(localStorage.getItem('selected_company') ? JSON.parse(localStorage.getItem('selected_company')) : null);
-const isOwner = ref(false);
+const isOwner = ref(localStorage.getItem('is_owner') === 'true'); // Load from localStorage
 
 // Get data
 const getters = {
@@ -53,7 +61,10 @@ const getters = {
   }
 };
 
-// Handle data update based on selectedCompany : isOwner
+watch(isOwner, (newValue) => {
+  localStorage.setItem('is_owner', newValue.toString()); // Persist as string ('true'/'false')
+});
+
 watch(() => selectedCompany.value, async (newCompany, oldCompany) => {
   if (!newCompany || newCompany.id === oldCompany?.id) {
     return; // Avoid unnecessary API calls for the same company
@@ -64,7 +75,6 @@ watch(() => selectedCompany.value, async (newCompany, oldCompany) => {
   );
   userAccount.value = response;
   isOwner.value = userAccount.value.is_owner; // Update ownership status
-
   localStorage.setItem('selected_company', JSON.stringify(newCompany));
   }
 );
@@ -97,6 +107,8 @@ const actions = {
       const savedUser = localStorage.getItem('user');
       const savedAuthToken = localStorage.getItem('auth_token');
       const savedSelectedCompany = localStorage.getItem('selected_company');
+      const savedPendingRequests = localStorage.getItem('pending_requests');
+      const savedAccessRequests = localStorage.getItem('access_requests');  
       
       if (savedUser) {
         user.value = JSON.parse(savedUser);
@@ -109,9 +121,15 @@ const actions = {
   
       if (savedSelectedCompany) {
         const parsedCompany = JSON.parse(savedSelectedCompany);
-  
-        // Directly set `selectedCompany` to avoid unnecessary re-fetches
         selectedCompany.value = parsedCompany;
+      }
+
+      if (savedPendingRequests) {
+        pendingRequests.value = JSON.parse(savedPendingRequests); // Initialize pending requests
+      }
+      
+      if (savedAccessRequests) {
+        accessRequests.value = JSON.parse(savedAccessRequests); // Initialize access requests
       }
     } catch (error) {
       console.error('Error during initializeAuthState:', error);
@@ -119,15 +137,17 @@ const actions = {
   },
 
   async fetchPendingAccounts() {
-      const response = await apiCaller.get(`accounts/${user.value.id}/pending_requests`);
-      pendingRequests.value = response;
+    const response = await apiCaller.get(`accounts/${user.value.id}/pending_requests`);
+    pendingRequests.value = response;
+    localStorage.setItem('pending_requests', JSON.stringify(response)); // Persist to localStorage
 
-      return response;
+    return response;
   },
 
   async fetchAccessRequestAccounts() {
     const response = await apiCaller.get(`accounts/${user.value.id}/access_requests`);
     accessRequests.value = response;
+    localStorage.setItem('access_requests', JSON.stringify(response)); // Persist to localStorage
 
     return response;
 },
@@ -196,7 +216,6 @@ const actions = {
   
         localStorage.setItem('selected_company', JSON.stringify(company)); // Persist in localStorage
       } else {
-        console.warn('Invalid company selection.');
         selectedCompany.value = null; 
         isOwner.value = false;
         localStorage.removeItem('selected_company');
@@ -251,6 +270,8 @@ const actions = {
     localStorage.removeItem('user');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('selected_company');
+    localStorage.removeItem('pending_requests');
+    localStorage.removeItem('access_requests');
   
     // Clear reactive state
     user.value = {

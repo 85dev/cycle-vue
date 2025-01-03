@@ -5,7 +5,9 @@ import dateConverter from '@/services/dateConverter';
 import sessionStore from '@/stores/sessionStore';
 import { globalConsumptionHeaders } from '@/models/tableHeaders';
 import CardTitle from '@/components/CardTitle.vue';
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
+const loading = ref(false)
 const consumptionRows = ref([])
 const parts = ref([])
 const number =ref('')
@@ -103,19 +105,28 @@ watch(() => selectedCompany.value, // Watching the computed value's reactive pro
             resetData()
             await fetchClients(); // Trigger refresh on change
         }
-    },
-    { immediate: true }
+    }
 );
+
+async function refreshData() {
+    loading.value =  true
+
+    setTimeout(async() => {
+        await fetchClients()
+        loading.value = false;
+    }, 300);
+}
 
 onMounted(async() => {
     sessionStore.actions.initializeAuthState(); 
     selectedCompany.value = sessionStore.getters.getSelectedCompany()
 
-    await fetchClients()
+    await refreshData()
 })
 </script>
 
 <template>
+    <SpinnLoader :loading="loading" />
     <div class="main-card">
         <v-card class="b1-container mt-3 mb-3">
             <CardTitle

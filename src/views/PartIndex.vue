@@ -11,6 +11,7 @@ import DeletePart from '@/components/modals/DeletePart.vue';
 import CreatePart from '@/components/modals/CreatePart.vue';
 import EditPart from '@/components/modals/EditPart.vue';
 import CardTitle from '@/components/CardTitle.vue';
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
 const userParts = ref(null)
 const filteredParts = ref(null)
@@ -85,22 +86,31 @@ watch(() => selectedCompany.value, // Watching the computed value's reactive pro
             await fetchClients();
             await fetchParts();
         }
-    },
-    { immediate: true }
+    }
 );
+
+async function fetchData() {
+    loading.value = true
+
+    setTimeout(async() => {
+        await fetchParts()
+        await fetchClients()
+        loading.value = false
+    }, 600);
+}
 
 onMounted(async() => {
     sessionStore.actions.initializeAuthState()
     selectedCompany.value = sessionStore.getters.getSelectedCompany();
 
     if (selectedCompany.value) {
-        await fetchParts()
-        await fetchClients()
+        await fetchData()
     }
 })
 </script>
 
 <template>
+    <SpinnLoader :loading="loading" />
     <div class="main-card">
         <CreatePart 
             :origin="'single'"
