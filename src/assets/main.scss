@@ -82,8 +82,8 @@ label, input, .v-btn, .v-data-table {
 
 .no-effects {
   background-color: none !important;
-  color: none;
-  box-shadow: none;
+  color: none !important;
+  box-shadow: none !important;
 }
 
 .dialog-width {
@@ -92,6 +92,10 @@ label, input, .v-btn, .v-data-table {
 
 .secundary-dialog-width {
   width: 64vw;
+}
+
+.tertiary-dialog-width {
+  width: 48vw;
 }
 
 .space-between {
@@ -138,11 +142,11 @@ label, input, .v-btn, .v-data-table {
 }
 
 .informative-text-m {
-  color: $sc-bg-color;
+  color: $lg-ft-color;
 }
 
 .informative-text-l {
-  color: $sc-bg-color;
+  color: $lg-ft-color;
   font-weight: 600;
 }
 
@@ -190,7 +194,7 @@ label, input, .v-btn, .v-data-table {
 
 .b1-container {
   margin: 0.4em 0em;
-  width: 68vw;
+  width: 66vw;
 }
 
 .centered-containers {
@@ -284,7 +288,7 @@ label, input, .v-btn, .v-data-table {
   }
 
   .b1-container{
-    width: 76vw;
+    width: 74vw;
   }
 }
 

@@ -4,6 +4,8 @@ import { onMounted, ref, toRefs } from 'vue'
 
 // Services
 import apiCaller from '@/services/apiCaller';
+import CardTitle from '../CardTitle.vue';
+import GenerateDeliverySlipPDF from './GenerateDeliverySlipPDF.vue';
 
 // Data constant
 import { transferHeaders } from '@/models/tableHeaders';
@@ -19,12 +21,15 @@ const props = defineProps({
         required: true
     },
     client: {
-        type: String,
+        type: Object,
         required: true
     },
     origin: {
         type: String,
         required: true
+    },
+    clientOrders: {
+        type: Array
     }
 })
 
@@ -35,7 +40,7 @@ const reactivePosition = toRefs(props.position)
 const subContractorsList = ref([])
 const logisticPlaceList = ref([])
 const modifiedQuantity = ref(props.position.quantity)
-
+const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedClient = ref(null)
 const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
@@ -52,8 +57,7 @@ async function fetchLogisticPlaces() {
     logisticPlaceList.value = response
 }
 
-async function submitTransfer() {
-
+function createPayload() {
     let destinationType = null;
     let destinationName = null;
     let logisticPlaceId = null;
@@ -62,22 +66,20 @@ async function submitTransfer() {
     if (selectedSubcontractor.value) {
         destinationType = "subcontractor";
         destinationName = selectedSubcontractor.value;
-        subContractorId = subContractorsList.value.find(sc => sc.name === selectedSubcontractor.value).id;
+        subContractorId = subContractorsList.value.find(sc => sc.name === selectedSubcontractor.value)?.id;
     } else if (selectedLogisticPlace.value) {
         destinationType = "logistic_place";
         destinationName = selectedLogisticPlace.value;
-        logisticPlaceId = logisticPlaceList.value.find(lp => lp.name === selectedLogisticPlace.value).id;
+        logisticPlaceId = logisticPlaceList.value.find(lp => lp.name === selectedLogisticPlace.value)?.id;
     } else if (selectedClient.value) {
         destinationType = "client";
         destinationName = selectedClient.value;
-    } else {
-        console.error("No destination selected.");
-        return;
     }
 
-    const payload = {
+    return {
         position_id: props.position.id,
         part_id: props.position.part_id,
+        transfer_date: transferDate.value,
         quantity: modifiedQuantity.value,
         destination_type: destinationType,
         destination_name: destinationName,
@@ -85,6 +87,14 @@ async function submitTransfer() {
         logistic_place_id: logisticPlaceId,
         expedition_position_id: props.position.expedition_position_id
     };
+}
+
+async function submitTransfer() {
+    const payload = createPayload();
+    if (!payload.destination_type) {
+        console.error("No destination selected.");
+        return;
+    }
 
     const response = await apiCaller.post(`companies/${props.selectedCompanyId}/expedition_positions/${props.position.expedition_position_id}/transfer_position`, payload);
 
@@ -120,25 +130,60 @@ onMounted(async() => {
   
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
-                <v-card :title="`Transférer la position`" append-icon="mdi-truck-delivery-outline" style="padding: 0.4em;">
-                    <span class="informative-text">
+                <v-card style="padding: 0.4em;">
+                    <div class="d-flex justify-lg-space-between align-center" style="width: 100%">
+                        <CardTitle 
+                        title="Transférer la position"
+                        icon="mdi-truck-delivery-outline"
+                        />
+                        <GenerateDeliverySlipPDF
+                            v-if="props"
+                            :selected-company-id="props.selectedCompanyId"
+                            :subcontractors="subContractorsList"
+                            :logistic-places="logisticPlaceList"
+                            :position="props.position"
+                            :origin="props.origin" 
+                            :client="props.client"
+                            :client-orders="props.clientOrders" 
+                            @refresh="refreshAllData()"
+                        />
+                    </div>
+                    
+                    <span class="informative-text d-flex flex-column mb-2">
                     <v-chip
-                      class="mt-2 mb-3"
                       variant="elevated"
+                      style="width: fit-content;"
                     >
                       <v-icon start class="ml-0">mdi-package-variant-closed-check</v-icon>
                       <span v-if="props.origin === 'subcontractor'">Quantité totale chez le sous-traitant : {{props.position.quantity}}</span>
                       <span v-else>Quantité totale sur lieu de stockage : {{props.position.quantity}}</span>
                     </v-chip>
+                    <span class="informative-text mt-2" style="margin-left: 0;" v-if="props.position.quantity < modifiedQuantity">
+                        <v-chip variant="elevated" color="red">
+                            <v-icon class="mr-2">mdi-alert-circle-outline</v-icon>
+                            La quantité à transférer doit être inférieure à celle disponible
+                        </v-chip>
+                    </span>
                   </span>
-                    <v-row class="pa-2 mr-4 ml-4">
-                        <v-data-table
+                  <v-card style="margin: 0.4em">
+                    <v-data-table
+                            class="pa-2"
                             :item-selectable="false"
                             :items="[reactivePosition]"
                             variant="underlined"
                             density="dense"
                             :headers="transferHeaders"
                         >
+                        <template v-slot:item.transfer_date="{item}">
+                            <v-text-field
+                                class="field-slot"
+                                type="date"
+                                v-model="transferDate"
+                                variant="underlined"
+                                label="Date du transfert"
+                                clearable
+                            />
+                        </template>
                         <template v-slot:item.quantity="{item}">
                             <v-text-field
                                 class="field-slot"
@@ -147,7 +192,7 @@ onMounted(async() => {
                                 variant="underlined"
                                 label="Quantité"
                                 clearable
-                            ></v-text-field>
+                            />
                         </template>
                         <template v-slot:item.sub_contractor="{ item }">
                             <v-select
@@ -178,7 +223,7 @@ onMounted(async() => {
                                 class="field-slot"
                                 variant="underlined"
                                 clearable
-                                :items="[props.client]"
+                                :items="[props.client.name]"
                                 v-model="selectedClient"
                                 label="Stockage client"
                                 aria-required="true"
@@ -186,7 +231,8 @@ onMounted(async() => {
                             ></v-select>
                         </template>
                         </v-data-table>
-                    </v-row>       
+                  </v-card>
+
 
                         <!-- Actions -->
                         <v-card-actions>

@@ -115,7 +115,7 @@ onMounted(async() => {
             </v-data-table>
             <div v-else class="d-flex flex-wrap align-items-center">
               <v-chip
-                class="ma-1 mt-2"
+                class="ma-1 mt-2 mb-2"
                 style="width: fit-content;"
                 variant="tonal"
                 color="secondary"
@@ -158,7 +158,7 @@ onMounted(async() => {
             </v-data-table>
             <div v-else class="d-flex flex-wrap align-items-center">
               <v-chip
-                class="ma-1 mt-2"
+                class="ma-1 mt-2 mb-2"
                 style="width: fit-content;"
                 variant="tonal"
                 color="secondary"

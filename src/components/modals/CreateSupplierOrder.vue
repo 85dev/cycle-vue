@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
+import { onMounted, ref, defineEmits, watch } from 'vue';
 
 // Services
 import apiCaller from '../../services/apiCaller.js';
@@ -8,10 +8,16 @@ import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
     selectedCompanyId: {
-        type: Number
+        type: Number,
+        required: true
+    },
+    latestSupplierPrice: {
+        type: Number,
+        default: 0
     },
     clientOrders: {
-        type: Array
+        type: Array,
+        default: () => []
     },
     clientId: {
         type: String
@@ -28,14 +34,27 @@ const supplier = ref(null)
 const number = ref(null)
 const supplierList = ref(null)
 const supplierListDisplayed = ref(null)
-const parts = ref(null)
+const parts = ref([])
 const orderPositions = ref([])
 
 const emit = defineEmits(['refreshSupplierOrders'])
 
 async function fetchParts() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.clientId}/parts_by_client`);
-    parts.value = response;
+    if (props.referenceAndDesignation) {
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/parts`);
+        parts.value = response;
+    } else {
+        const selectedSupplier = supplierList.value.find(s => s.name === supplier.value);
+        
+        if (!selectedSupplier) {
+            console.error('Supplier not found or not selected.');
+            parts.value = [];
+            return;
+        }
+
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/suppliers/${selectedSupplier.id}/parts_by_supplier`);
+        parts.value = response;
+    }
 }
 
 async function fetchSuppliers() {
@@ -70,7 +89,7 @@ async function submitSupplierOrder() {
 }
 
 function addOrderPosition() {
-    orderPositions.value.push({ part: props.referenceAndDesignation, price: props.partPrice, quantity: null, delivery_date: dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)) });
+    orderPositions.value.push({ part: props.referenceAndDesignation, price: props.latestSupplierPrice || 0, quantity: null, delivery_date: dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)) });
 }
 
 function removeOrderPosition(index) {
@@ -79,11 +98,16 @@ function removeOrderPosition(index) {
     }
 }
 
-onMounted( async () => {
-    await fetchParts()
-    await fetchSuppliers()
+watch(supplier, async () => {
+    await fetchParts();
+})
 
-    supplier.value = supplierList.value[0].name
+onMounted( async () => {
+    await fetchSuppliers()
+    if (props.referenceAndDesignation) {
+        supplier.value = supplierList.value[0].name
+    }
+    await fetchParts()
 
     addOrderPosition()
 })
@@ -94,7 +118,7 @@ onMounted( async () => {
         <template v-slot:activator="{ props: activatorProps }">
             <v-chip
                 v-bind="activatorProps"
-                variant="outlined"
+                :variant="props.clientId ? 'outlined' : 'elevated'"
                 color="blue"
             >
                 <v-icon class='mr-2'>mdi-plus-thick</v-icon>
@@ -115,6 +139,7 @@ onMounted( async () => {
 
                             <v-row style="margin: 0em 0.2em;">
                                 <v-select
+                                    :disabled="props.referenceAndDesignation ? true : false"
                                     label="Fournisseur"
                                     variant="underlined"
                                     v-model="supplier"
@@ -142,6 +167,7 @@ onMounted( async () => {
                                     <v-select
                                         label="Pièce"
                                         v-model="position.part"
+                                        :disabled="referenceAndDesignation"
                                         variant="underlined"
                                         clearable
                                         required

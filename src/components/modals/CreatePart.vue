@@ -53,13 +53,14 @@ async function fetchSuppliers() {
 
 async function submitPart() {
     const selectedClient = clientsList.value.find(c => c.name === client.value);
-    const selectedSupplier = suppliersList.value.find(c => c.name === supplier.value);
-    const selectedSubcontractorIds = subcontractor.value.map(name =>
+    const selectedSupplierIds = supplier.value.map(name =>
+        suppliersList.value.find(supplier => supplier.name === name)?.id
+    );    const selectedSubcontractorIds = subcontractor.value.map(name =>
         subcontractorsList.value.find(sub => sub.name === name)?.id
     );
 
     const payload = {
-        supplier_id: selectedSupplier?.id || null,
+        supplier_ids: selectedSupplierIds,
         client_id: selectedClient?.id || null,
         subcontractor_ids: selectedSubcontractorIds,
         part: {
@@ -139,6 +140,7 @@ onMounted(async() => {
                                 <v-select
                                     variant="underlined"
                                     class="form-part"
+                                    multiple="true"
                                     :items="suppliersListDisplayed ? suppliersListDisplayed : []"
                                     v-model="supplier"
                                     label="Fournisseur"

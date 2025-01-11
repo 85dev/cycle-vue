@@ -32,6 +32,11 @@ const router = useRouter();
 const loading = ref(false);
 const clientPositionModal = ref(false);
 
+async function fetchPartData() {
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
+  dataFromSearch.value = response;
+}
+
 async function fetchSupplierOrders() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/supplier_orders_positions`);
   dataFromSearch.value.supplier_orders = response
@@ -54,11 +59,6 @@ async function fetchConsignmentStockPositions() {
 async function fetchStandardStockPositions() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/standard_stocks_positions_by_client`)
   dataFromSearch.value.standard_stock_positions = response
-}
-
-async function fetchSuppliers() {
-  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
-  dataFromSearch.value.suppliers = response
 }
 
 async function fetchClientOrders() {
@@ -89,8 +89,8 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
 
 async function refreshAllData() {
     loading.value = true;
+    await fetchPartData()
     await fetchUnsortedClientPositions();
-    await fetchSuppliers();
     await fetchSupplierOrders();
     await fetchClientOrders();
     await fetchExpeditions();
@@ -105,9 +105,6 @@ onMounted(async () => {
   currentPartId.value = route.params.id
   sessionStore.actions.initializeAuthState();
   selectedCompany.value = sessionStore.getters.getSelectedCompany();
-
-  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
-  dataFromSearch.value = response;
 
   await refreshAllData();
 });
@@ -215,7 +212,6 @@ onMounted(async () => {
                   Liste des fournisseur(s)
                 </v-chip>
               </span>
-
               <div class="d-flex flex-wrap justify-center align-items-center" v-if="dataFromSearch.suppliers && dataFromSearch.suppliers.length > 0">
                 <v-divider class="mb-2" color="transparent"/>
                 <v-chip
@@ -232,7 +228,7 @@ onMounted(async () => {
               </div>
               <div v-else class="d-flex flex-wrap align-items-center">
                 <v-chip
-                  class="ma-1 mt-2"
+                  class="ma-1 mt-3"
                   style="width: fit-content;"
                   variant="tonal"
                   color="secondary"
@@ -257,7 +253,7 @@ onMounted(async () => {
               <div class="d-flex flex-wrap justify-center align-items-center" v-if="dataFromSearch.sub_contractors && dataFromSearch.sub_contractors.length > 0">
                 <v-divider class="mb-2" color="transparent"/>
                 <v-chip
-                  class="ma-1 mt-2"
+                  class="ma-1"
                   v-for="subcontractor in dataFromSearch.sub_contractors"
                   :key="subcontractor.id"
                   style="width: fit-content;"
@@ -270,7 +266,7 @@ onMounted(async () => {
               </div>
               <div v-else class="d-flex flex-wrap align-items-center">
                 <v-chip
-                  class="ma-1 mt-2"
+                  class="ma-1 mt-3"
                   style="width: fit-content;"
                   variant="tonal"
                   color="secondary"
@@ -288,7 +284,7 @@ onMounted(async () => {
         <v-card class="b1-container">
           
         <div v-if="dataFromSearch.consignment_stock_positions">
-          <div class="b1-top-content mt-0 mb-2">
+          <div class="b1-top-content mt-0 mb-2 mr-3">
             <CardTitle 
               title="Stock consignation client"
               icon="mdi-dolly"
@@ -381,8 +377,8 @@ onMounted(async () => {
                       density="dense"
                     >
                       <template v-slot:item.quantity="{item}">
-                        <v-chip variant="elevated" style="margin: 0.2em">
-                          <v-icon color='orange' class="mr-2">mdi-package-variant-closed-check</v-icon>
+                        <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                          <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                           {{ item.quantity }}
                         </v-chip>
                       </template>
@@ -411,8 +407,8 @@ onMounted(async () => {
                       density="dense"
                     >
                       <template v-slot:item.quantity="{item}">
-                        <v-chip variant="elevated" style="margin: 0.2em">
-                          <v-icon color='orange' class="mr-2">mdi-package-variant-closed-check</v-icon>
+                        <v-chip variant="outlined" color="success"style="margin: 0.2em">
+                          <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                           {{ item.quantity }}
                         </v-chip>
                       </template>
@@ -500,8 +496,8 @@ onMounted(async () => {
                         density="dense"
                       >
                         <template v-slot:item.quantity="{item}">
-                          <v-chip variant="elevated" style="margin: 0.2em;">
-                            <v-icon color='orange' class="mr-2">mdi-package-variant-closed-check</v-icon>
+                          <v-chip variant="outlined" color="success" style="margin: 0.2em;">
+                            <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                             {{ item.quantity }}
                           </v-chip>
                         </template>
@@ -540,7 +536,7 @@ onMounted(async () => {
               title="Commande client"
               icon="mdi-cube-send"
             />
-            <span>
+            <span class="mr-3">
               <!-- MODALS -->
                <CreateClientOrder
                 v-if="selectedCompany && dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client"
@@ -566,8 +562,8 @@ onMounted(async () => {
               <v-icon :icon="item.status === 'In transit' ? 'mdi-ferry' : 'mdi-progress-clock'"></v-icon>
             </template>
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="elevated" style="margin: 0.2em;">
-                <v-icon color='orange' class="mr-2">mdi-package-variant-closed-check</v-icon>
+              <v-chip variant="outlined" color="success" style="margin: 0.2em;">
+                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.quantity }}
               </v-chip>
             </template>
@@ -577,7 +573,7 @@ onMounted(async () => {
                     variant="outlined"
                     color="blue"
                 >
-                    {{ item.price }}
+                    {{ item.price ? item.price.toFixed(2) + ' €' : 'n/a' }}
                 </v-chip>
             </template>
             <template v-slot:item.delivery_date="{ item }">
@@ -630,14 +626,13 @@ onMounted(async () => {
               title="Commande fournisseur" 
               icon="mdi-factory"
             />
-            <span>
-              <!-- MODALS -->
+            <span class="mr-3">
               <CreateSupplierOrder
                 v-if="dataFromSearch.client_orders && selectedCompany && dataFromSearch.client && dataFromSearch.reference && dataFromSearch.designation"
                 :selected-company-id="selectedCompany.id"
+                :latest-supplier-price="dataFromSearch.supplier_price"
                 :client-id="dataFromSearch.client.id"
                 :client-orders="dataFromSearch.client_orders"
-                :part-price="dataFromSearch.current_supplier_price || 0"
                 :reference-and-designation="`${dataFromSearch.reference} ${dataFromSearch.designation}`"
                 @refresh-supplier-orders="refreshAllData()"
                >
@@ -663,14 +658,14 @@ onMounted(async () => {
                 </v-chip>
             </template>
             <template v-slot:item.original_quantity="{ item }">
-                <v-chip variant="outlined">
-                  <v-icon color="success" style="margin-right: 6px">mdi-package-variant-closed-plus</v-icon>
+                <v-chip variant="outlined" color="blue">
+                  <v-icon style="margin-right: 6px">mdi-package-variant-closed-plus</v-icon>
                   {{ item.original_quantity }}
                 </v-chip>
             </template>
             <template v-slot:item.quantity="{ item }">
-                <v-chip variant="elevated" v-if="item.quantity < 0">
-                  <v-icon color="success" style="margin-right: 6px">mdi-progress-check</v-icon>
+                <v-chip variant="outlined" color="success" v-if="item.quantity < 0">
+                  <v-icon style="margin-right: 6px">mdi-progress-check</v-icon>
                   Excédent de {{ Math.abs(item.quantity) }} 
                 </v-chip>
                 <v-chip variant="elevated" v-else> 
@@ -727,7 +722,7 @@ onMounted(async () => {
         </v-card>
 
         <v-card class="b1-container">
-          <div class="b1-top-content mt-0 mb-2">
+          <div class="b1-top-content mt-0 mb-2 mr-3">
             <CardTitle
               title="Programme des expéditions" 
               icon="mdi-ferry"
@@ -752,8 +747,8 @@ onMounted(async () => {
               density="dense"
             >
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="elevated" style="margin: 0.2em">
-                <v-icon color="success" class="mr-2">mdi-truck-fast-outline</v-icon>
+              <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                <v-icon class="mr-2">mdi-truck-fast-outline</v-icon>
                 {{ item.quantity }}
               </v-chip>
             </template>
@@ -823,17 +818,18 @@ onMounted(async () => {
               </v-chip>
             </template>
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="elevated" style="margin: 0.2em">
-                <v-icon color="orange" class="mr-2">mdi-package-variant-closed-check</v-icon>
+              <v-chip  variant="outlined" color="success" style="margin: 0.2em">
+                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.quantity }}
               </v-chip>
             </template>
             <template v-slot:item.actions="{ item }">
               <div class="actions-slot">
                 <TransferPosition
-                  v-if="selectedCompany && item && dataFromSearch.client.name"
+                  v-if="selectedCompany && item && dataFromSearch.client.name && dataFromSearch.client_orders"
                   origin="subcontractor"
-                  :client="dataFromSearch.client.name"
+                  :client-orders=" dataFromSearch.client_orders"
+                  :client="dataFromSearch.client"
                   :selected-company-id="selectedCompany.id" 
                   :position="item"
                   @refresh="refreshAllData()"
@@ -876,8 +872,8 @@ onMounted(async () => {
               </v-chip>
             </template>
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="elevated" style="margin: 0.2em">
-                <v-icon color="orange" class="mr-2">mdi-package-variant-closed-check</v-icon>
+              <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.quantity }}
               </v-chip>
             </template>
@@ -886,7 +882,8 @@ onMounted(async () => {
                 <TransferPosition
                   v-if="selectedCompany && item && dataFromSearch.client.name"
                   origin="logistic_place"
-                  :client="dataFromSearch.client.name"
+                  :client="dataFromSearch.client"
+                  :client-orders=" dataFromSearch.client_orders"
                   :selected-company-id="selectedCompany.id" 
                   :position="item"
                   @refresh="refreshAllData()"

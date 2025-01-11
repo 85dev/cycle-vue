@@ -23,7 +23,7 @@ function selectedCompanyName() {
         : selectedCompany.value;
 
     if (!selectedIds || selectedIds.length === 0) {
-        return 'Aucune entreprise sélectionnée';
+        return 'Aucune';
     }
     
     const company = companies.value.find(cp => selectedIds.includes(cp.id));
@@ -39,7 +39,6 @@ async function fetchCompanies() {
 
 async function submitRequest() {
     const response = await apiCaller.get(`accounts/${userId.value}/companies/${selectedCompany.value}/request_access?requested_owner_rights=${requestedOwnerRights.value}`)
-    
     sessionStore.actions.fetchPendingAccounts()
 }
 
@@ -48,24 +47,26 @@ function selectCompany(event, {item}) {
 }
 
 watch(searchQuery, (newQuery) => {
-    if (!newQuery) {
+    if (!newQuery || newQuery.trim() === "") {
         filteredCompanies.value = [...companies.value]; // Reset to all companies if query is null or empty
+        if (timeout.value) {
+            clearTimeout(timeout.value); // Clear any existing timeout
+        }
+        loading.value = false; // Ensure loading is not active
         return; // Exit the function early
     }
-
-    loading.value = true;
 
     if (timeout.value) {
         clearTimeout(timeout.value);
     }
 
+    loading.value = true;
     timeout.value = setTimeout(() => {
         filteredCompanies.value = companies.value.filter(company =>
-        company.name.toLowerCase().includes(newQuery.toLowerCase())
-    );
-    loading.value = false
+            company.name.toLowerCase().includes(newQuery.toLowerCase())
+        );
+        loading.value = false;
     }, 800);
-
 });
 
 watch(selectedCompany, (newValue, oldValue) => {
@@ -161,8 +162,10 @@ onMounted(async() => {
                         </v-card>
                         <v-card class="pa-2 mt-2">
                             <v-chip
+                                style="transition: all 0.5s;"
                                 class="mt-2 mb-2 ml-2"
-                                variant="outlined"
+                                :variant="selectedCompanyName() !== 'Aucune' ? 'elevated' : 'text'"
+                                :elevation="selectedCompanyName() !== 'Aucune' ? '4' : '0'"
                                 color="blue"
                             >
                                 Entreprise sélectionnée : <strong class="ml-1">{{ selectedCompanyName() }}</strong>

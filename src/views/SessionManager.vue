@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import Popup from '@/components/Popup.vue';
+import router from '@/router/index.js';
 
 // Form input states
 const signUpEmail = ref('')
@@ -62,7 +63,13 @@ async function onSignUp(event) {
     },
   }
   try {
-    sessionStore.actions.registerUser(data)
+    loading.value = true;
+
+    setTimeout(async() => {
+      await sessionStore.actions.registerUser(data)
+      loading.value = false;
+    }, 1200);
+
   } catch (error) {
     console.error(error)
   }
@@ -81,18 +88,34 @@ async function onLogin(event) {
     },
   }
   try {
-    const response = await sessionStore.actions.loginUser(data);
+    loading.value = true;
+    setTimeout(async() => {
+      const response = await sessionStore.actions.loginUser(data);
 
-    if (response !== undefined) {
-      triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger success snackbar
-    } else {
-      triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger error snackbar
-    }
+      if (response !== undefined) {
+        triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger success snackbar
+      }
+      loading.value = false;
+    }, 600);
+
   } catch (error) {
     console.error('Login failed:', error);
     triggerSnackbar('An unexpected error occurred.', 'error'); // Handle unexpected errors
   }
 }
+
+onMounted(async() => {
+  const userId = sessionStore.getters.getUserID();
+  const authToken = sessionStore.getters.getAuthToken();
+
+  if (userId && authToken) {
+    // Optional: Add token verification logic if needed
+    router.push('/dashboard');
+  } else {
+    sessionStore.actions.resetUserInfo();
+    router.push('/login'); // Redirect to login for better UX
+  }
+})
 </script>
 
 <template>
@@ -141,7 +164,7 @@ async function onLogin(event) {
               :type="showConfirmPassword ? 'text' : 'password'"
               required
           ></v-text-field>
-            <v-btn variant="elevated" :disabled="!isSignUpValid" type="submit" @click="onSignUp" style="margin-bottom: 1em;">
+            <v-btn variant="elevated" :loading="loading" :disabled="!isSignUpValid" type="submit" @click="onSignUp" style="margin-bottom: 1em;">
               <v-icon class="mr-1">mdi-account-plus-outline</v-icon>
               S'inscrire
             </v-btn>
@@ -170,7 +193,7 @@ async function onLogin(event) {
               :type="showLoginPassword ? 'text' : 'password'"
               required
             ></v-text-field>
-            <v-btn variant="elevated" :disabled="loginPassword === '' || loginEmail === ''" @click="onLogin" style="margin-bottom: 1em;">
+            <v-btn variant="elevated" :loading="loading" :disabled="loginPassword === '' || loginEmail === ''" @click="onLogin" style="margin-bottom: 1em;">
               <v-icon class="mr-1">mdi-account-arrow-right-outline</v-icon>
               Se connecter
             </v-btn>

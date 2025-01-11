@@ -74,10 +74,26 @@ async function deleteData(url, json) {
     }
 }
 
+async function getJson(url, expectJson = true) {
+    const response = await fetch(API_URL + url);
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // If expecting JSON, parse as JSON; otherwise, return the response as is
+    if (expectJson) {
+        return response.json();
+    } else {
+        return response; // For binary data (e.g., PDF)
+    }
+}
+
 export default {
     get,
     post,
     patch,
     put,
-    deleteData
+    deleteData,
+    getJson
 };

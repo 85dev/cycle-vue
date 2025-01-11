@@ -47,22 +47,23 @@ async function fetchExpeditions() {
     runningExpeditions.value = response
 }
 
-function getKpiColor(key) {
-  const colors = {
-    runningExpeditions: 'blue-darken-4',
-    totalActiveOrders: 'blue',
-    openSupplierPositions: 'yellow-darken-4'
-  }
-  return colors[key] || 'grey'
-}
-
 function getKpiIcon(key) {
   const icons = {
     runningExpeditions: 'mdi-ferry',
-    totalActiveOrders: 'mdi-package-variant',
-    openSupplierPositions: 'mdi-factory'
+    totalActiveOrders: 'mdi-package-variant'
   }
   return icons[key] || 'mdi-chart-box-outline'
+}
+
+function getKpiColor(key) {
+  const colors = {
+    runningExpeditions: 'blue-darken-4',
+    totalActiveOrders: 'red',
+    openSupplierPositions: 'red-accent-2',
+    onTimeDeliveryRate: 'orange-darken-3',
+  };
+
+  return colors[key] || 'grey-lighten-2'; // Default color if the key doesn't match
 }
 
 function formatMetricValue(value, key) {
@@ -75,8 +76,7 @@ function formatMetricValue(value, key) {
 function formatKpiLabel(key) {
   const labels = {
     runningExpeditions: 'Expédition(s) en cours',
-    totalActiveOrders: 'Commande(s) client active(s)',
-    openSupplierPositions: 'Commande(s) fournisseur ouverte(s)'
+    totalActiveOrders: 'Commande(s) client à livrer sur les 30 prochains jours'
   }
   return labels[key] || key
 }
@@ -145,8 +145,7 @@ watch(() => selectedCompany.value, // Watching the computed value's reactive pro
         if (newCompany && newCompany.id !== oldCompany?.id) {
             await refreshAllData(); // Trigger refresh on change
         }
-    },
-    { immediate: true }
+    }
 );
 
 async function refreshAllData() {
@@ -189,7 +188,7 @@ onMounted(async() => {
                   <v-row class="mb-1 mt-0 justify-center">
                     <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="4" md="3">
                       <v-card
-                        elevation="3"
+                        elevation="12"
                         class="kpi-card"
                         :color="getKpiColor(key)"
                       >
@@ -201,7 +200,7 @@ onMounted(async() => {
                             <div class="text-h6 white--text font-weight-bold mb-1">
                               {{ formatMetricValue(metric, key) }}
                             </div>
-                            <div class="informative-text-l" style="color: white;">
+                            <div class="informative-text-l pa-2" style="color: white;">
                               {{ formatKpiLabel(key) }}
                             </div>
                           </div>
@@ -241,49 +240,49 @@ onMounted(async() => {
                     </div>
                   <div class="space-between">
                     <div class="d-flex ml-4 mt-1" style="margin-bottom: -16px">
-                    <v-select
-                      v-model="startDate"
-                      clearable
-                      prepend-icon="mdi-calendar-start-outline"
-                      label="Date de début"
-                      :items="dateOptions"
-                      variant="underlined"
-                      class="mr-2"
-                      style="max-width: 16vw; min-width: 12vw;"
-                      required
-                    />
+                      <v-select
+                        v-model="startDate"
+                        clearable
+                        prepend-icon="mdi-calendar-start-outline"
+                        label="Date de début"
+                        :items="dateOptions"
+                        variant="underlined"
+                        class="mr-2"
+                        style="max-width: 16vw; min-width: 12vw;"
+                        required
+                      />
 
-                    <v-select
-                      v-model="endDate"
-                      clearable
-                      prepend-icon="mdi-calendar-end-outline"
-                      label="Date de fin"
-                      :items="dateOptions"
-                      variant="underlined"
-                      style="max-width: 16vw; min-width: 12vw;"
-                      class="mr-2"
-                      required
-                    />
+                      <v-select
+                        v-model="endDate"
+                        clearable
+                        prepend-icon="mdi-calendar-end-outline"
+                        label="Date de fin"
+                        :items="dateOptions"
+                        variant="underlined"
+                        style="max-width: 16vw; min-width: 12vw;"
+                        class="mr-2"
+                        required
+                      />
 
-                    <v-select
-                      clearable
-                      v-model="selectedClient"
-                      prepend-icon="mdi-account-multiple-outline"
-                      label="Client"
-                      :items="clientOptions"
-                      variant="underlined"
-                      style="max-width: 16vw; min-width: 12vw;"
-                      required
-                    />
+                      <v-select
+                        clearable
+                        v-model="selectedClient"
+                        prepend-icon="mdi-account-multiple-outline"
+                        label="Client"
+                        :items="clientOptions"
+                        variant="underlined"
+                        style="max-width: 16vw; min-width: 12vw;"
+                        required
+                      />
                   </div>
-                  <v-btn
-                      class="no-effects mr-4 mt-4"
-                      icon 
-                      size='16'
-                      @click="endDate = null; startDate = null; selectedClient = null;"
-                      >
-                      <v-icon color="secondary">mdi-refresh</v-icon>
-                  </v-btn>
+                    <v-btn
+                        class="no-effects mr-4 mt-4"
+                        icon 
+                        size='16'
+                        @click="endDate = null; startDate = null; selectedClient = null;"
+                        >
+                        <v-icon color="secondary">mdi-refresh</v-icon>
+                    </v-btn>
                   </div>
                   
                   </v-card>
@@ -292,15 +291,14 @@ onMounted(async() => {
                   style="overflow-x: scroll;"
                   direction="horizontal"
                   line-thickness="4"
-                  line-color="orange"
+                  line-color="blue"
                 >
                     <v-timeline-item
                         v-for="order in filteredOrders"
                         :key="order.id"
                         elevation="6"
-                        icon="mdi-dolly"
-                        icon-color="white"
-                        dot-color="blue"
+                        :icon="daysLeft(order.position_delivery_date) <= 30 ? 'mdi-alert-circle-outline' : 'mdi-dolly'"
+                        :dot-color="daysLeft(order.position_delivery_date) <= 30 ? 'red' : 'blue'"
                     > 
                     <template v-slot:opposite>
                       <div class="d-flex flex-column align-center">
@@ -309,8 +307,9 @@ onMounted(async() => {
                       </v-chip>
                       <v-chip
                         class="mb-1"
-                        variant="tonal"
-                        color="primary"
+                        variant="elevated"
+                        :elevation="daysLeft(order.position_delivery_date) <= 30 ? 4 : 0"
+                        :color="daysLeft(order.position_delivery_date) <= 30 ? 'red' : 'blue'"
                       >
                         <v-icon class="mr-2 ml-1">mdi-truck-alert-outline</v-icon>
                         {{ daysLeft(order.position_delivery_date) }} jour(s) avant livraison
@@ -329,12 +328,19 @@ onMounted(async() => {
                               style="display: flex; flex-direction: column; align-items: center; padding: 0.6em"
                             >
                               <span class="d-flex align-center flex-column ga-1">
-                                <v-chip variant="elevated" style="width: fit-content;" color="blue">
-                                  <v-icon class="mr-2 ml-1">mdi-account-outline</v-icon>
-                                  <span class="mr-3">{{ order.client_name }}</span>
-                                </v-chip>
-
                                 <v-card style="width: fit-content;" class="mt-1 d-flex flex-column">
+                                  <v-chip 
+                                    class="text-body-2 mt-1" 
+                                    variant="text" 
+                                    style="margin-bottom: -16px"
+                                  >
+                                  <v-icon class="mr-1">mdi-account-outline</v-icon>
+                                  <span style="margin-left: 2px; display: flex; align-items: center;">
+                                    Client : 
+                                    <strong style="margin-left: 4px;">{{ order.client_name }}</strong>
+                                  </span>
+                                  </v-chip>
+
                                   <v-chip 
                                     class="text-body-2 mt-1" 
                                     variant="text" 
@@ -389,7 +395,7 @@ onMounted(async() => {
                 </v-card>
                 <v-card class="b1-container">
                   <CardTitle
-                        title="Planning des commandes client"
+                        title="Planning des expéditions"
                         icon="mdi-ferry"
                   />
                   <v-card v-if="runningExpeditions && runningExpeditions.length > 0" style="margin:2px 10px;">
@@ -432,7 +438,7 @@ onMounted(async() => {
                     style="overflow-x: scroll;" 
                     direction="horizontal" 
                     line-thickness="4" 
-                    line-color="blue-darken-4">
+                    line-color="blue">
                     <v-timeline-item
                       v-for="expedition in filteredExpeditions"
                       :key="expedition.id"

@@ -15,6 +15,8 @@ const props = defineProps({
     }
 })
 
+const emit = defineEmits(['resfreshLogistics'])
+
 // Reactive data
 const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const transporter = ref({
@@ -44,6 +46,7 @@ async function submitTransporter() {
       is_sea: false,
       is_air: false,
     };
+    emit('resfreshLogistics')
     selectedTransportTypes.value = [];
 }
 </script>

@@ -24,15 +24,14 @@ const loading = ref(false)
 const companies = computed(() => sessionStore.getters.getUserCompanies());
 const localSelectedCompany = ref(null);
 
-// Handle company selection
 async function selectCompany() {
   loading.value = true;
-  emit('updateLoading', loading.value); // Emit the updated loading state to the parent
+  emit('updateLoading', loading.value);
   
   setTimeout(() => {
-    sessionStore.actions.setPreselectedCompany(localSelectedCompany.value); // Persist selection in sessionStore
+    sessionStore.actions.setPreselectedCompany(localSelectedCompany.value);
     loading.value = false;
-    emit('updateLoading', loading.value); // Emit the updated loading state to the parent
+    emit('updateLoading', loading.value);
   }, 1500);
 }
 
@@ -43,7 +42,7 @@ onMounted(() => {
 
 <template>
   <SpinnLoader :loading="loading" text="Chargement des données..."></SpinnLoader>
-  <v-dialog class="dialog-width">
+  <v-dialog class="secundary-dialog-width">
     <template v-slot:activator="{ props: activatorProps }">
       <v-card
         v-if="!props.origin"
@@ -53,7 +52,7 @@ onMounted(() => {
         color="blue"
         class="top-right-btn mr-2"
       >
-        <div style="padding-top: 4.6vh;">
+        <div style="padding-top: 36px">
           <Microloader :loading="loading" color="white"></Microloader>
           <div v-if="!loading">
             <v-icon>mdi-account-sync-outline</v-icon>

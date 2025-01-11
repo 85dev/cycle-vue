@@ -60,9 +60,10 @@ function updateLoading(event) {
 const items = ref( 
   [
     { title: 'Tableau de bord', icon: 'mdi-gesture-double-tap', path: '/dashboard' },
+    { title: 'Gestion des commandes', icon: 'mdi-package-variant', path: '/handle_orders' },
     { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
     { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
-    { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle-consumptions' },
+    { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle_consumptions' },
   ]
 );
 
@@ -88,7 +89,8 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
 onMounted(async() => {
     await fetchData()
 
-    if (!userId.value) {
+    if (!userId.value || userId.value === 0) {
+      sessionStore.actions.resetUserInfo()
       router.push('/login')
     }
 })
@@ -107,7 +109,9 @@ onMounted(async() => {
   
     <v-card v-if="selectedCompany"
         class="informative-text-m" 
-        id="info-company-bar">
+        id="info-company-bar"
+        elevation="4"
+        >
       <div v-if="selectedCompany" class="d-flex align-center">
         <v-icon class="mr-1">mdi-database</v-icon>
         Compte entreprise actuellement sélectionné : 
@@ -232,12 +236,12 @@ onMounted(async() => {
             v-if="!rail"
             style="display: flex; flex-direction: column; align-items: flex-start;"
           >
-            <CreatePart :origin="'menu'"></CreatePart>
-            <CreateClient :origin="'menu'"></CreateClient>
-            <CreateSupplier :origin="'menu'"></CreateSupplier>
-            <CreateSubcontractor :origin="'menu'"></CreateSubcontractor>
-            <CreateLogisticPlace :origin="'menu'"></CreateLogisticPlace>
-            <CreateTransporter :origin="'menu'"></CreateTransporter>
+            <CreatePart :origin="'menu'" @refresh-parts="rail = !rail"></CreatePart>
+            <CreateClient :origin="'menu'" @refresh-clients="rail = !rail"></CreateClient>
+            <CreateSupplier :origin="'menu'" @refresh-suppliers="rail = !rail"></CreateSupplier>
+            <CreateSubcontractor :origin="'menu'" @refresh-sub-contractors="rail = !rail"></CreateSubcontractor>
+            <CreateLogisticPlace :origin="'menu'" @refresh-logistic-places="rail = !rail"></CreateLogisticPlace>
+            <CreateTransporter :origin="'menu'" @resfresh-logistics="rail = !rail"></CreateTransporter>
           </div>
 
           <span v-if="!rail">

@@ -178,7 +178,7 @@ const actions = {
   },
 
   async loginUserWithToken(token) {
-    if (!accessToken.value && !refreshToken.value) {
+    if (!accessToken.value && !refreshToken.value &&!authToken.value) {
       try {
         const response = await fetch(`${BASE_URL}member_data`, {
           method: 'GET',
