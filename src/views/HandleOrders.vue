@@ -4,7 +4,6 @@ import CardTitle from '@/components/CardTitle.vue';
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 import { clientOrdersHeadersSPE, supplierOrdersHeadersSPE } from '@/models/tableHeaders';
-import dateConverter from '@/services/dateConverter';
 
 import CreateClientOrder from '@/components/modals/CreateClientOrder.vue';
 import CreateSupplierOrder from '@/components/modals/CreateSupplierOrder.vue';
@@ -16,17 +15,22 @@ const supplierOrders = ref([])
 const loading = ref(false)
 const selectedClientFilter = ref(null);
 const commandNumberFilter = ref("");
-const filterTimeout = ref(null); // Timeout reference for debouncing
+const filterTimeout = ref(null);
 const filteredClientOrders = ref([]); 
 const loadingFiltering = ref(false)
+const loadingSupplier = ref(false)
 
-function applyFilters() {
+const selectedSupplierFilter = ref(null);
+const supplierCommandNumberFilter = ref('');
+const filteredSupplierOrders = ref([]);
+const supplierFilterTimeout = ref(null);
+
+function applyClientFilters() {
   if (filterTimeout.value) {
     clearTimeout(filterTimeout.value); // Clear the previous timeout if it exists
   }
 
   if (!selectedClientFilter.value && !commandNumberFilter.value) {
-    // Reset filteredClientOrders to the full clientOrders list if no filters are applied
     filteredClientOrders.value = [...clientOrders.value];
     loadingFiltering.value = false
     return;
@@ -46,32 +50,59 @@ function applyFilters() {
   }, 500);
 }
 
+function applySupplierFilters() {
+  if (supplierFilterTimeout.value) {
+    clearTimeout(supplierFilterTimeout.value);
+  }
+
+  if (!selectedSupplierFilter.value && !supplierCommandNumberFilter.value) {
+    filteredSupplierOrders.value = [...supplierOrders.value];
+    loadingSupplier.value = false
+    return;
+  }
+
+  loadingSupplier.value = true
+
+  supplierFilterTimeout.value = setTimeout(() => {
+    const filtered = supplierOrders.value.filter(order => {
+      const matchesSupplier = !selectedSupplierFilter.value || order.supplier_name === selectedSupplierFilter.value;
+      const matchesCommandNumber = !supplierCommandNumberFilter.value || order.order_number.includes(supplierCommandNumberFilter.value);
+      return matchesSupplier && matchesCommandNumber;
+    });
+
+    filteredSupplierOrders.value = filtered;
+    loadingSupplier.value = false
+  }, 500);
+}
+
 async function fetchClientOrders() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/client_orders_by_company`)
     clientOrders.value = response;
-    applyFilters()
+    applyClientFilters()
 }
 
 async function fetchSupplierOrders() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/supplier_orders_by_company`)
     supplierOrders.value = response;
+    applySupplierFilters()
 }
 
 async function refreshAllData() {
     loading.value = true
     loadingFiltering.value = true
+    loadingSupplier.value = true
 
     setTimeout(async() => {
         await fetchClientOrders()
         await fetchSupplierOrders()
         loading.value = false
         loadingFiltering.value = false
+        loadingSupplier.value = false
     }, 500);
-
 }
 
-watch([selectedClientFilter, commandNumberFilter], applyFilters);
-
+watch([selectedClientFilter, commandNumberFilter], applyClientFilters);
+watch([selectedSupplierFilter, supplierCommandNumberFilter], applySupplierFilters);
 watch(selectedCompany, async () => {
     await refreshAllData()
 })
@@ -98,6 +129,10 @@ onMounted(async() => {
 
         <div class="b1-container mt-3">
             <v-card style="padding: 0.4em">
+                <CardTitle
+                    title="Gestion des commandes client"
+                    icon="mdi-cube-send"
+                />
                 <v-card v-if="clientOrders && clientOrders.length > 0" style="margin: 0.4em;">
                     <div class="d-flex justify-space-between align-center">
                         <span class="informative-text">
@@ -127,7 +162,7 @@ onMounted(async() => {
                         </span>
                     </div>
 
-                    <div class="d-flex ml-4 mt-1 mr-4 justify-lg-space-between" style="margin-bottom: -16px; align-items: center;">
+                    <div class="d-flex ml-4 mt-1 mr-4 justify-lg-space-between" style="margin-bottom: -8px; align-items: center;">
                         <div class="d-flex align-center">
                             <v-select
                                 v-model="selectedClientFilter"
@@ -151,21 +186,12 @@ onMounted(async() => {
                                 v-model="commandNumberFilter"
                                 clearable
                                 prepend-icon="mdi-file-document-outline"
-                                label="Filtre numéro de commande"
+                                label="Filtrer par numéro de commande"
                                 variant="underlined"
-                                class="mr-2"
-                                style="max-width: 16vw; min-width: 12vw;"
+                                class="ml-2"
+                                style="max-width: 36vw; min-width: 24vw;"
                             />
                         </div>
-                        
-                        <v-btn
-                            class="no-effects"
-                            icon
-                            size="16"
-                            @click="selectedClientFilter = null; commandNumberFilter = '';"
-                        >
-                            <v-icon color="secondary">mdi-refresh</v-icon>
-                        </v-btn>
                     </div>
                 </v-card>
    
@@ -178,31 +204,31 @@ onMounted(async() => {
                     no-data-text="Aucune commande client enregistrée"
                 >
                 <template v-slot:item.client_name="{ item }">
-                    <v-chip variant="outlined">
+                    <v-chip variant="text">
                         <v-icon class="mr-1">mdi-account-outline</v-icon>
                         {{ item.client_name }}
                     </v-chip>
                 </template>
                 <template v-slot:item.order_number="{ item }">
-                    <v-chip variant="elevated" color="blue">                
+                    <v-chip variant="elevated" color="white">                
                         <v-icon class="mr-1">mdi-file-document-outline</v-icon>
                         {{ item.order_number }}
                     </v-chip>
                 </template>
                 <template v-slot:item.reference_and_designation="{ item }">
-                    <v-chip variant="outlined">
+                    <v-chip variant="text">
                         <v-icon class="mr-1">mdi-cog-outline</v-icon>
                         {{ item.reference_and_designation }}
                     </v-chip>
                 </template>
                 <template v-slot:item.quantity="{ item }">
-                    <v-chip variant="elevated">
-                        <v-icon color="success" class="mr-1">mdi-package-variant-closed-check</v-icon>
+                    <v-chip variant="text" color="success">
+                        <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
                         {{ item.quantity }}
                     </v-chip>
                 </template>
                 <template v-slot:item.price="{ item }">
-                    <v-chip variant="tonal" color="blue">
+                    <v-chip variant="outlined" color="blue">
                         {{ item.price ? item.price.toFixed(2) + ' €' : 'n/a' }}
                     </v-chip>
                 </template>
@@ -231,41 +257,64 @@ onMounted(async() => {
             <v-card style="padding:0.4em">
                 <CardTitle
                     title="Gestion des commandes fournisseur"
-                    icon="mdi-package-variant"
+                    icon="mdi-package-variant-plus"
                 />
+                <div class="d-flex ml-4 mt-1 mr-4 justify-lg-space-between" style="margin-bottom: -8px; align-items: center;">
+                    <div class="d-flex align-center">
+                    <v-select
+                        v-model="selectedSupplierFilter"
+                        clearable
+                        prepend-icon="mdi-account-outline"
+                        label="Filtre fournisseur"
+                        :items="[...new Set(supplierOrders.map(order => order.supplier_name))]"
+                        variant="underlined"
+                        class="mr-2"
+                        style="max-width: 16vw; min-width: 12vw;"
+                    />
+                    <v-text-field
+                        v-model="supplierCommandNumberFilter"
+                        clearable
+                        prepend-icon="mdi-file-document-outline"
+                        label="Filtrer par numéro de commande"
+                        variant="underlined"
+                        class="ml-2"
+                        style="max-width: 36vw; min-width: 24vw;"
+                    />
+                    </div>
+                </div>
                 <v-data-table
-                    :loading="loading"
+                    :loading="loadingSupplier"
                     density="compact"
-                    :items="supplierOrders"
+                    :items="filteredSupplierOrders"
                     :headers="supplierOrdersHeadersSPE"
                     no-data-text="Aucune commande fournisseur enregistrée"
                 >
                     <template v-slot:item.supplier_name="{ item }">
-                        <v-chip variant="outlined">
+                        <v-chip variant="text">
                             <v-icon class="mr-1">mdi-account-outline</v-icon>
                             {{ item.supplier_name }}
                         </v-chip>
                     </template>
                     <template v-slot:item.order_number="{ item }">
-                        <v-chip variant="elevated" color="blue">
+                        <v-chip variant="elevated" color="white">
                             <v-icon class="mr-1">mdi-file-document-outline</v-icon>
                             {{ item.order_number }}
                         </v-chip>
                     </template>
                     <template v-slot:item.reference_and_designation="{ item }">
-                        <v-chip variant="outlined">
+                        <v-chip variant="text">
                             <v-icon class="mr-1">mdi-cog-outline</v-icon>
                             {{ item.reference_and_designation }}
                         </v-chip>
                     </template>
                     <template v-slot:item.quantity="{ item }">
-                        <v-chip variant="elevated">
-                            <v-icon color="success" class="mr-1">mdi-package-variant-closed-check</v-icon>
+                        <v-chip variant="text" color="success">
+                            <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
                             {{ item.quantity }}
                         </v-chip>
                     </template>
                     <template v-slot:item.price="{ item }">
-                        <v-chip variant="tonal" color="blue">
+                        <v-chip variant="outlined" color="blue">
                             {{ item.price ? item.price.toFixed(2) + ' €' : 'n/a' }}
                         </v-chip>
                     </template>

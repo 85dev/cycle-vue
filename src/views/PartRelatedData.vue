@@ -34,6 +34,8 @@ const router = useRouter();
 const loading = ref(false);
 const clientPositionModal = ref(false);
 const calculatedStocks = ref({})
+const subContractorsList = ref([])
+const logisticPlaceList = ref([])
 
 async function fetchPartData() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
@@ -57,7 +59,7 @@ async function fetchUnsortedClientPositions() {
 }
 
 async function fetchCalculatedStocks() {
-  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/consignment_stocks_positions_by_client`)
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/calculate_part_stocks`)
   calculatedStocks.value = response
 }
 
@@ -91,6 +93,16 @@ async function fetchLogisticPlaces() {
   dataFromSearch.value.positions_by_logistic_place = response
 }
 
+async function fetchSubcontractorsIndex() {
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/subcontractors_index`)
+    subContractorsList.value = response
+}
+
+async function fetchLogisticPlacesIndex() {
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/logistic_places`)
+    logisticPlaceList.value = response
+}
+
 watch(selectedCompany, async (newCompany, oldCompany) => {
   if (newCompany?.id !== oldCompany?.id) {
     router.push('/dashboard');
@@ -108,6 +120,9 @@ async function refreshAllData() {
     await fetchLogisticPlaces();
     await fetchConsignmentStockPositions();
     await fetchStandardStockPositions();
+    await fetchCalculatedStocks();
+    await fetchSubcontractorsIndex();
+    await fetchLogisticPlacesIndex();
     loading.value = false;
 }
 
@@ -153,65 +168,49 @@ onMounted(async () => {
           <div class="d-flex align-center ml-5">
               <span class="informative-text ml-1">Technique et générale : </span>
           </div>
-          <v-row class="pr-2 pl-2 mb-0" style="margin-bottom: -2.4em;" align="center" justify="space-between">
+          <v-row class="pr-4 pl-4 mb-0" style="margin-bottom: -2.4em;" align="center" justify="space-between">
             <v-col cols="12" md="6" class="d-flex flex-column mb-0">
               <div v-if="dataFromSearch.material">
-                <v-chip variant="elevated" class="text-body-2 mt-1">
-                    <v-icon class="mr-2">mdi-label-outline</v-icon>
-                    <span class="mr-1">Matière : <strong>{{ dataFromSearch.material }}</strong></span>
-                </v-chip>
+                  <v-icon class="mr-2">mdi-label-outline</v-icon>
+                  <span class="mr-1">Matière : <strong>{{ dataFromSearch.material }}</strong></span>
               </div>
               <div v-if="dataFromSearch.weight">
-                <v-chip variant="elevated" class="text-body-2 mt-1">
-                    <v-icon class="mr-2">mdi-weight-gram</v-icon>
-                    <span class="mr-1">Poids unitaire (gr) : <strong>{{ dataFromSearch.weight }}</strong></span>
-                </v-chip>
+                  <v-icon class="mr-2">mdi-weight-gram</v-icon>
+                  <span class="mr-1">Poids unitaire (gr) : <strong>{{ dataFromSearch.weight }}</strong></span>
               </div>
               <div v-if="dataFromSearch.drawing">
-                <v-chip variant="elevated" class="text-body-2 mt-1">
-                    <v-icon class="mr-2">mdi-draw-pen</v-icon>
-                    <span class="mr-1">Numéro de dessin : <strong>{{ dataFromSearch.drawing }}</strong></span>
-                </v-chip>
+                  <v-icon class="mr-2">mdi-draw-pen</v-icon>
+                  <span class="mr-1">Numéro de dessin : <strong>{{ dataFromSearch.drawing }}</strong></span>
               </div>
             </v-col>
             <v-col cols="12" md="6" class="d-flex flex-column mb-0">
               <div v-if="dataFromSearch.designation">
-                <v-chip variant="elevated" color="blue" class="text-body-2">
-                    <v-icon class="mr-2">mdi-cog-outline</v-icon>
-                    <span class="mr-1">Désignation : <strong>{{ dataFromSearch.designation }}</strong></span>
-                </v-chip>
+                  <v-icon class="mr-2">mdi-cog-outline</v-icon>
+                  <span class="mr-1">Désignation : <strong>{{ dataFromSearch.designation }}</strong></span>
               </div>
               <div v-if="dataFromSearch.reference">
-                <v-chip variant="elevated" color="blue" class="text-body-2 mt-1">
-                    <v-icon class="mr-2">mdi-rename</v-icon>
-                    <span class="mr-1">Référence : <strong>{{ dataFromSearch.reference }}</strong></span>
-                </v-chip>
+                  <v-icon class="mr-2">mdi-rename</v-icon>
+                  <span class="mr-1">Référence : <strong>{{ dataFromSearch.reference }}</strong></span>
               </div>
-              <v-chip v-if="dataFromSearch.client" color="blue" class="mt-1" style="width: fit-content;" variant="elevated">
+              <div v-if="dataFromSearch.client">
                   <v-icon class="mr-2" >mdi-account-arrow-left-outline</v-icon>
                   <span class="mr-1">Client : <strong>{{ dataFromSearch.client.name }}</strong></span>
-              </v-chip>
+              </div>
             </v-col>
           </v-row>
-          <div v-if="dataFromSearch.current_client_price || dataFromSearch.current_supplier_price" class="ml-1 mb-4">
+          <div v-if="dataFromSearch.current_client_price || dataFromSearch.current_supplier_price" class="ml-1 mb-4 pr-4 pl-4">
             <div class="d-flex align-center">
               <span class="informative-text">Financier : </span>
             </div>
-              <v-chip class="aligner mt-1" style="width: fit-content;" variant="elevated">
                   <v-icon class="mr-2" color="blue">mdi-swap-horizontal</v-icon>
                   <span class="mr-1"><strong>Marge brute</strong> avant sous-traitance et transports : <strong>{{ (dataFromSearch.current_client_price - dataFromSearch.current_supplier_price).toFixed(2) }}</strong></span>
-              </v-chip>
               <div v-if="dataFromSearch.current_client_price">
-                <v-chip variant="elevated" class="text-body-2 mt-1">
                     <v-icon class="mr-2">mdi-currency-usd</v-icon>
                     <span class="mr-1">Dernier prix unitaire client : <strong>{{ dataFromSearch.current_client_price }}</strong></span>
-                </v-chip>
               </div>
               <div v-if="dataFromSearch.current_supplier_price">
-                <v-chip variant="elevated" class="text-body-2 mt-1">
                     <v-icon class="mr-2">mdi-currency-usd</v-icon>
                     <span class="mr-1">Dernier prix unitaire fournisseur : <strong>{{ dataFromSearch.supplier_price }}</strong></span>
-                </v-chip>
               </div>
               <div class="d-flex mt-2" style="margin-bottom: -0.6em;">
                 <span class="informative-text" style="font-style: italic;">Les données financières sont issues de l'activité des commandes client et fournisseur</span>
@@ -223,7 +222,7 @@ onMounted(async () => {
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
-                  variant="elevated"
+                  variant="text"
                 >
                   <v-icon start class="ml-0">mdi-account-multiple</v-icon>
                   Liste des fournisseur(s)
@@ -260,7 +259,7 @@ onMounted(async () => {
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
-                  variant="elevated"
+                  variant="text"
                 >
                   <v-icon start class="ml-0">mdi-account-multiple</v-icon>
                   Liste des sous-traitant(s)
@@ -296,12 +295,152 @@ onMounted(async () => {
           </div>
         </v-card>
 
+      <v-card class="b1-container">
+        <CardTitle 
+              title="Pièces commandées, réservées et à terme"
+              icon="mdi-package-variant-closed"
+            />
+            <v-expansion-panels class="pa-2">
+              <v-expansion-panel>
+                <v-expansion-panel-title>
+                  <v-chip variant="text" color="blue" elevation="2">
+                    <v-icon class="mr-2">mdi-package-variant</v-icon>
+                    Détail des stocks
+                  </v-chip>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <!-- Current Stock -->
+                  <div v-if="calculatedStocks.current_stock" class="mb-6">
+                    <v-data-table
+                      :items="[
+                        { type: 'En stock consignation client', quantity: calculatedStocks.current_stock.consignment_stock },
+                        { type: 'En stock standard client', quantity: calculatedStocks.current_stock.standard_stock },
+                        { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
+                        { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
+                        { type: 'Total disponible', quantity: calculatedStocks.current_stock.total },
+                      ]"
+                      :headers="[
+                        { title: 'Stocks disponibles', value: 'type' },
+                        { title: 'Quantité', value: 'quantity' },
+                      ]"
+                      class="elevation-1"
+                      density="compact"
+                      hide-default-footer
+                    >
+                      <template v-slot:item.quantity="{ item }">
+                        <template v-if="item.type === 'Total disponible'">
+                          <v-chip variant="text" color="blue">
+                            <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
+                            {{ item.quantity }}
+                          </v-chip>
+                        </template>
+                        <template v-else>
+                          <!-- Default Display for Other Rows -->
+                          <v-chip :variant="item.quantity > 0 ? 'text' : 'outlined'" color="success">
+                            <v-icon class="mr-1">
+                              {{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}
+                            </v-icon>
+                            {{ item.quantity }}
+                          </v-chip>
+                        </template>
+                      </template>
+                      <template v-slot:item.total="{ item }">
+                        <strong>{{ item.total }}</strong>
+                      </template>
+                    </v-data-table>
+                  </div>
+
+                  <div v-if="calculatedStocks.ordered_stock" class="mb-6">
+                    <v-data-table
+                      :items="[
+                        { type: 'Total des expéditions en cours', quantity: calculatedStocks.ordered_stock.expeditions },
+                        { type: 'Total des commandes fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
+                      ]"
+                      :headers="[
+                        { title: 'Stocks en commande', value: 'type' },
+                        { title: 'Quantité', value: 'quantity' },
+                      ]"
+                      class="elevation-1"
+                      density="compact"
+                      hide-default-footer
+                    >
+                      <template v-slot:item.quantity="{ item }">
+                        <v-chip variant="text" color="green">
+                          <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}</v-icon>
+                          {{ item.quantity }}
+                        </v-chip>
+                      </template>
+                    </v-data-table>
+                  </div>
+
+                  <div v-if="calculatedStocks.reserved_stock" class="mb-6">
+                    <v-data-table
+                      :items="[
+                        { type: 'Total des commandes client', quantity: calculatedStocks.reserved_stock },
+                      ]"
+                      :headers="[
+                        { title: 'Stocks réservés au client', value: 'type' },
+                        { title: 'Quantité', value: 'quantity' },
+                      ]"
+                      class="elevation-1"
+                      density="compact"
+                      hide-default-footer
+                    >
+                      <template v-slot:item.quantity="{ item }">
+                          <v-chip variant="text" color="success">
+                            <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}</v-icon>
+                            {{ item.quantity }}
+                          </v-chip>
+                      </template>
+                    </v-data-table>
+                  </div>
+
+                  <div v-if="calculatedStocks.total_current_stock || calculatedStocks.total_available_stock">
+                    <v-data-table
+                      :items="[
+                        { type: 'Total actuel disponible', quantity: calculatedStocks.total_current_stock },
+                        { type: 'Total disponible à terme', quantity: calculatedStocks.total_available_stock }
+                      ]"
+                      :headers="[
+                        { title: 'Stock total actuel à terme', value: 'type' },
+                        { title: 'Quantité', value: 'quantity' },
+                      ]"
+                      class="elevation-1"
+                      density="compact"
+                      hide-default-footer
+                    >
+                      <template v-slot:item.quantity="{ item }">
+                        <template v-if="item.type === 'Total disponible à terme' && item.quantity < 0">
+                          <v-chip variant="text" color="red">
+                            <v-icon class="mr-1">mdi-alert-circle-outline</v-icon>
+                            {{ item.quantity }}
+                          </v-chip>
+                        </template>
+                        <template v-else>
+                          <v-chip
+                            variant="text"
+                            :color="item.type === 'Total disponible à terme' ? 'success' : 'blue'"
+                          >
+                            <v-icon class="mr-1">
+                              {{ item.type === 'Total disponible à terme' ? 'mdi-check-circle-outline' : 'mdi-package-variant-closed-check' }}
+                            </v-icon>
+                            {{ item.quantity }}
+                          </v-chip>
+                        </template>
+                      </template>
+                    </v-data-table>
+                  </div>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+      </v-card>
+
       <div class="b1-hand-container">
 
         <v-card class="b1-container">
           
         <div v-if="dataFromSearch.consignment_stock_positions">
-          <div class="b1-top-content mt-0 mb-2 mr-3">
+          <div class="b1-top-content mt-0 mr-3">
             <CardTitle 
               title="Stock consignation client"
               icon="mdi-dolly"
@@ -322,9 +461,9 @@ onMounted(async () => {
             >
               <!-- Panel Title -->
               <v-expansion-panel-title>
-                <v-chip variant="elevated" color="blue">
+                <v-chip variant="text" color="blue" elevation="2">
                   <v-icon class="mr-2">mdi-map-marker-circle</v-icon>
-                  {{ stock.address }}
+                  {{ stock.name ? stock.name : stock.address }}
                 </v-chip>
                 <v-spacer></v-spacer>
               </v-expansion-panel-title>
@@ -335,18 +474,16 @@ onMounted(async () => {
                   <v-card>
                     <v-row class="pa-4" align="center" justify="space-between">
                       <v-col cols="12" md="6" class="d-flex flex-column">
-                        <!-- Stock Address -->
                         <div>
-                          <v-chip variant="elevated" class="text-body-2">
-                            <v-icon class="mr-2">mdi-map-marker-circle</v-icon>
-                            {{ stock.address }}
+                          <v-chip variant="text" class="text-body-2 mt-1">
+                            <v-icon class="mr-2">mdi-account</v-icon>
+                            {{ stock.name }}
                           </v-chip>
                         </div>
-                        <!-- Contact Name -->
                         <div>
-                          <v-chip variant="elevated" class="text-body-2 mt-1">
-                            <v-icon class="mr-2">mdi-account-circle-outline</v-icon>
-                            {{ stock.contact_name }}
+                          <v-chip variant="text" class="text-body-2">
+                            <v-icon class="mr-2">mdi-map-marker-circle</v-icon>
+                            {{ stock.address }}
                           </v-chip>
                         </div>
                       </v-col>
@@ -394,7 +531,7 @@ onMounted(async () => {
                       density="dense"
                     >
                       <template v-slot:item.quantity="{item}">
-                        <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                        <v-chip variant="text" color="success" style="margin: 0.2em">
                           <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                           {{ item.quantity }}
                         </v-chip>
@@ -408,6 +545,8 @@ onMounted(async () => {
                           <TransferPositionFromClient
                             v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
                             origin="consignment"
+                            :logistic-place-list="logisticPlaceList"
+                            :sub-contractors-list="subContractorsList"
                             :client-orders=" dataFromSearch.client_orders"
                             :client="dataFromSearch.client"
                             :selected-company-id="selectedCompany.id" 
@@ -432,14 +571,14 @@ onMounted(async () => {
                       density="dense"
                     >
                       <template v-slot:item.quantity="{item}">
-                        <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                        <v-chip variant="text" color="success" style="margin: 0.2em">
                           <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                           {{ item.quantity }}
                         </v-chip>
                       </template>
                       <template v-slot:item.consumption_period="{item}">
-                        <v-chip variant="outlined" style="margin: 0.2em">
-                          <v-icon color='orange' class="mr-2">mdi-package-variant-minus</v-icon>
+                        <v-chip variant="text" style="margin: 0.2em">
+                          <v-icon class="mr-2">mdi-package-variant-minus</v-icon>
                           {{ item.consumption_period }}
                         </v-chip>
                       </template>
@@ -454,10 +593,10 @@ onMounted(async () => {
             </v-expansion-panel>
           </v-expansion-panels>
         </div>
-        <div class="ml-5 mb-2" style="margin-top: -0.5em" v-if="dataFromSearch.consignment_stock_positions">
-          <div v-if="dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
+        <div class="ml-5" v-if="dataFromSearch.consignment_stock_positions">
+          <div style="margin-top: -1.2em;" class="mb-1" v-if="dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
             <v-chip
-                variant="outlined"
+                variant="text"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
@@ -465,8 +604,10 @@ onMounted(async () => {
               </v-chip>
           </div>
         </div>
+        </v-card>
 
-        <div class="mt-3" v-if="dataFromSearch.standard_stock_positions">
+        <v-card class="b1-container">
+          <div class="mt-3" v-if="dataFromSearch.standard_stock_positions">
           <CardTitle 
               title="Stock standard client"
               icon="mdi-dolly"
@@ -539,6 +680,8 @@ onMounted(async () => {
                           <TransferPositionFromClient
                             v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
                             origin="consignment"
+                            :logistic-place-list="logisticPlaceList"
+                            :sub-contractors-list="subContractorsList"
                             :client-orders=" dataFromSearch.client_orders"
                             :client="dataFromSearch.client"
                             :selected-company-id="selectedCompany.id" 
@@ -554,10 +697,10 @@ onMounted(async () => {
               </v-expansion-panel>
             </v-expansion-panels>
           </div>
-          <div class="ml-5 mb-2" v-if="dataFromSearch.standard_stock_positions">
-            <div v-if="dataFromSearch.standard_stock_positions && dataFromSearch.standard_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
+          <div class="ml-5" v-if="dataFromSearch.standard_stock_positions">
+            <div style="margin-top: -1.2em;" class="mb-1" v-if="dataFromSearch.standard_stock_positions && dataFromSearch.standard_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
               <v-chip
-                variant="outlined"
+                variant="text"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
@@ -599,7 +742,7 @@ onMounted(async () => {
               <v-icon :icon="item.status === 'In transit' ? 'mdi-ferry' : 'mdi-progress-clock'"></v-icon>
             </template>
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="outlined" color="success" style="margin: 0.2em;">
+              <v-chip variant="text" color="success" style="margin: 0.2em;">
                 <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.quantity }}
               </v-chip>
@@ -691,28 +834,28 @@ onMounted(async () => {
                     variant="outlined"
                     color="blue"
                 >
-                    {{ item.price }}
+                    {{ item.price + ' €' }}
                 </v-chip>
             </template>
             <template v-slot:item.original_quantity="{ item }">
-                <v-chip variant="elevated" color="blue">
+                <v-chip variant="text" color="blue">
                   <v-icon style="margin-right: 6px">mdi-package-variant-closed-plus</v-icon>
                   {{ item.original_quantity }}
                 </v-chip>
             </template>
             <template v-slot:item.quantity="{ item }">
-                <v-chip variant="outlined" color="success" v-if="item.quantity < 0">
+                <v-chip variant="text" color="success" v-if="item.quantity < 0">
                   <v-icon style="margin-right: 6px">mdi-progress-check</v-icon>
                   Excédent de {{ Math.abs(item.quantity) }} 
                 </v-chip>
-                <v-chip variant="elevated" v-else> 
-                  <v-icon color="warning" style="margin-right: 6px">mdi-progress-download</v-icon>
+                <v-chip variant="text" color="warning" v-else> 
+                  <v-icon style="margin-right: 6px">mdi-progress-download</v-icon>
                   {{ item.quantity }} 
                 </v-chip>
             </template>
             <template v-slot:item.status="{ item }">
-              <v-chip variant="elevated" style="margin: 0.4em 0.2em; font-weight: 500">
-                <v-icon :color="statusIconColor(item.status)" style="margin-right: 4px">
+              <v-chip variant="text" style="margin: 0.4em 0.2em; font-weight: 500">
+                <v-icon style="margin-right: 4px">
                   {{ statusIcon(item.status) }}
                 </v-icon>
                 <span>{{ statusText(item.status) }}</span>
@@ -784,7 +927,7 @@ onMounted(async () => {
               density="dense"
             >
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="outlined" color="success" style="margin: 0.2em">
+              <v-chip variant="text" color="success" style="margin: 0.2em">
                 <v-icon class="mr-2">mdi-truck-fast-outline</v-icon>
                 {{ item.quantity }}
               </v-chip>
@@ -797,12 +940,13 @@ onMounted(async () => {
             </template>
             <template v-slot:item.status="{ item }">
               <v-chip
-                variant="elevated"
+                variant="text"
                 style="margin: 0.2em 0;"
                 outlined
+                :color="item.status === 'delivered' ? 'success' : 'warning'"
               >
                 <v-icon
-                  :color="item.status === 'delivered' ? 'success' : 'orange'"
+                  :color="item.status === 'delivered' ? 'success' : 'warning'"
                   style="margin-right: 4px;"
                   left
                 >
@@ -845,7 +989,7 @@ onMounted(async () => {
               <div v-for="subcontractor in dataFromSearch.positions_by_sub_contractors" :key="subcontractor.subcontractor_id" class="mb-4">
                 <v-card style="margin:0.4em">
                   <v-card-title>
-                    <v-chip variant="elevated" color="blue" outlined>
+                    <v-chip variant="text">
                       <v-icon class="mr-1">mdi-account-wrench-outline</v-icon>
                       {{ subcontractor.subcontractor_name }}
                     </v-chip>
@@ -859,7 +1003,7 @@ onMounted(async () => {
                   >
                     <!-- Quantity Column -->
                     <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="elevated" style="margin: 0.2em">
+                      <v-chip variant="text" style="margin: 0.2em">
                         <v-icon color="orange" class="mr-2">mdi-cog-sync-outline</v-icon>
                         {{ item.quantity }}
                       </v-chip>
@@ -871,6 +1015,8 @@ onMounted(async () => {
                         <TransferPosition
                           v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
                           origin="subcontractor"
+                          :logistic-place-list="logisticPlaceList"
+                          :sub-contractors-list="subContractorsList"
                           :client-orders="dataFromSearch.client_orders"
                           :client="dataFromSearch.client"
                           :selected-company-id="selectedCompany.id"
@@ -907,7 +1053,7 @@ onMounted(async () => {
               <div v-for="logisticPlace in dataFromSearch.positions_by_logistic_place" :key="logisticPlace.logistic_place_id" class="mb-4">
                 <v-card style="margin:0.4em">
                   <v-card-title>
-                    <v-chip variant="elevated" color="blue" outlined>
+                    <v-chip variant="text">
                       <v-icon class="mr-1">mdi-human-dolly</v-icon>
                       {{ logisticPlace.logistic_place_name }}
                     </v-chip>
@@ -921,7 +1067,7 @@ onMounted(async () => {
                   >
                     <!-- Quantity Column -->
                     <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                      <v-chip variant="text" color="success" style="margin: 0.2em">
                         <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                         {{ item.quantity }}
                       </v-chip>
@@ -933,6 +1079,8 @@ onMounted(async () => {
                         <TransferPosition
                           v-if="selectedCompany && item && dataFromSearch.client.name"
                           origin="logistic_place"
+                          :logistic-place-list="logisticPlaceList"
+                          :sub-contractors-list="subContractorsList"
                           :client="dataFromSearch.client"
                           :client-orders="dataFromSearch.client_orders"
                           :selected-company-id="selectedCompany.id"

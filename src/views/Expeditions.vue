@@ -115,13 +115,13 @@ onMounted(async() => {
             </v-data-table>
             <div v-else class="d-flex flex-wrap align-items-center">
               <v-chip
-                class="ma-1 mt-2 mb-2"
+                class="ma-1 mt-2 mb-2 ml-4"
                 style="width: fit-content;"
-                variant="tonal"
+                variant="text"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>
-                <span class="mr-1" >Aucune expédition en cours</span>
+                <span class="mr-1">Aucune expédition en cours</span>
               </v-chip>
             </div>
         </v-card>
@@ -144,7 +144,7 @@ onMounted(async() => {
                     {{ new Date(item.arrival_time).toLocaleDateString() }}
                 </template>
                 <template v-slot:item.status="{ item }">
-                    <v-chip variant="elevated" style="margin: 0.2em 0em" outlined>
+                    <v-chip variant="text" style="margin: 0.2em 0em" outlined>
                         <v-icon color="success" style="margin-right: 4px;" left>mdi-check-circle-outline</v-icon>
                         Livré
                     </v-chip>
@@ -158,9 +158,9 @@ onMounted(async() => {
             </v-data-table>
             <div v-else class="d-flex flex-wrap align-items-center">
               <v-chip
-                class="ma-1 mt-2 mb-2"
+                class="ma-1 mt-2 mb-2 ml-4"
                 style="width: fit-content;"
-                variant="tonal"
+                variant="text"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>

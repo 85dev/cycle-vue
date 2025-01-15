@@ -26,6 +26,12 @@ const props = defineProps({
     origin: {
         type: String,
         required: true
+    },
+    subContractorsList: {
+        type: Array
+    },
+    logisticPlaceList: {
+        type: Array
     }
 })
 
@@ -33,22 +39,10 @@ const emit = defineEmits('refresh')
 
 const reactivePosition = toRefs(props.position)
 
-const subContractorsList = ref([])
-const logisticPlaceList = ref([])
 const modifiedQuantity = ref(props.position.quantity)
 const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
-
-async function fetchSubcontractors() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/subcontractors_index`);
-    subContractorsList.value = response;
-}
-
-async function fetchLogisticPlaces() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/logistic_places`);
-    logisticPlaceList.value = response;
-}
 
 function createPayload() {
     let destinationType = null;
@@ -59,11 +53,11 @@ function createPayload() {
     if (selectedSubcontractor.value) {
         destinationType = "subcontractor";
         destinationName = selectedSubcontractor.value;
-        subContractorId = subContractorsList.value.find(sc => sc.name === selectedSubcontractor.value)?.id;
+        subContractorId = props.subContractorsList.find(sc => sc.name === selectedSubcontractor.value)?.id;
     } else if (selectedLogisticPlace.value) {
         destinationType = "logistic_place";
         destinationName = selectedLogisticPlace.value;
-        logisticPlaceId = logisticPlaceList.value.find(lp => lp.name === selectedLogisticPlace.value)?.id;
+        logisticPlaceId = props.logisticPlaceList.find(lp => lp.name === selectedLogisticPlace.value)?.id;
     }
 
     return {
@@ -94,9 +88,6 @@ onMounted(async () => {
     modifiedQuantity.value = props.position.quantity;
     selectedLogisticPlace.value = null;
     selectedSubcontractor.value = null;
-
-    await fetchSubcontractors();
-    await fetchLogisticPlaces();
 });
 </script>
 
@@ -164,7 +155,7 @@ onMounted(async () => {
                                     class="field-slot"
                                     variant="underlined"
                                     clearable
-                                    :items="subContractorsList.map(sc => sc.name) || []"
+                                    :items="props.subContractorsList.map(sc => sc.name) || []"
                                     v-model="selectedSubcontractor"
                                     label="Sous-traitant"
                                     aria-required="true"
@@ -176,7 +167,7 @@ onMounted(async () => {
                                     class="field-slot"
                                     variant="underlined"
                                     clearable
-                                    :items="logisticPlaceList.map(lp => lp.name) || []"
+                                    :items="props.logisticPlaceList.map(lp => lp.name) || []"
                                     v-model="selectedLogisticPlace"
                                     label="Lieu de stockage"
                                     aria-required="true"

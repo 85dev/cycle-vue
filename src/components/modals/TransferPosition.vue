@@ -30,32 +30,23 @@ const props = defineProps({
     },
     clientOrders: {
         type: Array
+    },
+    subContractorsList: {
+        type: Array
+    },
+    logisticPlaceList: {
+        type: Array
     }
 })
 
 const emit = defineEmits('refresh')
 
 const reactivePosition = toRefs(props.position)
-
-const subContractorsList = ref([])
-const logisticPlaceList = ref([])
 const modifiedQuantity = ref(props.position.quantity)
 const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedClient = ref(null)
 const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
-
-async function fetchSubcontractors() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/subcontractors_index`)
-
-    subContractorsList.value = response
-}
-
-async function fetchLogisticPlaces() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/logistic_places`)
-
-    logisticPlaceList.value = response
-}
 
 function createPayload() {
     let destinationType = null;
@@ -66,11 +57,11 @@ function createPayload() {
     if (selectedSubcontractor.value) {
         destinationType = "subcontractor";
         destinationName = selectedSubcontractor.value;
-        subContractorId = subContractorsList.value.find(sc => sc.name === selectedSubcontractor.value)?.id;
+        subContractorId = props.subContractorsList.find(sc => sc.name === selectedSubcontractor.value)?.id;
     } else if (selectedLogisticPlace.value) {
         destinationType = "logistic_place";
         destinationName = selectedLogisticPlace.value;
-        logisticPlaceId = logisticPlaceList.value.find(lp => lp.name === selectedLogisticPlace.value)?.id;
+        logisticPlaceId = props.logisticPlaceList.find(lp => lp.name === selectedLogisticPlace.value)?.id;
     } else if (selectedClient.value) {
         destinationType = "client";
         destinationName = selectedClient.value;
@@ -107,9 +98,6 @@ onMounted(async() => {
     selectedClient.value = null
     selectedLogisticPlace.value = null
     selectedSubcontractor.value = null
-
-    await fetchSubcontractors()
-    await fetchLogisticPlaces()
 })
 </script>
 
@@ -139,8 +127,8 @@ onMounted(async() => {
                         <GenerateDeliverySlipPDF
                             v-if="props"
                             :selected-company-id="props.selectedCompanyId"
-                            :subcontractors="subContractorsList"
-                            :logistic-places="logisticPlaceList"
+                            :subcontractors="props.subContractorsList"
+                            :logistic-places="props.logisticPlaceList"
                             :position="props.position"
                             :origin="props.origin" 
                             :client="props.client"
@@ -199,7 +187,7 @@ onMounted(async() => {
                                 class="field-slot"
                                 variant="underlined"
                                 clearable
-                                :items="subContractorsList.map(sc => sc.name) || []"
+                                :items="props.subContractorsList.map(sc => sc.name) || []"
                                 v-model="selectedSubcontractor"
                                 label="Sous-traitant"
                                 aria-required="true"
@@ -211,7 +199,7 @@ onMounted(async() => {
                                 class="field-slot"
                                 variant="underlined"
                                 clearable
-                                :items="logisticPlaceList.map(sc => sc.name) || []"
+                                :items="props.logisticPlaceList.map(sc => sc.name) || []"
                                 v-model="selectedLogisticPlace"
                                 label="Lieu de stockage"
                                 aria-required="true"
