@@ -16,10 +16,11 @@ const name = ref(null)
 const autocompletedAddresses = ref([])
 const clientLoading = ref(false)
 const contacts = ref([{ email: '', first_name: '', last_name: '', role: '' }]);
+const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() })
 
 // For stock adding purposes
-const consignmentStocks = ref([{ address: '', autocompleteOptions: [], loading: false }]);
-const standardStocks = ref([{ address: '', autocompleteOptions: [], loading: false }]);
+const consignmentStocks = ref([{ address: '', name: '', autocompleteOptions: [], loading: false }]);
+const standardStocks = ref([{ address: '', name: '', autocompleteOptions: [], loading: false }]);
 
 const emit = defineEmits(['refreshClients'])
 
@@ -129,12 +130,12 @@ async function submitClient() {
             name: name.value,
             address: address.value,
             contacts: contacts.value.map(({ email, first_name, last_name, role }) => ({ email, first_name, last_name, role, contactable_type: "client" })),
-            consignment_stocks: consignmentStocks.value.map(({ address }) => ({ address })),
-            standard_stocks: standardStocks.value.map(({ address }) => ({ address})),
+            consignment_stocks: consignmentStocks.value.map(({ address, name }) => ({ address, name })),
+            standard_stocks: standardStocks.value.map(({ address, name }) => ({ address, name })),
         }
     }
 
-    const response = await apiCaller.post(`users/${userId.value}/create_client`, client, true)
+    const response = await apiCaller.post(`companies/${selectedCompany.value.id}/create_client`, client, true)
 
     emit('refreshClients')
 }
@@ -174,7 +175,7 @@ onMounted(async() => {
       </template>
   
       <template v-slot:default="{ isActive }">
-        <div style="padding: 0.4em;">
+        <div style="padding: 0.4em; overflow-y: auto;">
           <v-card style="padding: 0.4em;">
             <CardTitle
               title="Ajouter un nouveau client"
@@ -187,10 +188,11 @@ onMounted(async() => {
             <CardTitle
               title="Informations de la société"
               icon="mdi-card-account-details-outline"
+              color="dark"
             />
               <v-card-text>
                 <v-row 
-                    style="margin-top: -1em;"
+                    style="margin-top: -0.6em;"
                     no-gutters
                 >
                   <v-col cols="6">
@@ -246,6 +248,7 @@ onMounted(async() => {
                 <CardTitle
                   title="Contacts"
                   icon="mdi-account-multiple-outline"
+                  color="dark"
                 />
                 <div style="margin-bottom: 0.4em;">
                       <span class="informative-text" style="display: flex; align-items: center;">
@@ -303,7 +306,7 @@ onMounted(async() => {
                     ></v-text-field>
                   </v-col>
                   <v-col cols="12" md="1" class="d-flex justify-end">
-                    <v-btn @click="removeContact(index)" icon small>
+                    <v-btn @click="removeContact(index)" class="no-effects" icon small>
                       <v-icon>mdi-delete-outline</v-icon>
                     </v-btn>
                   </v-col>
@@ -332,6 +335,7 @@ onMounted(async() => {
                   <CardTitle
                     title="Lieux de stockage consignation"
                     icon="mdi-package-variant-closed-check"
+                    color="dark"
                   />
                   <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                   
@@ -342,7 +346,17 @@ onMounted(async() => {
                     no-gutters
                     style="margin-top: -2em; padding: 0em 0.8em"
                   >
-                    <v-col cols="12" md="10">
+                  <v-col cols="12" md="4">
+                    <v-text-field
+                      v-model="stock.name"
+                      label="Nom du stock"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                    <v-col cols="12" md="7">
                       <v-text-field
                         v-model="stock.address"
                         label="Adresse"
@@ -353,8 +367,8 @@ onMounted(async() => {
                         clearable
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="2" class="d-flex justify-end">
-                      <v-btn @click="removeConsignmentStock(index)" icon small>
+                    <v-col cols="12" md="1" class="d-flex justify-end">
+                      <v-btn @click="removeConsignmentStock(index)" class="no-effects" icon small>
                         <v-icon>mdi-delete-outline</v-icon>
                       </v-btn>
                     </v-col>
@@ -395,6 +409,7 @@ onMounted(async() => {
                   <CardTitle
                     title="Lieux de stockage standard"
                     icon="mdi-dolly"
+                    color="dark"
                   />
                   <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
                   
@@ -405,7 +420,17 @@ onMounted(async() => {
                     no-gutters
                     style="margin-top: -2em; padding: 0em 0.8em"
                   >
-                    <v-col cols="12" md="10">
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="stock.name"
+                        label="Nom du stock"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="7">
                       <v-text-field
                         v-model="stock.address"
                         label="Adresse"
@@ -416,8 +441,8 @@ onMounted(async() => {
                         clearable
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="2" class="d-flex justify-end">
-                      <v-btn @click="removeStandardStock(index)" icon small>
+                    <v-col cols="12" md="1" class="d-flex justify-end">
+                      <v-btn @click="removeStandardStock(index)" class="no-effects" icon small>
                         <v-icon>mdi-delete-outline</v-icon>
                       </v-btn>
                     </v-col>

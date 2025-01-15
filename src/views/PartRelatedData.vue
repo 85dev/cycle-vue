@@ -11,6 +11,7 @@ import { useRoute, useRouter } from 'vue-router';
 import CreateClientOrder from '@/components/modals/CreateClientOrder.vue'
 import CreateSupplierOrder from '@/components/modals/CreateSupplierOrder.vue'
 import EditClientOrder from '@/components/modals/EditClientOrder.vue'
+import EditPart from '@/components/modals/EditPart.vue';
 import ArchivateClientOrder from '@/components/modals/ArchivateClientOrder.vue'
 import DeletingOrder from '@/components/modals/DeletingOrder.vue'
 import SupplierOrderDetails from '@/components/modals/SupplierOrderDetails.vue'
@@ -19,6 +20,7 @@ import PositionHistory from '@/components/modals/PositionHistory.vue';
 import TransferPosition from '@/components/modals/TransferPosition.vue';
 import HandleConsignmentConsumption from '@/components/modals/HandleConsignmentConsumption.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import TransferPositionFromClient from '@/components/modals/TransferPositionFromClient.vue';
 
 // Constant data
 import { clientOrdersHeaders, consumptionPositionsHeaders, supplierOrdersHeaders, clientStockPositionsHeaders, expeditionsListHeaders, subcontractorHeaders, logisticplacesHeaders } from '@/models/tableHeaders.js'
@@ -31,6 +33,7 @@ const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const clientPositionModal = ref(false);
+const calculatedStocks = ref({})
 
 async function fetchPartData() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
@@ -43,12 +46,19 @@ async function fetchSupplierOrders() {
 }
 
 async function fetchUnsortedClientPositions() {
-  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/unsorted_client_positions`)
-  dataFromSearch.value.unsorted_client_positions = response
+  setTimeout(async() => {
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/unsorted_client_positions`)
+    dataFromSearch.value.unsorted_client_positions = response
 
-  if (response.length > 0) {
-    clientPositionModal.value = true;
-  }
+    if (response.length > 0) {
+      clientPositionModal.value = true;
+    }
+  }, 200);
+}
+
+async function fetchCalculatedStocks() {
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/clients/${dataFromSearch.value.client.id}/consignment_stocks_positions_by_client`)
+  calculatedStocks.value = response
 }
 
 async function fetchConsignmentStockPositions() {
@@ -89,8 +99,8 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
 
 async function refreshAllData() {
     loading.value = true;
-    await fetchPartData()
     await fetchUnsortedClientPositions();
+    await fetchPartData()
     await fetchSupplierOrders();
     await fetchClientOrders();
     await fetchExpeditions();
@@ -125,14 +135,21 @@ onMounted(async () => {
           :selected-company-id="selectedCompany.id"
           :client="dataFromSearch.client"
           :client-positions="dataFromSearch.unsorted_client_positions"
-          @refreshClientPositions="refreshAllData"
+          @refreshClientPositions="refreshAllData()"
         />
 
-        <v-card class="b1-container">
-          <CardTitle 
+        <v-card class="b1-container mt-3 mb-3">
+          <div class="d-flex align-center justify-lg-space-between">
+            <CardTitle 
               title="Informations sur la pièce"
               icon="mdi-cog-outline"
             />
+            <EditPart
+                v-if="selectedCompany && dataFromSearch"
+                :selected-company-id="selectedCompany.id"
+                :part="dataFromSearch"
+            />
+          </div>
           <div class="d-flex align-center ml-5">
               <span class="informative-text ml-1">Technique et générale : </span>
           </div>
@@ -178,7 +195,7 @@ onMounted(async () => {
           </v-row>
           <div v-if="dataFromSearch.current_client_price || dataFromSearch.current_supplier_price" class="ml-1 mb-4">
             <div class="d-flex align-center">
-              <span class="informative-text ml-1">Financier : </span>
+              <span class="informative-text">Financier : </span>
             </div>
               <v-chip class="aligner mt-1" style="width: fit-content;" variant="elevated">
                   <v-icon class="mr-2" color="blue">mdi-swap-horizontal</v-icon>
@@ -202,7 +219,7 @@ onMounted(async () => {
           </div>
 
           <div class="d-flex">
-            <v-card class="pa-1 flex-grow-1 ma-3">
+            <v-card class="pa-1 flex-grow-1 mr-3 ml-3 mb-3">
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
@@ -219,7 +236,7 @@ onMounted(async () => {
                   v-for="supplier in dataFromSearch.suppliers"
                   :key="supplier.id"
                   style="width: fit-content;"
-                  variant="tonal"
+                  variant="outlined"
                   color='blue'
                 >
                   <v-icon class="mr-2">mdi-account-arrow-right-outline</v-icon>
@@ -230,7 +247,7 @@ onMounted(async () => {
                 <v-chip
                   class="ma-1 mt-3"
                   style="width: fit-content;"
-                  variant="tonal"
+                  variant="outlined"
                   color="secondary"
                 >
                   <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>
@@ -239,7 +256,7 @@ onMounted(async () => {
               </div>
             </v-card>
 
-            <v-card class="pa-1 flex-grow-1 ma-3">
+            <v-card class="pa-1 flex-grow-1 mr-3 ml-3 mb-3">
               <span class="informative-text ml-1">
                 <v-chip
                   class="mt-2"
@@ -257,7 +274,7 @@ onMounted(async () => {
                   v-for="subcontractor in dataFromSearch.sub_contractors"
                   :key="subcontractor.id"
                   style="width: fit-content;"
-                  variant="tonal"
+                  variant="outlined"
                   color='blue'
                 >
                   <v-icon class="mr-2">mdi-screw-machine-flat-top</v-icon>
@@ -268,7 +285,7 @@ onMounted(async () => {
                 <v-chip
                   class="ma-1 mt-3"
                   style="width: fit-content;"
-                  variant="tonal"
+                  variant="outlined"
                   color="secondary"
                 >
                   <v-icon class="mr-2">mdi-backspace-reverse-outline</v-icon>
@@ -388,11 +405,20 @@ onMounted(async () => {
                             :selected-company-id="selectedCompany.id"
                             :client-position-id="item.id"
                           />
+                          <TransferPositionFromClient
+                            v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
+                            origin="consignment"
+                            :client-orders=" dataFromSearch.client_orders"
+                            :client="dataFromSearch.client"
+                            :selected-company-id="selectedCompany.id" 
+                            :position="item"
+                            @refresh="refreshAllData()"
+                          />
                       </template>
                     </v-data-table>
                   </v-card>
 
-                  <v-card style="margin-top: 1em; margin-bottom: 0.1em;">
+                  <v-card v-if="(stock && stock.consumption_positions && stock.consumption_positions.length > 0) || loading" style="margin-top: 1em; margin-bottom: 0.1em;">
                     <span class="informative-text">
                       <v-chip class="mt-2 mb-1" variant="outlined" color="blue">
                         <v-icon start class="ml-0">mdi-package-variant-minus</v-icon>
@@ -401,13 +427,12 @@ onMounted(async () => {
                     </span>
                     <v-data-table
                       :loading="loading"
-                      v-if="(stock && stock.consumption_positions && stock.consumption_positions.length > 0) || loading"
                       :items="stock.consumption_positions"
                       :headers="consumptionPositionsHeaders"
                       density="dense"
                     >
                       <template v-slot:item.quantity="{item}">
-                        <v-chip variant="outlined" color="success"style="margin: 0.2em">
+                        <v-chip variant="outlined" color="success" style="margin: 0.2em">
                           <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                           {{ item.quantity }}
                         </v-chip>
@@ -420,7 +445,10 @@ onMounted(async () => {
                       </template>
                     </v-data-table>
                   </v-card>
-                  
+                  <v-chip v-else variant="outlined" color='secondary' class="mt-4 mb-2" style="width: fit-content;">
+                    <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
+                    Aucune  {{ dataFromSearch.designation  + ' ' + dataFromSearch.reference }} n'est enregistrée dans l'historique de consommation 
+                  </v-chip>
                 </v-card>
               </v-expansion-panel-text>
             </v-expansion-panel>
@@ -429,11 +457,11 @@ onMounted(async () => {
         <div class="ml-5 mb-2" style="margin-top: -0.5em" v-if="dataFromSearch.consignment_stock_positions">
           <div v-if="dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
             <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                  Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation  + ' ' + dataFromSearch.reference }} </strong> en stock consignation client n'est enregistrée
+                  Aucune {{ dataFromSearch.designation  + ' ' + dataFromSearch.reference }} en stock consignation client n'est enregistrée
               </v-chip>
           </div>
         </div>
@@ -508,6 +536,15 @@ onMounted(async () => {
                             :selected-company-id="selectedCompany.id"
                             :client-position-id="item.id"
                           />
+                          <TransferPositionFromClient
+                            v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
+                            origin="consignment"
+                            :client-orders=" dataFromSearch.client_orders"
+                            :client="dataFromSearch.client"
+                            :selected-company-id="selectedCompany.id" 
+                            :position="item"
+                            @refresh="refreshAllData()"
+                          />
                           </div>
                         </template>
                       </v-data-table>           
@@ -520,11 +557,11 @@ onMounted(async () => {
           <div class="ml-5 mb-2" v-if="dataFromSearch.standard_stock_positions">
             <div v-if="dataFromSearch.standard_stock_positions && dataFromSearch.standard_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> en stock standard client n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} en stock standard client n'est enregistrée
               </v-chip>
             </div>
           </div>
@@ -610,11 +647,11 @@ onMounted(async () => {
             </v-data-table>
             <div v-else class="informative-text" style="display: flex; align-items: center">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> en commande client n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} en commande client n'est enregistrée
               </v-chip>
             </div>
           </div>
@@ -658,7 +695,7 @@ onMounted(async () => {
                 </v-chip>
             </template>
             <template v-slot:item.original_quantity="{ item }">
-                <v-chip variant="outlined" color="blue">
+                <v-chip variant="elevated" color="blue">
                   <v-icon style="margin-right: 6px">mdi-package-variant-closed-plus</v-icon>
                   {{ item.original_quantity }}
                 </v-chip>
@@ -711,11 +748,11 @@ onMounted(async () => {
             </v-data-table>
             <div v-else class="informative-text" style="display: flex; align-items: center">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> en commande fournisseur n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} en commande fournisseur n'est enregistrée
               </v-chip>
             </div>
           </div>
@@ -786,11 +823,11 @@ onMounted(async () => {
             </v-data-table>
             <div v-else class="informative-text" style="display: flex; align-items: center">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> en expédition n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} en expédition n'est enregistrée
               </v-chip>
             </div>
           </div>
@@ -804,46 +841,55 @@ onMounted(async () => {
             />
           </div>
           <div class="b1-middle-content">
-            <v-data-table
-              :loading="loading"
-              v-if="(dataFromSearch.positions_by_sub_contractors && dataFromSearch.positions_by_sub_contractors.length > 0) || loading"
-              :items="dataFromSearch.positions_by_sub_contractors"
-              density="dense"
-              :headers="subcontractorHeaders"
-            >
-            <template v-slot:item.subcontractor_name="{ item }">
-              <v-chip variant="outlined" style="margin: 0.2em 0em" outlined>
-                <v-icon color='orange' class="mr-1">mdi-account-wrench-outline</v-icon>
-                {{ item.subcontractor_name }}
-              </v-chip>
-            </template>
-            <template v-slot:item.quantity="{item}">
-              <v-chip  variant="outlined" color="success" style="margin: 0.2em">
-                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
-                {{ item.quantity }}
-              </v-chip>
-            </template>
-            <template v-slot:item.actions="{ item }">
-              <div class="actions-slot">
-                <TransferPosition
-                  v-if="selectedCompany && item && dataFromSearch.client.name && dataFromSearch.client_orders"
-                  origin="subcontractor"
-                  :client-orders=" dataFromSearch.client_orders"
-                  :client="dataFromSearch.client"
-                  :selected-company-id="selectedCompany.id" 
-                  :position="item"
-                  @refresh="refreshAllData()"
-                />
+            <div v-if="dataFromSearch.positions_by_sub_contractors && dataFromSearch.positions_by_sub_contractors.length > 0">
+              <div v-for="subcontractor in dataFromSearch.positions_by_sub_contractors" :key="subcontractor.subcontractor_id" class="mb-4">
+                <v-card style="margin:0.4em">
+                  <v-card-title>
+                    <v-chip variant="elevated" color="blue" outlined>
+                      <v-icon class="mr-1">mdi-account-wrench-outline</v-icon>
+                      {{ subcontractor.subcontractor_name }}
+                    </v-chip>
+                  </v-card-title>
+                  <v-divider></v-divider>
+                  <v-data-table
+                    :loading="loading"
+                    :items="subcontractor.positions"
+                    density="dense"
+                    :headers="subcontractorHeaders"
+                  >
+                    <!-- Quantity Column -->
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="elevated" style="margin: 0.2em">
+                        <v-icon color="orange" class="mr-2">mdi-cog-sync-outline</v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+
+                    <!-- Actions Column -->
+                    <template v-slot:item.actions="{ item }">
+                      <div class="actions-slot">
+                        <TransferPosition
+                          v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
+                          origin="subcontractor"
+                          :client-orders="dataFromSearch.client_orders"
+                          :client="dataFromSearch.client"
+                          :selected-company-id="selectedCompany.id"
+                          :position="item"
+                          @refresh="refreshAllData()"
+                        />
+                      </div>
+                    </template>
+                  </v-data-table>
+                </v-card>
               </div>
-            </template>
-            </v-data-table>
+            </div>
             <div v-else class="informative-text" style="display: flex; align-items: center">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> sur les lieux de stockage n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} sur les lieux de stockage n'est enregistrée
               </v-chip>
             </div>
           </div>
@@ -857,47 +903,55 @@ onMounted(async () => {
             />
           </div>
           <div class="b1-middle-content">
-            <v-data-table
-              :loading="loading"
-              v-if="dataFromSearch.positions_by_logistic_place && dataFromSearch.positions_by_logistic_place.length > 0"
-              :items="dataFromSearch.positions_by_logistic_place"
-              density="dense"
-              :headers="logisticplacesHeaders"
-              no-data-text="Aucune référence dans les lieux de stockage"
-            >
-            <template v-slot:item.logistic_place_name="{ item }">
-              <v-chip variant="outlined" style="margin: 0.2em 0em" outlined>
-                <v-icon color='orange' class="mr-1">mdi-human-dolly</v-icon>
-                {{ item.logistic_place_name }}
-              </v-chip>
-            </template>
-            <template v-slot:item.quantity="{item}">
-              <v-chip variant="outlined" color="success" style="margin: 0.2em">
-                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
-                {{ item.quantity }}
-              </v-chip>
-            </template>
-            <template v-slot:item.actions="{ item }">
-              <div class="actions-slot">
-                <TransferPosition
-                  v-if="selectedCompany && item && dataFromSearch.client.name"
-                  origin="logistic_place"
-                  :client="dataFromSearch.client"
-                  :client-orders=" dataFromSearch.client_orders"
-                  :selected-company-id="selectedCompany.id" 
-                  :position="item"
-                  @refresh="refreshAllData()"
-                />
+            <div v-if="dataFromSearch.positions_by_logistic_place && dataFromSearch.positions_by_logistic_place.length > 0">
+              <div v-for="logisticPlace in dataFromSearch.positions_by_logistic_place" :key="logisticPlace.logistic_place_id" class="mb-4">
+                <v-card style="margin:0.4em">
+                  <v-card-title>
+                    <v-chip variant="elevated" color="blue" outlined>
+                      <v-icon class="mr-1">mdi-human-dolly</v-icon>
+                      {{ logisticPlace.logistic_place_name }}
+                    </v-chip>
+                  </v-card-title>
+                  <v-divider></v-divider>
+                  <v-data-table
+                    :loading="loading"
+                    :items="logisticPlace.positions"
+                    density="dense"
+                    :headers="logisticplacesHeaders"
+                  >
+                    <!-- Quantity Column -->
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="outlined" color="success" style="margin: 0.2em">
+                        <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+
+                    <!-- Actions Column -->
+                    <template v-slot:item.actions="{ item }">
+                      <div class="actions-slot">
+                        <TransferPosition
+                          v-if="selectedCompany && item && dataFromSearch.client.name"
+                          origin="logistic_place"
+                          :client="dataFromSearch.client"
+                          :client-orders="dataFromSearch.client_orders"
+                          :selected-company-id="selectedCompany.id"
+                          :position="item"
+                          @refresh="refreshAllData()"
+                        />
+                      </div>
+                    </template>
+                  </v-data-table>
+                </v-card>
               </div>
-            </template>
-            </v-data-table>
+            </div>
             <div v-else class="informative-text" style="display: flex; align-items: center">
               <v-chip
-                variant="tonal"
+                variant="outlined"
                 color="secondary"
               >
                 <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                Aucune <strong class="ml-1 mr-1"> {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} </strong> sur les lieux de stockage n'est enregistrée
+                Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} sur les lieux de stockage n'est enregistrée
               </v-chip>
             </div>
           </div>

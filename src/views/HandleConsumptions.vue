@@ -6,6 +6,7 @@ import sessionStore from '@/stores/sessionStore';
 import { globalConsumptionHeaders } from '@/models/tableHeaders';
 import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import Popup from '@/components/Popup.vue';
 
 const loading = ref(false)
 const consumptionRows = ref([])

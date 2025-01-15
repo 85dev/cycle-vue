@@ -5,8 +5,9 @@ const props = defineProps({
     selectedCompanyId: {
         type: Number
     },
-    partId: {
-        type: Number
+    part: {
+        type: Object,
+        required: true,
     }
 })
 
@@ -21,12 +22,12 @@ const emit = defineEmits(['refreshPart'])
             <v-chip
                 v-bind="activatorProps"
                 class="index-slot"
-                variant="text"
+                variant="outlined"
                 color="blue"
                 style="margin-right: 0.6em; font-weight: 500;"
             >
                 <v-icon start class="ml-1">mdi-pencil-outline</v-icon>
-                <span class="mr-1">Editer</span>
+                <span class="mr-1">Modifier les informations</span>
             </v-chip>
         </template>
   

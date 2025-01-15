@@ -71,15 +71,17 @@ async function fetchExpeditionIndices() {
     indices.value = response
 
     indices.value = indices.value.map(index => {
-      if (index.part_id) {
+    if (index.part_id) {
         partIds.value.push(index.part_id); // Add part_id to partIds array
-      }
-      return {
+    }
+    return {
         ...index,
         selectedSubcontractor: null,
         selectedLogisticPlace: null,
-        selectedClient: null
-      };
+        selectedClient: null,
+        clone: false,
+        quantity: index.quantity || 0 // Initialize with the existing or default quantity
+    };
     });
 
     partIds.value = [...new Set(partIds.value)];
@@ -111,6 +113,7 @@ async function submitDispatch() {
         references: indices.value.map(index => index.part_reference),
         designations: indices.value.map(index => index.part_designation),
         clients: indices.value.map(index => index.selectedClient || ''),
+        quantities: indices.value.map(index => index.quantity),
         clones: indices.value.map(index => index.clone || false),
         arrival_time: arrivalTime.value
     }

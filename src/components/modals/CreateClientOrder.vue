@@ -151,6 +151,7 @@ onMounted( async () => {
         <template v-slot:activator="{ props: activatorProps }">
             <v-chip
                 v-bind="activatorProps"
+                :elevation="props.client ? 0 : 4"
                 :variant="props.client ? 'outlined' : 'elevated'"
                 color="blue"
             >

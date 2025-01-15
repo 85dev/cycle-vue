@@ -15,10 +15,15 @@ const props = defineProps({
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-            <v-chip :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(pendingRequests && pendingRequests.length === 0) ? 0 : 4" v-bind="activatorProps" class="ml-2 mb-2" :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'warning' ">
+            <v-chip 
+                :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" 
+                :elevation="(pendingRequests && pendingRequests.length === 0) ? 0 : 4" 
+                v-bind="activatorProps" 
+                class="ml-2 mb-2" 
+                :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'blue' ">
                 <v-icon class="mr-2">mdi-account-clock-outline</v-icon>
                 {{ pendingRequests.length }} demande(s) en attente
-              </v-chip>
+            </v-chip>
         </template>
   
         <template v-slot:default="{ isActive }">

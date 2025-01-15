@@ -109,6 +109,7 @@ onMounted(async() => {
                     v-bind="activatorProps" v-else-if="props.origin !== 'menu'"
                     style="margin: 1em 0em -0.6em 0em;"
                     variant="elevated"
+                    elevation="4"
                     color="blue"
                 >
                     <v-icon class='mr-2'>mdi-plus-thick</v-icon>

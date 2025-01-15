@@ -57,7 +57,7 @@ function getKpiIcon(key) {
 
 function getKpiColor(key) {
   const colors = {
-    runningExpeditions: 'blue-darken-4',
+    runningExpeditions: 'blue',
     totalActiveOrders: 'red',
     openSupplierPositions: 'red-accent-2',
     onTimeDeliveryRate: 'orange-darken-3',
@@ -445,7 +445,7 @@ onMounted(async() => {
                       elevation="6"
                       icon="mdi-ferry"
                       icon-color="white"
-                      dot-color="orange"
+                      dot-color="blue"
                     >
                       <template v-slot:opposite>
                         <v-chip

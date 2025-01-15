@@ -9,7 +9,6 @@ import { useRouter } from 'vue-router';
 import apiCaller from '@/services/apiCaller';
 import DeletePart from '@/components/modals/DeletePart.vue';
 import CreatePart from '@/components/modals/CreatePart.vue';
-import EditPart from '@/components/modals/EditPart.vue';
 import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 
@@ -185,7 +184,7 @@ onMounted(async() => {
                 @click:row="routeToPart"
             >
             <template v-slot:item.reference="{ item }">
-                <v-chip class="index-slot" variant="elevated" color="white">
+                <v-chip class="index-slot" variant="outlined">
                     <v-icon class="mr-1">mdi-cog-outline</v-icon>
                     {{ item.reference + ' ' + item.designation }}
                 </v-chip>
@@ -251,14 +250,8 @@ onMounted(async() => {
                     </v-chip>
                 </div>
             </template>
-            <template v-slot:item.actions="{ item }">
-                
+            <template v-slot:item.actions="{ item }">     
                 <div class="actions-slot">
-                    <EditPart
-                        v-if="selectedCompany && item"
-                        :selected-company-id="selectedCompany.id"
-                        :part-id="item.id"
-                    />
                     <DeletePart
                         v-if="selectedCompany && item"
                         :selected-company-id="selectedCompany.id"
@@ -268,7 +261,7 @@ onMounted(async() => {
                         @refresh-parts="fetchParts()"
                     />
                     <td class="arrow-cell">
-                        <v-icon class="hover-arrow">mdi-chevron-right</v-icon>
+                        <v-icon class="hover-arrow ml-2">mdi-chevron-right</v-icon>
                     </td>
                 </div>  
             </template>

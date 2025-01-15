@@ -1,5 +1,5 @@
 <script setup>
-import { ref, toRef, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // Services
 import apiCaller from '@/services/apiCaller';
@@ -112,7 +112,6 @@ async function downloadPdf() {
         window.open(url, '_blank');
         loading.value = false
     }, 1200);
-   
 }
 
 async function processPdf() {

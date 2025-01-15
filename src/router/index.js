@@ -11,6 +11,7 @@ import SubContractorsIndex from '@/views/SubContractorsIndex.vue'
 import LogisticPlacesIndex from '@/views/LogisticPlacesIndex.vue'
 import HandleConsumptions from '@/views/HandleConsumptions.vue'
 import HandleOrders from '@/views/HandleOrders.vue'
+import PdfCreations from '@/views/PdfCreations.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,7 @@ const router = createRouter({
     { path: '/subcontractors', name: 'SubContractorIndex', component: SubContractorsIndex },
     { path: '/logistic-places', name: 'LogisticPlacesIndex', component: LogisticPlacesIndex },
     { path: '/handle_consumptions', name: 'HandleConsumptions', component: HandleConsumptions },
+    { path: '/pdf_creations', name: 'PdfCreations', component: PdfCreations },
   ],
 })
 

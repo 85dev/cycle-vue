@@ -83,6 +83,7 @@ onMounted( async () => {
                 v-if="props.origin === 'single'"
                 style="margin-top: 1em;"
                 variant="elevated"
+                elevation="4"
                 color="blue"
             >
                 <v-icon class='mr-2'>mdi-plus-thick</v-icon>

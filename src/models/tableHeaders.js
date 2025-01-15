@@ -39,14 +39,12 @@ const partHeaders = [
 const subcontractorHeaders = [
   { title: "Numéro d'expédition", value: 'expedition_number' },
   { title: 'Quantité', value: 'quantity' },
-  { title: 'Sous-traitant', value: 'subcontractor_name' },
   { title: 'Actions', value: 'actions', sortable: false },
 ];
 
 const logisticplacesHeaders = [
   { title: "Numéro d'expédition", value: 'expedition_number' },
   { title: 'Quantité', value: 'quantity' },
-  { title: 'Lieu de stockage', value: 'logistic_place_name' },
   { title: 'Actions', value: 'actions', sortable: false },
 ];
 
@@ -108,6 +106,13 @@ const multipleDestinationHeaders = [
   { title: 'Lieu de stockage', value: 'logistic_place' },     
   { title: 'Stockage chez client', value: 'client' },                 
   { title: 'Actions', value: 'actions', sortable: false }
+]
+
+const transferClientHeaders = [
+  { title: 'Date du transfert', value: 'transfer_date' },
+  { title: 'Quantité à transférer', value: 'quantity' },
+  { title: 'Sous-traitant', value: 'sub_contractor' },
+  { title: 'Lieu de stockage', value: 'logistic_place' }
 ]
 
 const transferHeaders = [
@@ -201,4 +206,4 @@ const expeditionsIndexHeaders = [
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { clientOrdersHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

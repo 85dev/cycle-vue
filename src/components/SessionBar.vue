@@ -64,6 +64,7 @@ const items = ref(
     { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
     { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
     { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle_consumptions' },
+    { title: 'Gestion des PDF', icon: 'mdi-file-pdf-box', path: '/pdf_creations' },
   ]
 );
 
@@ -276,7 +277,7 @@ onMounted(async() => {
               <span v-else>{{ accessRequests.length }}</span>
             </v-chip>
             <!-- Pending Requests -->
-            <v-chip class="mt-2" @click="rail = true" :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(pendingRequests && pendingRequests.length === 0) ? 0 : 4" :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'warning'">
+            <v-chip class="mt-2" @click="rail = true" :variant="(pendingRequests && pendingRequests.length === 0) ? 'outlined' : 'elevated'" :elevation="(pendingRequests && pendingRequests.length === 0) ? 0 : 4" :color="(pendingRequests && pendingRequests.length === 0) ? 'secondary' : 'blue'">
               <v-icon>mdi-account-clock-outline</v-icon>
               <span v-if="pendingRequests && pendingRequests.length > 0"><strong>{{ pendingRequests.length }}</strong></span>
               <span v-else>{{ pendingRequests.length }}</span>

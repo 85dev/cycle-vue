@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits } from 'vue';
+import { ref, defineEmits, computed } from 'vue';
 import sessionStore from '@/stores/sessionStore.js'; // Import the new store
 
 // Components
@@ -10,13 +10,13 @@ import CardTitle from '../CardTitle.vue';
 import apiCaller from '@/services/apiCaller.js';
 import autocomplete from '@/services/addressAutocomplete.js';
 
-const userId = ref(null);
 const address = ref(null);
 const name = ref(null);
 const contactEmail = ref(null);
 const contactName = ref(null);
 const autocompletedAddresses = ref([]);
 const loading = ref(false);
+const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() })
 
 const emit = defineEmits(['refreshLogisticPlaces']);
 
@@ -50,7 +50,7 @@ async function submitLogisticPlace() {
   };
 
   const response = await apiCaller.post(
-    `users/${userId.value}/create_logistic_place`,
+    `companies/${selectedCompany.value.id}/create_logistic_place`,
     logisticPlace,
     true
   );
@@ -61,13 +61,6 @@ async function submitLogisticPlace() {
 function selectAddress(newAddress) {
   address.value = newAddress;
 }
-
-onMounted(async () => {
-  sessionStore.actions.initializeAuthState(); // Load user and auth token from localStorage
-
-  // Set the userId from sessionStore
-  userId.value = sessionStore.getters.getUserID();
-});
 </script>
 
 <template>
