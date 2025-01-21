@@ -42,16 +42,14 @@ async function deleteOrder() {
 </script>
 
 <template>
-    <div class="pa-4 text-center">
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-
             <v-chip
                 v-bind="activatorProps"
                 variant="text"
                 color="red"
             >
-                <v-icon class='mr-2'>mdi-delete-outline</v-icon>
+                <v-icon class='mr-1'>mdi-delete-outline</v-icon>
                 <span>Supprimer</span>
             </v-chip> 
 
@@ -85,7 +83,6 @@ async function deleteOrder() {
 
         </template>
       </v-dialog>
-    </div>
   </template>
 
 <style scoped lang="scss">

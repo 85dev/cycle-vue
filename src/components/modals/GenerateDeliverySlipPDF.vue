@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue'
 import apiCaller from '@/services/apiCaller';
 import CardTitle from '../CardTitle.vue';
 import SpinnLoader from '../SpinnLoader.vue';
+import dateConverter from '@/services/dateConverter';
 
 const props = defineProps({
     selectedCompanyId: {
@@ -13,7 +14,6 @@ const props = defineProps({
     },
     position: {
         type: Object,
-        required: true
     },
     logisticPlace: {
         type: Object,
@@ -33,6 +33,10 @@ const props = defineProps({
     },
     logisticPlaces: {
         type: Array,
+    },
+    clientList: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -43,6 +47,7 @@ const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedLogisticPlaceDeparture = ref(null)
 const selectedSubcontractorDeparture = ref(null)
 const selectedClientArrival = ref(null)
+const selectedClient = ref(null)
 const selectedLogisticPlaceArrival = ref(null)
 const selectedSubcontractorArrival = ref(null)
 const deliverySlip = ref(null)
@@ -52,19 +57,44 @@ const packagingInformations = ref('')
 const transportConditions = ref('')
 const createdObjectId = ref(0)
 const lastDeliverySlip = ref({})
+const clientForOrders = ref(null)
+const reactiveOrders = ref([])
+const selectedOrders = ref([])
+const reactiveClientOrder = ref(null)
+const expeditionPositions = ref([])
 
 async function fetchContacts() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.client.id}/contacts_by_client`)
-    contacts.value = response
+    if (props.client) {
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.client.id}/contacts_by_client`)
+        contacts.value = response
+    }
 }
 
 async function fetchLastSlip() {
-    const response = await apiCaller.get(`pdf_generator/${props.client.id}/last_delivery_slip`)
-    lastDeliverySlip.value = response.delivery_slip
+    if (props.client) {
+        const response = await apiCaller.get(`pdf_generator/${props.client.id}/last_delivery_slip`)
+        lastDeliverySlip.value = response.delivery_slip
+    }
+}
+
+async function fetchClientOrders() {
+    const clientId = props.clientList.find(c => c.name === clientForOrders.value)?.id
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${clientId}/client_orders_by_client`)
+
+    reactiveOrders.value = response
+    reactiveClientOrder.value = null
+}
+
+async function fetchExpeditionPositions() {
+    const clientId = props.clientList.find(c => c.name === clientForOrders.value)?.id
+    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${clientId}/expedition_positions_by_client`)
+
+    expeditionPositions.value = response
 }
 
 async function generatedPdf() {
-    const departureAddress = selectedSubcontractorDeparture.value
+    if (props.origin === 'subcontractor' || props.origin === 'logistic_place') {
+        const departureAddress = selectedSubcontractorDeparture.value
     ? `${selectedSubcontractorDeparture.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorDeparture.value)?.address || "Adresse non trouvée"}`
     : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || "Adresse non trouvée"}`;
 
@@ -98,6 +128,7 @@ async function generatedPdf() {
 
     const responseData = await response.json();
     createdObjectId.value = responseData.delivery_slip_id
+    }
 }
 
 async function downloadPdf() {
@@ -134,15 +165,26 @@ onMounted(async() => {
     <SpinnLoader :loading="loading" text="Génération du document" />
      <v-dialog class="secundary-dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-            <v-btn
+            <v-chip
+                v-if="props.origin === 'subcontractor' || props.origin === 'logistic_place'"
                 v-bind="activatorProps"
-                class="index-slot mr-4"
-                variant="text"
-                color="blue"
+                variant="elevated"
+                color="white"
+                elevation="2"
             >
-                <v-icon start class="ml-1">mdi-download-box-outline</v-icon>
-                <span class="mr-1 ">Générer le bordereau</span>
-            </v-btn>
+                <v-icon start class="mr-1 ml-1">mdi-download-box-outline</v-icon>
+                Générer le bordereau
+            </v-chip>
+            <v-chip 
+                v-else
+                v-bind="activatorProps"
+                variant="elevated"
+                color="white"
+                elevation="2"
+            >
+                <v-icon start class="mr-1 ml-1">mdi-download-box-outline</v-icon>
+                Générer un bordereau
+            </v-chip>
         </template>
   
         <template v-slot:default="{ isActive }">
@@ -158,8 +200,72 @@ onMounted(async() => {
                             <strong class="ml-1">{{ lastDeliverySlip.number }}</strong>
                         </v-chip>
                     </span>
+                    <v-card v-if="props.origin !== 'subcontractor' && props.origin !== 'logistic_place'" style="margin: 0.4em">
+                        <v-select 
+                            class="mr-6 ml-6 mt-2"
+                            :items="props.clientList.map(c => c.name)"
+                            v-model="clientForOrders"
+                            variant="underlined"
+                            label="Sélectionnez un client afin d'en choisir les positions"
+                            @update:model-value="fetchClientOrders(); fetchExpeditionPositions();"
+                        />
+                        <v-select 
+                            v-if="clientForOrders"
+                            class="mr-6 ml-6"
+                            style="margin-top: -1em;"
+                            variant="underlined"
+                            label="Sélectionnez une commande"
+                            :items="reactiveOrders.map(o => o.order_number)"
+                            v-model="reactiveClientOrder"
+                        />
+                        <v-data-table
+                            v-if="reactiveClientOrder"
+                            class="mr-2 ml-2"
+                            density="compact"
+                            show-select
+                            :headers="[
+                                { title: 'Numéro de commande', value: 'order_number' },
+                                { title: 'Réference', value: 'reference_and_designation' },
+                                { title: 'Quantité', value: 'quantity' },
+                                { title: 'Prix (€/unité)', value: 'price' },
+                                { title: 'Date de livraison', value: 'delivery_date' }
+                            ]"
+                            v-model="selectedOrders"
+                            :items="reactiveOrders"
+                        >
+                        <template v-slot:item.order_number="{ item }">
+                            <v-chip variant="elevated" color="white">
+                            <v-icon class="mr-1">mdi-file-document-outline</v-icon>
+                            {{ item.order_number }}
+                            </v-chip>
+                        </template>
+                        <template v-slot:item.reference_and_designation="{ item }">
+                            <v-chip variant="text" color="primary">
+                            <v-icon class="mr-1">mdi-tag-text-outline</v-icon>
+                                {{ item.reference_and_designation }}
+                            </v-chip>
+                        </template>
+                        <template v-slot:item.quantity="{ item }">
+                            <v-chip variant="text" color="success">
+                            <v-icon class="mr-1">mdi-format-list-numbered</v-icon>
+                            {{ item.quantity }}
+                            </v-chip>
+                        </template>
+                        <template v-slot:item.price="{ item }">
+                            <v-chip variant="elevated" color="white">
+                            {{ item.price }}
+                            </v-chip>
+                        </template>
+                        <template v-slot:item.delivery_date="{ item }">
+                            <v-chip variant="text" color="success">
+                            <v-icon class="mr-1">mdi-calendar-clock</v-icon>
+                            {{ dateConverter.formatISODate(item.delivery_date) }}
+                            </v-chip>
+                        </template>
+                        </v-data-table>
+                    </v-card>
                     <v-card style="margin: 0.4em">
-                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -1em;">
+                        <v-row class="mr-2 ml-2 pa-2" style="margin-top: -1em;">
                             <v-col cols="6">
                                 <v-text-field
                                     class="field-slot"
@@ -167,28 +273,6 @@ onMounted(async() => {
                                     variant="underlined"
                                     label="Numéro de bordereau"
                                     clearable
-                                />
-                            </v-col>
-                            <v-col cols="6">
-                                <v-select
-                                    v-if="props.clientOrders"
-                                    v-model="selectedClientOrder"
-                                    label="Commande client"
-                                    variant="underlined"
-                                    :items="props.clientOrders.map(c => c.client_order_number)"
-                                />
-                            </v-col>   
-                        </v-row>         
-                        
-                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -3em;">
-                            <v-col cols="6">
-                                <v-select 
-                                    v-if="props.clientOrders"
-                                    v-model="selectedContact"
-                                    clearable
-                                    label="Référent"
-                                    variant="underlined"
-                                    :items="contacts.map(c => `${c.first_name} ${c.last_name}`)"
                                 />
                             </v-col>
                             <v-col cols="6">
@@ -200,10 +284,32 @@ onMounted(async() => {
                                     label="Poids brut (kg)"
                                     clearable
                                 />
+                            </v-col>   
+                        </v-row>         
+                        
+                        <v-row class="mr-2 ml-2 pa-2" style="margin-top: -3em;">
+                            <v-col cols="6">
+                                <v-select 
+                                    v-if="props.clientOrders"
+                                    v-model="selectedContact"
+                                    clearable
+                                    label="Référent"
+                                    variant="underlined"
+                                    :items="contacts.map(c => `${c.first_name} ${c.last_name}`)"
+                                />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-select
+                                    v-if="props.clientOrders"
+                                    v-model="selectedClientOrder"
+                                    label="Commande client"
+                                    variant="underlined"
+                                    :items="props.clientOrders.map(c => c.client_order_number)"
+                                />
                             </v-col>
                         </v-row>
                       
-                            <v-row class="mr-4 ml-4 pa-2" style="margin-top: -3em;">
+                            <v-row class="mr-2 ml-2 pa-2" style="margin-top: -3em;">
                                 <v-col cols="6">
                                     <v-textarea
                                         v-model="packagingInformations"
@@ -267,7 +373,7 @@ onMounted(async() => {
                                     variant="underlined"
                                     label="Sous-traitant"
                                     clearable
-                                    :disabled="selectedLogisticPlaceArrival || selectedClientArrival"
+                                    :disabled="selectedLogisticPlaceArrival || selectedClientArrival || selectedClient"
                                 />
                                 <v-select
                                     class="field-slot mr-2"
@@ -276,15 +382,25 @@ onMounted(async() => {
                                     variant="underlined"
                                     label="Lieu logistique"
                                     clearable
-                                    :disabled="selectedClientArrival || selectedSubcontractorArrival "
+                                    :disabled="selectedClientArrival || selectedSubcontractorArrival || selectedClient"
                                 />
                                 <v-checkbox
+                                    v-if="props.origin !== 'subcontractor' || props.origin !== 'logistic_place'"
                                     class="ml-2"
                                     v-model="selectedClientArrival"
                                     label="Chez le client"
                                     variant="underlined"
                                     color="blue"
-                                    :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival "
+                                    :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival || selectedClient"
+                                />
+                                <v-select
+                                    v-else
+                                    class="ml-2"
+                                    variant="underlined"
+                                    v-model="selectedClient"
+                                    label="Sélectionnez un client"
+                                    :items="props.clientList.map(c => c.name) || []"
+                                    :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival || selectedClientArrival"
                                 />
                         </v-row>
                     </v-card>

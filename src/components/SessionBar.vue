@@ -5,15 +5,6 @@ import sessionStore from '../stores/sessionStore.js'
 import Logo from '@/assets/img/cycle_app.svg'
 
 // Components import
-// Models Creation
-import CreateClient from '@/components/modals/CreateClient.vue'
-import CreateSupplier from '@/components/modals/CreateSupplier.vue'
-import CreatePart from '@/components/modals/CreatePart.vue';
-import CreateSubcontractor from './modals/CreateSubcontractor.vue';
-import CreateLogisticPlace from './modals/CreateLogisticPlace.vue';
-import CreateTransporter from './modals/CreateTransporter.vue';
-
-// Others
 import PendingRequests from './modals/PendingRequests.vue';
 import AccessRequests from './modals/AccessRequests.vue';
 import SelectDatabaseCompany from './modals/SelectDatabaseCompany.vue';
@@ -22,6 +13,7 @@ import SpinnLoader from './SpinnLoader.vue';
 import WelcomeAccount from './modals/WelcomeAccount.vue';
 import AccountModal from './modals/AccountModal.vue';
 import Microloader from './Microloader.vue';
+import DataAddingModal from './modals/DataAddingModal.vue';
 
 const loading = ref(false)
 const loadingData = ref(false)
@@ -64,7 +56,7 @@ const items = ref(
     { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
     { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
     { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle_consumptions' },
-    { title: 'Gestion des PDF', icon: 'mdi-file-pdf-box', path: '/pdf_creations' },
+    { title: 'Gestion des documents', icon: 'mdi-file-pdf-box', path: '/pdf_creations' },
   ]
 );
 
@@ -235,14 +227,8 @@ onMounted(async() => {
    
           <div 
             v-if="!rail"
-            style="display: flex; flex-direction: column; align-items: flex-start;"
           >
-            <CreatePart :origin="'menu'" @refresh-parts="rail = !rail"></CreatePart>
-            <CreateClient :origin="'menu'" @refresh-clients="rail = !rail"></CreateClient>
-            <CreateSupplier :origin="'menu'" @refresh-suppliers="rail = !rail"></CreateSupplier>
-            <CreateSubcontractor :origin="'menu'" @refresh-sub-contractors="rail = !rail"></CreateSubcontractor>
-            <CreateLogisticPlace :origin="'menu'" @refresh-logistic-places="rail = !rail"></CreateLogisticPlace>
-            <CreateTransporter :origin="'menu'" @resfresh-logistics="rail = !rail"></CreateTransporter>
+           <DataAddingModal @refresh="rail = !rail" />
           </div>
 
           <span v-if="!rail">

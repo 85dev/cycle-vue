@@ -5,7 +5,7 @@ import sessionStore from '@/stores/sessionStore';
 import autocomplete from '@/services/addressAutocomplete.js'
 
 // Components
-import SpinnLoader from '../SpinnLoader.vue';
+import SpinnLoader from '../Microloader.vue'
 import CardTitle from '../CardTitle.vue';
 
 // Vue essentials

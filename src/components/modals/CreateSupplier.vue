@@ -72,18 +72,20 @@ onMounted(async() => {
 <template>
       <v-dialog class="dialog-width">
         <template v-slot:activator="{ props: activatorProps }">
-            <v-list v-if="props.origin === 'menu'" variant="tonal" density="compact" nav style="width: 100%; transition: all 0.2s; margin-top: -0.15em; margin-bottom: 0.5em;">
-                <v-list-item v-bind="activatorProps" style="display: flex; margin-bottom: -0.6em;" nav>
-                    <div class="aligner">
-                        <v-list-item-icon>
-                        <v-icon style="margin-right: 0.4em;">mdi-account-multiple-plus-outline</v-icon>
-                        </v-list-item-icon>
-                        <v-list-item-title style="margin-right: 0.2em;">Ajouter un fournisseur</v-list-item-title>
-                    </div>
-                </v-list-item>                
-            </v-list>
+            <v-card
+                v-if="props.origin !== 'single'"
+                    class="clickable-card d-flex align-center justify-center flex-column"
+                    outlined
+                    v-bind="activatorProps"
+                    style="height: 100px; width: 200px;"
+                    elevation="2"
+                    @click="openModal"
+                >
+                    <v-icon class="mr-2">mdi-factory</v-icon>
+                    <span class="informative-text">Ajouter un fournisseur</span>
+            </v-card>
             <v-btn v-bind="activatorProps" v-if="props.origin === 'single'" style="margin: 1em 0em 0.6em 0em;">
-                <v-icon style="margin-right: 0.4em">mdi-account-multiple-plus-outline</v-icon>
+                <v-icon style="margin-right: 0.4em">mdi-factory</v-icon>
                 Ajouter un fournisseur
             </v-btn>
         </template>

@@ -7,7 +7,7 @@ import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 
 // Components & constant data
-import { expeditionsIndexHeaders } from '@/models/tableHeaders'
+import { expeditionsIndexHeaders, deliveredExpeditionsHeaders } from '@/models/tableHeaders'
 import DispatchExpedition from '@/components/modals/DispatchExpedition.vue';
 import CreateExpedition from '@/components/modals/CreateExpedition.vue';
 import ExpeditionDetails from '@/components/modals/ExpeditionDetails.vue';
@@ -40,7 +40,7 @@ function expeditionStatus(status) {
     if (status === 'undelivered') {
         return 'En transit'
     } else if (status === 'delivered') {
-        return 'Livré'
+        return 'Arrivé au port'
     }
 }
 
@@ -84,22 +84,38 @@ onMounted(async() => {
                 icon="mdi-ferry"
             />
             <v-data-table
-            v-if="runningExpeditions && runningExpeditions.length > 0"
-            :headers="expeditionsIndexHeaders"
-            :items="runningExpeditions || []"
-            density="dense"
+                v-if="runningExpeditions && runningExpeditions.length > 0"
+                :headers="expeditionsIndexHeaders"
+                :items="runningExpeditions || []"
+                density="dense"
             >
                 <template v-slot:item.real_departure_time="{ item }">
-                {{ new Date(item.real_departure_time).toLocaleDateString() }}
+                    {{ new Date(item.real_departure_time).toLocaleDateString() }}
                 </template>
                 <template v-slot:item.arrival_time="{ item }">
-                {{  item.arrival_time ? new Date(item.arrival_time).toLocaleDateString() : 'Pas de date d\'arrivée' }}
+                    {{ item.arrival_time ? new Date(item.arrival_time).toLocaleDateString() : 'Pas de donnée' }}
+                </template>
+                <template v-slot:item.estimated_arrival_time="{ item }">
+                    {{ item.estimated_arrival_time ? new Date(item.estimated_arrival_time).toLocaleDateString() : 'Pas de donnée' }}
                 </template>
                 <template v-slot:item.status="{ item }">
-                    <v-chip variant="elevated" color="blue" style="margin: 0.2em 0em">
+                    <v-chip variant="elevated" color="white" style="margin: 0.2em 0em">
                         <v-icon class="mr-1">mdi-ferry</v-icon>
                         {{ expeditionStatus(item.status) }}
                     </v-chip>
+                </template>
+                <template v-slot:item.supplier_names="{ item }">
+                    <div>
+                        <v-chip
+                            v-for="(supplier, index) in item.supplier_names"
+                            :key="index"
+                            variant="text"
+                            class="mr-2"
+                        >
+                        <v-icon class="mr-1">mdi-account-outline</v-icon>
+                            {{ supplier }}
+                        </v-chip>
+                    </div>
                 </template>
                 <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
@@ -108,8 +124,7 @@ onMounted(async() => {
                         :selected-company-id="selectedCompany.id"
                         :expedition="item"
                         @refresh-expeditions="refreshExpeditions()"
-                    >
-                    </DispatchExpedition>
+                    />
                 </div>
                 </template>
             </v-data-table>
@@ -133,7 +148,7 @@ onMounted(async() => {
             <v-data-table
                 v-if="deliveredExpeditions && deliveredExpeditions.length > 0"
                 no-data-text="Aucune expédition passée enregsitrée"
-                :headers="expeditionsIndexHeaders"
+                :headers="deliveredExpeditionsHeaders"
                 :items="deliveredExpeditions || []"
                 density="dense"
             >
@@ -146,8 +161,21 @@ onMounted(async() => {
                 <template v-slot:item.status="{ item }">
                     <v-chip variant="text" style="margin: 0.2em 0em" outlined>
                         <v-icon color="success" style="margin-right: 4px;" left>mdi-check-circle-outline</v-icon>
-                        Livré
+                        {{ expeditionStatus(item.status) }}
                     </v-chip>
+                </template>
+                <template v-slot:item.supplier_names="{ item }">
+                    <div>
+                        <v-chip
+                            v-for="(supplier, index) in item.supplier_names"
+                            :key="index"
+                            variant="text"
+                            class="mr-2"
+                        >
+                        <v-icon class="mr-1">mdi-account-outline</v-icon>
+                            {{ supplier }}
+                        </v-chip>
+                    </div>
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <ExpeditionDetails

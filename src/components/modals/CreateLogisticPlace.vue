@@ -12,8 +12,7 @@ import autocomplete from '@/services/addressAutocomplete.js';
 
 const address = ref(null);
 const name = ref(null);
-const contactEmail = ref(null);
-const contactName = ref(null);
+const contacts = ref([{ email: '', first_name: '', last_name: '', role: '' }]);
 const autocompletedAddresses = ref([]);
 const loading = ref(false);
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() })
@@ -25,6 +24,14 @@ const props = defineProps({
         type: String,
     },
 })
+
+function addContact() {
+  contacts.value.push({ email: '', first_name: '', last_name: '', role: '' });
+}
+
+function removeContact(index) {
+  contacts.value.splice(index, 1);
+}
 
 async function fetchAddressAutocomplete(address) {
   if (address) {
@@ -44,8 +51,7 @@ async function submitLogisticPlace() {
     logistic_place: {
       name: name.value,
       address: address.value,
-      contact_email: contactEmail.value,
-      contact_name: contactName.value,
+      contacts: contacts.value.map(({ email, first_name, last_name, role }) => ({ email, first_name, last_name, role, contactable_type: "logistic" })),
     },
   };
 
@@ -66,19 +72,21 @@ function selectAddress(newAddress) {
 <template>
   <v-dialog class="dialog-width">
     <template v-slot:activator="{ props: activatorProps }">
-      <v-list v-if="props.origin === 'menu'" variant="tonal" density="compact" nav style="width: 100%; transition: all 0.2s; margin-top: -0.95em; margin-bottom: 0.7em;">
-        <v-list-item v-bind="activatorProps" style="display: flex; margin-bottom: -0.6em;" nav>
-          <div class="aligner">
-            <v-list-item-icon>
-              <v-icon style="margin-right: 0.4em;">mdi-domain-plus</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title style="margin-right: 0.2em;">Ajouter un lieu de stockage</v-list-item-title>
-          </div>
-        </v-list-item>
-      </v-list>
+      <v-card
+          v-if="props.origin !== 'single'"
+          class="clickable-card d-flex align-center justify-center flex-column"
+          outlined
+          v-bind="activatorProps"
+          style="height: 100px; width: 200px;"
+          elevation="2"
+          @click="openModal"
+        >
+          <v-icon class="mr-2">mdi-warehouse</v-icon>
+          <span class="informative-text">Ajouter un lieu de logistique</span>
+      </v-card>
 
       <v-btn v-bind="activatorProps" v-if="props.origin === 'single'" style="margin: 1em 0em 0.6em 0em;">
-            <v-icon style="margin-right: 0.4em">mdi-domain-plus</v-icon>
+            <v-icon style="margin-right: 0.4em">mdi-warehouse</v-icon>
             Ajouter un lieu de stockage
       </v-btn>
     </template>
@@ -131,23 +139,81 @@ function selectAddress(newAddress) {
               </v-chip>
             </v-chip-group>
 
-            <v-text-field
-              clearable
-              variant="underlined"
-              class="form-part"
-              v-model="contactName"
-              label="Nom du contact"
-              required
-            ></v-text-field>
-
-            <v-text-field
-              clearable
-              variant="underlined"
-              class="form-part"
-              v-model="contactEmail"
-              label="Email du contact"
-              required
-            ></v-text-field>
+            <v-card flat outlined>
+                <v-card style="margin: 0.4em;">
+                    <CardTitle
+                    title="Contacts"
+                    icon="mdi-account-multiple-outline"
+                    />
+                    <div style="margin-bottom: 0.4em;">
+                        <span class="informative-text" style="display: flex; align-items: center;">
+                            <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
+                            Les personnes suivantes seront ajoutées comme contacts de la société.
+                        </span>
+                    </div>
+                    <v-divider color="transparent" style="margin:0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
+                    <v-row 
+                        v-for="(contact, index) in contacts" 
+                        :key="'contact-' + index" 
+                        class="mb-4 align-center"
+                        no-gutters
+                        style="margin-top: -2em; padding: 0em 0.8em"
+                    >
+                    <v-col cols="12" md="3">
+                        <v-text-field
+                        v-model="contact.email"
+                        label="Email"
+                        :rules="[validateEmail]"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                        ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="3">
+                        <v-text-field
+                        v-model="contact.first_name"
+                        label="Prénom"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                        ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="3">
+                        <v-text-field
+                        v-model="contact.last_name"
+                        label="Nom"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                        ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="2">
+                        <v-text-field
+                        v-model="contact.role"
+                        label="Rôle"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                        ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="1" class="d-flex justify-end">
+                        <v-btn @click="removeContact(index)" icon small>
+                        <v-icon>mdi-delete-outline</v-icon>
+                        </v-btn>
+                    </v-col>
+                    </v-row>
+                    <div class="aligner mb-3">
+                    <v-btn @click="addContact" variant="elevated">
+                        <v-icon start>mdi-plus-circle-outline</v-icon>
+                        Ajouter
+                    </v-btn>
+                    </div>
+                </v-card>
+            </v-card>
           </v-form>
 
           <v-card-actions>

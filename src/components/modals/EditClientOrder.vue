@@ -28,8 +28,8 @@ const emit = defineEmits(['refreshClientOrders'])
                 variant="text"
                 color="blue"
             >
-                <v-icon class='mr-2'>mdi-pencil-outline</v-icon>
-                <span>Modifier</span>
+                <v-icon class='mr-1'>mdi-pencil-outline</v-icon>
+                <span>Consulter</span>
             </v-chip> 
         </template>
   

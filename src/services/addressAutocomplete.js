@@ -35,7 +35,7 @@ async function fetchAddressAutocomplete(address) {
         console.log('error', error);
         reject(error);
       }
-    }, 350);
+    }, 800);
   });
 }
 

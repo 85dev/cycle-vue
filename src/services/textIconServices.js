@@ -41,9 +41,9 @@ function statusIconColor(status) {
         case 'transit':
           return 'primary';
         case 'partial_sent_and_production':
-          return 'orange';
+          return 'warning';
         case 'production':
-          return 'orange';
+          return 'warning';
         case 'partial':
           return 'primary';
         case 'stock':

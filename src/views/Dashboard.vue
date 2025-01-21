@@ -2,7 +2,7 @@
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 import { ref, onMounted, computed, watch } from 'vue'
-import ArchivateClientOrder from '@/components/modals/ArchivateClientOrder.vue';
+import ArchivateOrder from '@/components/modals/ArchivateOrder.vue';
 import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import router from '@/router';
@@ -50,6 +50,7 @@ async function fetchExpeditions() {
 function getKpiIcon(key) {
   const icons = {
     runningExpeditions: 'mdi-ferry',
+    futureOrders: 'mdi-clock-outline',
     totalActiveOrders: 'mdi-package-variant'
   }
   return icons[key] || 'mdi-chart-box-outline'
@@ -59,6 +60,7 @@ function getKpiColor(key) {
   const colors = {
     runningExpeditions: 'blue',
     totalActiveOrders: 'red',
+    futureOrders: 'warning',
     openSupplierPositions: 'red-accent-2',
     onTimeDeliveryRate: 'orange-darken-3',
   };
@@ -76,6 +78,7 @@ function formatMetricValue(value, key) {
 function formatKpiLabel(key) {
   const labels = {
     runningExpeditions: 'Expédition(s) en cours',
+    futureOrders: 'Commande(s) client à livrer sur les 6 prochains mois',
     totalActiveOrders: 'Commande(s) client à livrer sur les 30 prochains jours'
   }
   return labels[key] || key
@@ -314,7 +317,8 @@ onMounted(async() => {
                         <v-icon class="mr-2 ml-1">mdi-truck-alert-outline</v-icon>
                         {{ daysLeft(order.position_delivery_date) }} jour(s) avant livraison
                       </v-chip>  
-                      <ArchivateClientOrder 
+                      <ArchivateOrder 
+                        origin="client"
                         :userId="userId" 
                         :order="order" 
                         @refreshClientOrders="refreshAllData()" 

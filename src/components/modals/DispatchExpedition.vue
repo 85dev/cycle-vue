@@ -65,6 +65,29 @@ function handleSplitUpdate({ id, splitted_positions }) {
     }
 }
 
+const generateDistributionSummary = () => {
+  const summary = [];
+
+  if (positionCounts.value.hasSelections) {
+    // Add subcontractors to summary
+    Object.entries(positionCounts.value.subcontractorCounts).forEach(([subcontractor, count]) => {
+      summary.push({ destination: subcontractor, type: 'Sous-traitant', count });
+    });
+
+    // Add logistic places to summary
+    Object.entries(positionCounts.value.logisticPlaceCounts).forEach(([logisticPlace, count]) => {
+      summary.push({ destination: logisticPlace, type: 'Lieu de stockage', count });
+    });
+
+    // Add clients to summary
+    Object.entries(positionCounts.value.clientCounts).forEach(([client, count]) => {
+      summary.push({ destination: client, type: 'Client', count });
+    });
+  }
+
+  return summary;
+};
+
 async function fetchExpeditionIndices() {
     const response = await apiCaller.get(`companies/${props.selectedCompanyId}/expeditions/${props.expedition.id}/supplier_orders`)
 
@@ -190,6 +213,7 @@ onMounted(async() => {
                             <v-chip
                                 v-if="!item.clone"
                                 variant="elevated"
+                                color="white"
                                 clearable
                             >{{ item.part_designation + ' ' + item.part_reference }}
                             </v-chip>
@@ -262,49 +286,41 @@ onMounted(async() => {
                         </v-data-table>
                     </v-card>
 
-                    <v-card title="Répartition actuelle par destination" v-if="positionCounts.hasSelections" style="margin: 0.6em; padding-bottom: 0.8em;">
-                        <div v-if="Object.keys(positionCounts.subcontractorCounts).length > 0">
-                            <span style="margin-left: 1.2em" class="informative-text-l">
-                                Vers sous-traitant(s) :
-                            </span>
-                            <ul>
-                            <li
-                                v-for="(count, subcontractor) in positionCounts.subcontractorCounts"
-                                :key="subcontractor"
-                                style="margin-left: 2em"
-                            >
-                                {{ subcontractor }} : {{ count }} position(s)
-                            </li>
-                            </ul>
-                        </div>
-                        <div v-if="Object.keys(positionCounts.logisticPlaceCounts).length > 0">
-                            <span style="margin-left: 1.2em" class="informative-text-l">
-                                Vers lieu(x) de stockage :
-                            </span>
-                            <ul>
-                            <li
-                                v-for="(count, logisticPlace) in positionCounts.logisticPlaceCounts"
-                                :key="logisticPlace"
-                                style="margin-left: 2em"
-                            >
-                                {{ logisticPlace }} : {{ count }} position(s)
-                            </li>
-                            </ul>
-                        </div>
-                        <div v-if="Object.keys(positionCounts.clientCounts).length > 0">
-                            <span style="margin-left: 1.2em" class="informative-text-l">
-                                Vers client :
-                            </span>
-                            <ul>
-                            <li
-                                v-for="(count, client) in positionCounts.clientCounts"
-                                :key="client"
-                                style="margin-left: 2em"
-                            >
-                                {{ client }} : {{ count }} position(s)
-                            </li>
-                            </ul>
-                        </div>
+                    <v-card v-if="positionCounts.hasSelections" style="margin: 0.6em; padding-bottom: 0.8em;">
+                        <CardTitle 
+                            title="Répartition actuelle par destination"
+                            icon="mdi-format-list-group"
+                        />
+
+                        <v-data-table
+                            :items="generateDistributionSummary()"
+                            :headers="[
+                            { title: 'Destination', value: 'destination' },
+                            { title: 'Type', value: 'type' },
+                            { title: 'Nombre de positions', value: 'count' }
+                            ]"
+                            density="compact"
+                            class="elevation-1"
+                            no-data-text="Aucune répartition enregistrée"
+                        >
+                            <template v-slot:item.destination="{ item }">
+                                <v-chip variant="elevated" color="white">
+                                    <v-icon class="mr-1">{{ item.type === 'Sous-traitant' ? 'mdi-account-hard-hat' : item.type === 'Lieu de stockage' ? 'mdi-warehouse' : 'mdi-account-group' }}</v-icon>
+                                    {{ item.destination }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.type="{ item }">
+                                <v-chip variant="text">
+                                    {{ item.type }}
+                                </v-chip>
+                            </template>
+                            <template v-slot:item.count="{ item }">
+                            <v-chip variant="tonal" color="blue">
+                                    <v-icon class="mr-1">mdi-counter</v-icon>
+                                    {{ item.count }} position(s)
+                                </v-chip>
+                            </template>
+                        </v-data-table>
                     </v-card>
 
                     <v-card-actions style="margin-bottom: 0.8em;">

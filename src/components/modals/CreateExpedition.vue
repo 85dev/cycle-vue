@@ -1,6 +1,6 @@
 <script setup>
 // Vue essentials
-import { onMounted, ref, defineEmits } from 'vue';
+import { onMounted, ref, computed, defineEmits, watch } from 'vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -24,15 +24,36 @@ const props = defineProps({
     }
 })
 
+const loading = ref(false)
 const supplierOrders = ref([])
 const selectedSupplierOrders = ref([])
 const departureDate = ref(dateConverter.formatISODate(new Date()))
+const estimatedArrivalTime = ref(dateConverter.formatISODate(new Date(Date.now() + 42 * 24 * 60 * 60 * 1000)));
 const selectedSupplier = ref(null)
 const selectedTransporter = ref(null)
 const number = ref(null)
 const transporters = ref([])
 const modifiedQuantities = ref([])
 const modifiedPartials = ref({})
+const filteredSupplierOrders = ref([])
+
+const selectedOrdersSummary = computed(() => {
+  return selectedSupplierOrders.value.map(orderId => {
+    const order = supplierOrders.value.find(o => o.id === orderId);
+
+    if (!order) {
+      console.warn(`Order with ID ${orderId} not found in supplierOrders.`);
+      return null;
+    }
+
+    return {
+      part: `${order.part_reference} ${order.part_designation}`,
+      supplier_name: order.supplier_name,
+      partial: modifiedPartials.value[order.id] || false, // Default to false if not set
+      quantity: modifiedQuantities.value[order.id] || order.quantity  ||  0, // Default to original quantity if not modified
+    };
+  }).filter(order => order !== null); // Filter out nulls for unmatched IDs
+});
 
 const emit = defineEmits(['refreshExpeditions'])
 
@@ -48,20 +69,33 @@ async function fetchTransporters() {
     transporters.value = response
 }
 
+function applyFilter() {
+    if (!selectedSupplier.value) {
+        filteredSupplierOrders.value = supplierOrders.value
+        return
+    }
+
+    loading.value = true;
+    setTimeout(() => {
+        filteredSupplierOrders.value = supplierOrders.value.filter(order => order.supplier_name === selectedSupplier.value)
+        loading.value = false;
+    }, 600);
+}
+
 async function submitExpedition() {
     const expedition = {
         expedition: {
             real_departure_time: dateConverter.formatISODate(departureDate.value),
+            estimated_arrival_time: dateConverter.formatISODate(estimatedArrivalTime.value),
             number: number.value
             }
         }
 
     const selectedTransporterId = transporters.value.find(tr => tr.name === selectedTransporter.value)?.id;
-    const selectedSupplierId = props.suppliers.find(c => c.name === selectedSupplier.value)?.id;
     const quantities = selectedSupplierOrders.value.map(orderId => modifiedQuantities.value[orderId]);
     const partials = selectedSupplierOrders.value.map(orderId => modifiedPartials.value[orderId] || false);
 
-    await apiCaller.post(`companies/${props.selectedCompanyId}/create_expedition?supplier_order_position_ids=${selectedSupplierOrders.value}&supplier_order_position_quantities=${quantities}&supplier_order_position_partials=${partials}&supplier_id=${selectedSupplierId}&transporter_id=${selectedTransporterId}`, expedition, true)
+    await apiCaller.post(`companies/${props.selectedCompanyId}/create_expedition?supplier_order_position_ids=${selectedSupplierOrders.value}&supplier_order_position_quantities=${quantities}&supplier_order_position_partials=${partials}&transporter_id=${selectedTransporterId}`, expedition, true)
 
     emit('refreshExpeditions')
 }
@@ -69,9 +103,7 @@ async function submitExpedition() {
 onMounted( async () => {
     await fetchTransporters()   
     await fetchSupplierOrders()
-
-    selectedSupplier.value = props.suppliers[0].name
-    selectedTransporter.value = transporters.value[0].name
+    applyFilter() 
 })
 </script>
 
@@ -111,17 +143,6 @@ onMounted( async () => {
                                     label="Numéro d'expédition"
                                     required
                                 />
-
-                                <v-select
-                                    label="Fournisseur à l'origine de l'expédition"
-                                    variant="underlined"
-                                    class="form-part"
-                                    :items="props.suppliers.map(supplier => supplier.name)"
-                                    v-model="selectedSupplier"
-                                />
-                            </v-row>
-
-                            <v-row style="margin: 0.8em 0.6em 0em 0.6em;">
                                 <v-select
                                     variant="underlined"
                                     class="form-part"
@@ -129,12 +150,19 @@ onMounted( async () => {
                                     :items="transporters.map(tr => tr.name)"
                                     v-model="selectedTransporter"
                                 />
-
                                 <v-text-field
                                     variant="underlined"
                                     class="form-part"
                                     v-model="departureDate"
-                                    label="Date de départ estimé"
+                                    label="Date de départ"
+                                    type="date"
+                                    required
+                                />
+                                <v-text-field
+                                    variant="underlined"
+                                    class="form-part"
+                                    v-model="estimatedArrivalTime"
+                                    label="Date d'arrivée estimée"
                                     type="date"
                                     required
                                 />
@@ -151,7 +179,25 @@ onMounted( async () => {
                                     title="Choix des commandes à ajouter"
                                     icon=mdi-package-variant-closed-plus
                                 />
+                                <v-select
+                                    label="Filtrer les commandes par fournisseur"
+                                    clearable
+                                    variant="underlined"
+                                    class="form-part"
+                                    :items="props.suppliers.map(supplier => supplier.name)"
+                                    v-model="selectedSupplier"
+                                    @update:model-value="applyFilter()"
+                                >
+                                    <template v-slot:selection="{ item }">
+                                        <v-chip class="pa-3 ma-1" variant="elevated" color="blue">
+                                            <v-icon class="mr-1">mdi-account-group</v-icon>
+                                            {{ item.title }}
+                                        </v-chip>
+                                    </template>
+                                </v-select>
                                 <v-data-table
+                                    :loading="loading"
+                                    loading-text="Chargement des commandes..."
                                     v-if="supplierOrders.length > 0"
                                     variant="underlined"
                                     density="compact"
@@ -160,10 +206,16 @@ onMounted( async () => {
                                     class="form-part"
                                     label="Liste des commandes fournisseurs"
                                     v-model="selectedSupplierOrders"
-                                    :items="supplierOrders"
+                                    :items="filteredSupplierOrders"
                                     no-data-text="Pas de commandes fournisseur enregistrés"
                                     show-select
                                 >
+                                <template v-slot:item.supplier_order_number="{ item }">
+                                    <v-chip variant="elevated" color="white">
+                                        <v-icon class="mr-2">mdi-file-document-outline</v-icon>
+                                        {{ item.supplier_order_number }}
+                                    </v-chip>
+                                </template>
                                 <template v-slot:item.partial="{ item }">
                                     <v-switch
                                         style="display: flex; align-items: center;"
@@ -173,7 +225,7 @@ onMounted( async () => {
                                         type="number"
                                         aria-required="true"
                                         density="compact"
-                                    ></v-switch>
+                                    />
                                 </template>
                                 <template v-slot:item.quantity="{ item }">
                                     <div style="display: flex; align-items: baseline;">
@@ -184,7 +236,7 @@ onMounted( async () => {
                                         label="Reste à livrer"
                                         :disabled="true"
                                         density="compact"
-                                        ></v-text-field>
+                                        />
                                     </div>
                                 </template>
                                 <template v-slot:item.real_quantity="{ item }">
@@ -195,7 +247,7 @@ onMounted( async () => {
                                         v-model="modifiedQuantities[item.id]"
                                         type="number"
                                         density="compact"
-                                    ></v-text-field>
+                                    />
                                 </template>
                                 </v-data-table>
                                 <div v-else style="margin-bottom: 0.4em;">
@@ -208,9 +260,52 @@ onMounted( async () => {
                                         Les commandes fournisseur s'ajoutent sur la page de la référence de la pièce
                                     </span>
                                 </div>
-                            
                             </v-card>
 
+                            <v-card class="mr-6 ml-6 mt-4" v-if="selectedOrdersSummary && selectedOrdersSummary.length > 0">
+                                <CardTitle
+                                    title="Récapitulatif des commandes sélectionnées"
+                                    icon="mdi-format-list-checkbox"
+                                />
+                                <v-data-table
+                                    :items="selectedOrdersSummary"
+                                    :headers="[
+                                    { title: 'Pièce', value: 'part' },
+                                    { title: 'Fournisseur', value: 'supplier_name' },
+                                    { title: 'Partiel', value: 'partial' },
+                                    { title: 'Quantité', value: 'quantity' }
+                                    ]"
+                                    density="dense"
+                                    hide-default-footer
+                                    class="summary-table"
+                                >
+                                    <template v-slot:item.part="{ item }">
+                                        <v-chip
+                                            variant="elevated"
+                                            color="white"
+                                            class="mt-2 mb-2"
+                                        >
+                                            {{ item.part }}
+                                        </v-chip>
+                                    </template>
+                                    <template v-slot:item.partial="{ item }">
+                                        <v-chip
+                                            :color="item.partial ? 'success' : 'secondary'"
+                                            variant="outlined"
+                                        >
+                                            <v-icon>
+                                            {{ item.partial ? 'mdi-check-circle-outline' : 'mdi-close-circle-outline' }}
+                                            </v-icon>
+                                        </v-chip>
+                                    </template>
+                                    <template v-slot:item.quantity="{ item }">
+                                        <v-chip variant="text">
+                                            <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
+                                            {{ item.quantity }}
+                                        </v-chip>
+                                    </template>
+                                </v-data-table>
+                            </v-card>
                         </v-form>
 
                     <v-card-actions style="margin-bottom: 0.2em; margin-top: 1.2em;">

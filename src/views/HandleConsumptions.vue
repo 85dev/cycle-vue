@@ -70,9 +70,7 @@ async function submitConsumption() {
 
     const response = await apiCaller.post(`companies/${selectedCompany.value.id}/consignment_stocks/${stock.id}/create_consignment_consumption`, payload, true)
 
-    if (response.status === 200 || response.status === 201) {
-        resetData()
-    }
+    resetData()
 }
 
 function resetData() {

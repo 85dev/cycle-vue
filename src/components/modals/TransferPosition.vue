@@ -119,10 +119,10 @@ onMounted(async() => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <div class="d-flex justify-lg-space-between align-center" style="width: 100%">
+                    <div class="d-flex justify-lg-space-between align-center pr-4" style="width: 100%">
                         <CardTitle 
-                        title="Transférer la position"
-                        icon="mdi-truck-delivery-outline"
+                            title="Transférer la position"
+                            icon="mdi-truck-delivery-outline"
                         />
                         <GenerateDeliverySlipPDF
                             v-if="props"

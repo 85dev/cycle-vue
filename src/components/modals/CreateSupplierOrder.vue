@@ -140,7 +140,6 @@ onMounted( async () => {
 
                             <v-row style="margin: 0em 0.2em;">
                                 <v-select
-                                    :disabled="props.referenceAndDesignation ? true : false"
                                     label="Fournisseur"
                                     variant="underlined"
                                     v-model="supplier"

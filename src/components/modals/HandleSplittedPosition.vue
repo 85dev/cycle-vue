@@ -75,7 +75,7 @@ onMounted(() => {
             <v-chip
                 v-bind="activatorProps"
                 class="index-slot"
-                variant="elevated"
+                variant="tonal"
                 color="blue"
                 style="margin-right: 0.6em; font-weight: 500;"
             >

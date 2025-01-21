@@ -2,7 +2,9 @@ const clientOrdersHeaders = [
     { title: 'Numéro de commande', value: 'client_order_number' },
     { title: 'Quantité', value: 'quantity'},
     { title: 'Prix unitaire', value: 'price'},
-    { title: 'Date de livraison', value: 'delivery_date'},
+    { title: 'Statut', value: 'status'},
+    { title: 'Date de livraison souhaitée', value: 'delivery_date'},
+    { title: 'Date de livraison réelle', value: 'real_delivery_time'},
     { title: 'Actions', value: 'actions', sortable: false }
   ]
 
@@ -54,12 +56,14 @@ const supplierOrdersHeaders = [
   { title: 'Reste à livrer', value: 'quantity'},
   { title: 'Prix unitaire', value: 'price'},
   { title: 'Statut', value: 'status'},
-  { title: 'Date de livraison', value: 'delivery_date'},
+  { title: 'Date de livraison souhaitée', value: 'delivery_date'},
+  { title: 'Date de livraison réelle', value: 'real_delivery_date'},
   { title: 'Actions', value: 'actions', sortable: false },
 ]
 
 const expeditionHeaders = [
   { title: 'Numéro de commande', value: 'supplier_order_number' },
+  { title: 'Fournisseur', value: 'supplier_name' },
   { title: 'Partiel', value: 'partial'},
   { title: 'Quantité commandée', value: 'quantity'},
   { title: 'Quantité expédiée', value: 'real_quantity'},
@@ -192,18 +196,28 @@ const expeditionsListHeaders = [
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée", value: 'delivery_date' },
   { title: "Statut", value: 'status' },
-  { title: 'Transporteur', value: 'transporter'},
+  { title: 'Transporteur', value: 'transporter_name'},
   { title: 'Fournisseur', value: 'supplier_name'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
 const expeditionsIndexHeaders = [
   { title: "Date de départ", value: 'real_departure_time'},
-  { title: "Date d'arrivée", value: 'arrival_time' },
+  { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
+  { title: "Date d'arrivée réelle", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
-  { title: 'Transporteur', value: 'transporter'},
-  { title: 'Fournisseur', value: 'supplier_name'},
+  { title: 'Transporteur', value: 'transporter_name'},
+  { title: 'Fournisseur', value: 'supplier_names'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+const deliveredExpeditionsHeaders = [
+  { title: "Date de départ", value: 'real_departure_time'},
+  { title: "Date d'arrivée", value: 'arrival_time' },
+  { title: "Statut", value: 'status' },
+  { title: 'Transporteur', value: 'transporter_name'},
+  { title: 'Fournisseur', value: 'supplier_names'},
+  { title: 'Actions', value: 'actions', sortable: false }
+]
+
+export { clientOrdersHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
