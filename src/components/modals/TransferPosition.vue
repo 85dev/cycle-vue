@@ -1,6 +1,6 @@
 <script setup>
 // Vue
-import { onMounted, ref, toRefs } from 'vue'
+import { onMounted, ref, toRefs, watch } from 'vue'
 
 // Services
 import apiCaller from '@/services/apiCaller';
@@ -44,9 +44,14 @@ const emit = defineEmits('refresh')
 const reactivePosition = toRefs(props.position)
 const modifiedQuantity = ref(props.position.quantity)
 const transferDate = ref(new Date().toISOString().split('T')[0]);
-const selectedClient = ref(null)
+const selectedClient = ref(false)
 const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
+const transferData = ref({
+    type: null,
+    name: null,
+    isSelected: false,
+});
 
 function createPayload() {
     let destinationType = null;
@@ -64,7 +69,7 @@ function createPayload() {
         logisticPlaceId = props.logisticPlaceList.find(lp => lp.name === selectedLogisticPlace.value)?.id;
     } else if (selectedClient.value) {
         destinationType = "client";
-        destinationName = selectedClient.value;
+        destinationName = props.client.name;
     }
 
     return {
@@ -80,6 +85,30 @@ function createPayload() {
     };
 }
 
+function handleArrival(payload) {
+    console.log(payload);
+    
+    if (payload) {
+        selectedClient.value = null;
+        selectedLogisticPlace.value = null;
+        selectedSubcontractor.value = null;
+
+        if (payload.quantity) {
+            modifiedQuantity.value = payload.quantity
+        }
+
+        if (payload.type === "client") {
+            selectedClient.value = true;
+        } else if (payload.type === "logistic_place") {
+            selectedLogisticPlace.value = payload.name;
+        } else if (payload.type === "subcontractor") {
+            selectedSubcontractor.value = payload.name;
+        }
+        
+        selectedClient.value = payload.isSelected
+    }
+}
+
 async function submitTransfer() {
     const payload = createPayload();
     if (!payload.destination_type) {
@@ -92,12 +121,23 @@ async function submitTransfer() {
     response.status === 200 || response.status === 201 ? emit('refresh') : console.error("Erreur lors de la transfert de la position");
 }
 
+watch([selectedLogisticPlace, selectedSubcontractor, selectedClient], () => {
+    transferData.value = {
+        type: selectedSubcontractor.value
+            ? 'subcontractor'
+            : selectedLogisticPlace.value
+            ? 'logistic_place'
+            : selectedClient.value
+            ? 'client'
+            : null,
+        name: selectedSubcontractor.value || selectedLogisticPlace.value || null,
+        isSelected: !!selectedClient.value,
+        quantity: modifiedQuantity.value,
+    };
+});
+
 onMounted(async() => {
     modifiedQuantity.value = props.position.quantity
-
-    selectedClient.value = null
-    selectedLogisticPlace.value = null
-    selectedSubcontractor.value = null
 })
 </script>
 
@@ -133,6 +173,9 @@ onMounted(async() => {
                             :origin="props.origin" 
                             :client="props.client"
                             :client-orders="props.clientOrders" 
+                            :quantity="modifiedQuantity"
+                            :transfer-data="transferData"
+                            @catch-arrival="handleArrival"
                             @refresh="refreshAllData()"
                         />
                     </div>
@@ -207,16 +250,15 @@ onMounted(async() => {
                             ></v-select>
                         </template>
                         <template v-slot:item.client="{ item }">
-                            <v-select
+                            <v-checkbox
+                                v-if="props.origin !== 'subcontractor' || props.origin !== 'logistic_place'"
                                 class="field-slot"
-                                variant="underlined"
-                                clearable
-                                :items="[props.client.name]"
                                 v-model="selectedClient"
-                                label="Stockage client"
-                                aria-required="true"
-                                :disabled="selectedLogisticPlace || selectedSubcontractor"
-                            ></v-select>
+                                label="Transférer au client"
+                                variant="underlined"
+                                color="blue"
+                                :disabled="selectedSubcontractor || selectedLogisticPlace"
+                            />
                         </template>
                         </v-data-table>
                   </v-card>

@@ -1,11 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 // Services
 import apiCaller from '@/services/apiCaller';
 import CardTitle from '../CardTitle.vue';
 import SpinnLoader from '../SpinnLoader.vue';
-import dateConverter from '@/services/dateConverter';
 
 const props = defineProps({
     selectedCompanyId: {
@@ -37,12 +36,31 @@ const props = defineProps({
     clientList: {
         type: Array,
         default: () => []
+    },
+    transferData: {
+        type: Object
     }
 })
 
+console.log(props.transferData);
+
+const emit = defineEmits(['catch-arrival', 'refresh']);
+
+const arrivalData = computed(() => ({
+    type: selectedSubcontractorArrival.value
+            ? 'subcontractor'
+            : selectedLogisticPlaceArrival.value
+            ? 'logistic_place'
+            : selectedClient.value
+            ? 'client'
+            : null,
+    name: selectedSubcontractorArrival.value || selectedLogisticPlaceArrival.value || null,
+    isSelected: !!selectedClientArrival.value
+}));
+
 const loading = ref(false)
 const selectedContact = ref(null)
-const selectedClientOrder = ref(null)
+const selectedClientOrders = ref(null)
 const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedLogisticPlaceDeparture = ref(null)
 const selectedSubcontractorDeparture = ref(null)
@@ -67,6 +85,12 @@ async function fetchContacts() {
     if (props.client) {
         const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${props.client.id}/contacts_by_client`)
         contacts.value = response
+    } else if (clientForOrders.value) {
+        const clientId = props.clientList.find(c => c.name === clientForOrders.value)?.id
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${clientId}/contacts_by_client`)
+        contacts.value = response
+    } else {
+        console.warn("No client found to fetch contacts");
     }
 }
 
@@ -83,6 +107,7 @@ async function fetchClientOrders() {
 
     reactiveOrders.value = response
     reactiveClientOrder.value = null
+    selectedContact.value = null
 }
 
 async function fetchExpeditionPositions() {
@@ -95,40 +120,89 @@ async function fetchExpeditionPositions() {
 async function generatedPdf() {
     if (props.origin === 'subcontractor' || props.origin === 'logistic_place') {
         const departureAddress = selectedSubcontractorDeparture.value
-    ? `${selectedSubcontractorDeparture.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorDeparture.value)?.address || "Adresse non trouvée"}`
-    : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || "Adresse non trouvée"}`;
+            ? `${selectedSubcontractorDeparture.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorDeparture.value)?.address || "Adresse non trouvée"}`
+            : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || "Adresse non trouvée"}`;
 
-    const arrivalAddress = selectedSubcontractorArrival.value
-        ? `${selectedSubcontractorArrival.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || "Adresse non trouvée"}`
-        : selectedLogisticPlaceArrival.value
-        ? `${selectedLogisticPlaceArrival.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || "Adresse non trouvée"}`
-        : `${props.client.name}, ${props.client.address || "Adresse client non trouvée"}`;
+        const arrivalAddress = selectedSubcontractorArrival.value
+            ? `${selectedSubcontractorArrival.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || "Adresse non trouvée"}`
+            : selectedLogisticPlaceArrival.value
+            ? `${selectedLogisticPlaceArrival.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || "Adresse non trouvée"}`
+            : `${props.client.name}, ${props.client.address || "Adresse client non trouvée"}`;
 
-    const payload = {
-        position_id: props.position.expedition_position_id,
-        part_id: props.position.part_id,
-        delivery_slip: deliverySlip.value,
-        transfer_date: transferDate.value,
-        brut_weight: brutWeight.value,
-        transport_conditions: transportConditions.value,
-        packaging_informations: packagingInformations.value,
-        departure_address: departureAddress,
-        arrival_address: arrivalAddress,
-        client_order_id: selectedClientOrder.value 
-            ? props.clientOrders.find(order => order.client_order_number === selectedClientOrder.value)?.client_order_id 
-            : null,
-        contact_id: contacts.value.find(
-            contact => `${contact.first_name} ${contact.last_name}` === selectedContact.value
-        )?.id || null
-    };
+        const payload = {
+            expedition_position_ids: props.position.expedition_position_id,
+            part_id: props.position.part_id,
+            delivery_slip: deliverySlip.value,
+            transfer_date: transferDate.value,
+            brut_weight: brutWeight.value,
+            transport_conditions: transportConditions.value,
+            packaging_informations: packagingInformations.value,
+            departure_address: departureAddress,
+            arrival_address: arrivalAddress,
+            client_order_ids: selectedClientOrders.value && selectedClientOrders.value.length
+                ? selectedClientOrders.value.map(orderNumber => 
+                    props.clientOrders.find(order => order.client_order_number === orderNumber)?.client_order_id
+                ).filter(id => id !== undefined) // Ensure no undefined IDs are included
+                : [],
+            contact_id: contacts.value.find(
+                contact => `${contact.first_name} ${contact.last_name}` === selectedContact.value
+            )?.id || null
+        };
 
-    const response = await apiCaller.post(
-        `companies/${props.selectedCompanyId}/expedition_positions/${props.position.expedition_position_id}/delivery_slip`, payload
-    );
+        const response = await apiCaller.post(
+            `companies/${props.selectedCompanyId}/delivery_slip`, payload
+        );
 
-    const responseData = await response.json();
-    createdObjectId.value = responseData.delivery_slip_id
+        const responseData = await response.json();
+        createdObjectId.value = responseData.delivery_slip_id
+    } else {
+        const departureAddress = selectedSubcontractorDeparture.value
+            ? `${selectedSubcontractorDeparture.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorDeparture.value)?.address || 'Adresse non trouvée'}`
+            : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || 'Adresse non trouvée'}`;
+
+        const arrivalAddress = selectedSubcontractorArrival.value
+            ? `${selectedSubcontractorArrival.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || 'Adresse non trouvée'}`
+            : selectedLogisticPlaceArrival.value
+            ? `${selectedLogisticPlaceArrival.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || 'Adresse non trouvée'}`
+            : props.client
+            ? `${props.client.name}, ${props.client.address || 'Adresse client non trouvée'}`
+            : 'Adresse non spécifiée';
+
+        const payload = {
+            expedition_position_ids: selectedOrders.value.map(item => item.expedition_position_id),
+            delivery_slip: deliverySlip.value,
+            transfer_date: transferDate.value,
+            brut_weight: brutWeight.value,
+            packaging_informations: packagingInformations.value,
+            transport_conditions: transportConditions.value,
+            departure_address: departureAddress,
+            arrival_address: arrivalAddress,
+            client_order_ids: reactiveClientOrder.value.map(selectedOrder =>
+                                reactiveOrders.value.find(order => order.order_number === selectedOrder)?.id
+                                ).filter(id => id !== undefined),
+            contact_id: contacts.value.find(contact => `${contact.first_name} ${contact.last_name}` === selectedContact.value)?.id || null,
+        };
+
+        loading.value = true;
+        const response = await apiCaller.post(
+            `companies/${props.selectedCompanyId}/delivery_slip`,
+            payload
+        );
+
+        const responseData = await response.json();
+        createdObjectId.value = responseData.delivery_slip_id;
     }
+}
+
+async function processDataFetches() {
+    loading.value = true
+    setTimeout(async() => {
+        await fetchLastSlip()
+        await fetchClientOrders(); 
+        await fetchExpeditionPositions(); 
+        await fetchContacts();
+        loading.value = false
+    }, 400);
 }
 
 async function downloadPdf() {
@@ -150,7 +224,30 @@ async function processPdf() {
     await downloadPdf()
 }
 
+watch(
+    [selectedSubcontractorArrival, selectedLogisticPlaceArrival, selectedClientArrival],
+    () => {
+        emit('catch-arrival', arrivalData.value);
+    }
+);
+
 onMounted(async() => {
+    if (props.transferData && (props.origin === 'subcontractor' && props.origin === 'logistic_place')) {
+        if (props.transferData.type === 'subcontractor') {
+        selectedSubcontractorArrival.value = props.transferData.name;
+        selectedLogisticPlaceArrival.value = null;
+        selectedClientArrival.value = false;
+        } else if (props.transferData.type === 'logistic_place') {
+            selectedLogisticPlaceArrival.value = props.transferData.name;
+            selectedSubcontractorArrival.value = null;
+            selectedClientArrival.value = false;
+        } else if (props.transferData.type === 'client') {
+            selectedClientArrival.value = props.transferData.isSelected;
+            selectedSubcontractorArrival.value = null;
+            selectedLogisticPlaceArrival.value = null;
+        }
+    }
+    
     if (props.origin === 'subcontractor') {
         selectedSubcontractorDeparture.value = props.position.subcontractor_name
     } else if (props.origin === 'logistic_place') {
@@ -207,62 +304,109 @@ onMounted(async() => {
                             v-model="clientForOrders"
                             variant="underlined"
                             label="Sélectionnez un client afin d'en choisir les positions"
-                            @update:model-value="fetchClientOrders(); fetchExpeditionPositions();"
+                            @update:model-value="processDataFetches()"
                         />
-                        <v-select 
-                            v-if="clientForOrders"
-                            class="mr-6 ml-6"
-                            style="margin-top: -1em;"
-                            variant="underlined"
-                            label="Sélectionnez une commande"
-                            :items="reactiveOrders.map(o => o.order_number)"
-                            v-model="reactiveClientOrder"
-                        />
-                        <v-data-table
-                            v-if="reactiveClientOrder"
-                            class="mr-2 ml-2"
-                            density="compact"
-                            show-select
-                            :headers="[
-                                { title: 'Numéro de commande', value: 'order_number' },
-                                { title: 'Réference', value: 'reference_and_designation' },
-                                { title: 'Quantité', value: 'quantity' },
-                                { title: 'Prix (€/unité)', value: 'price' },
-                                { title: 'Date de livraison', value: 'delivery_date' }
-                            ]"
-                            v-model="selectedOrders"
-                            :items="reactiveOrders"
+                        <v-row class="mr-3 ml-3" style="margin-top: -1.6em;" v-if="clientForOrders">
+                            <v-col cols="6">
+                                <v-select
+                                    variant="underlined"
+                                    label="Sélectionnez une ou plusieurs commande(s)"
+                                    multiple
+                                    :items="reactiveOrders.map(o => o.order_number)"
+                                    v-model="reactiveClientOrder"
+                                />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-select 
+                                    v-model="selectedContact"
+                                    clearable
+                                    label="Référent"
+                                    variant="underlined"
+                                    :items="contacts.map(c => `${c.first_name} ${c.last_name}`)"
+                                />
+                            </v-col>
+                        </v-row>
+                        <span class="d-flex align-center justify-center mb-5" v-if="reactiveOrders && reactiveOrders.length">
+                            <v-chip variant="elevated" color="white">
+                                <v-icon color="warning" class="mr-2">mdi-alert-circle-outline</v-icon>
+                                <span>
+                                    Sélectionnez les positions qui apparaitront sur le bordereau
+                                </span>
+                            </v-chip>
+                        </span>
+                        <div v-if="expeditionPositions.subcontractors && expeditionPositions.subcontractors.length">
+                            <div
+                                v-for="subcontractor in expeditionPositions.subcontractors"
+                                :key="subcontractor.subcontractor_id"
+                            >
+                                <v-card style="margin: 0.4em">
+                                    <CardTitle 
+                                        icon="mdi-account-wrench"
+                                        :title="subcontractor.subcontractor_name"
+                                    />
+                                <v-data-table
+                                    v-if="subcontractor.positions"
+                                    :items="subcontractor.positions"
+                                    show-select
+                                    :headers="[
+                                    { title: 'Référence', value: 'part_reference' },
+                                    { title: 'Désignation', value: 'part_designation' },
+                                    { title: 'Quantité', value: 'quantity' },
+                                    { title: 'Numéro d\'expédition', value: 'expedition_number' },
+                                    { title: 'Date de livraison souhaitée', value: 'delivery_date' }
+                                    ]"
+                                    v-model="selectedOrders"
+                                    density="compact"
+                                    return-object
+                                >
+                                
+                                    <template v-slot:item.delivery_date="{ item }">
+                                    <v-chip variant="tonal" color="blue">
+                                        <v-icon class="mr-1">mdi-calendar-clock</v-icon>
+                                        {{ new Date(item.delivery_date).toLocaleDateString() }}
+                                    </v-chip>
+                                    </template>
+                                </v-data-table>
+                                </v-card>
+                            </div>
+                    </div>
+
+                    <!-- Logistic Places Section -->
+                    <div v-if="expeditionPositions.logistic_places && expeditionPositions.logistic_places.length">
+                        <div
+                            v-for="logisticPlace in expeditionPositions.logistic_places"
+                            :key="logisticPlace.logistic_place_id"
                         >
-                        <template v-slot:item.order_number="{ item }">
-                            <v-chip variant="elevated" color="white">
-                            <v-icon class="mr-1">mdi-file-document-outline</v-icon>
-                            {{ item.order_number }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.reference_and_designation="{ item }">
-                            <v-chip variant="text" color="primary">
-                            <v-icon class="mr-1">mdi-tag-text-outline</v-icon>
-                                {{ item.reference_and_designation }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.quantity="{ item }">
-                            <v-chip variant="text" color="success">
-                            <v-icon class="mr-1">mdi-format-list-numbered</v-icon>
-                            {{ item.quantity }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.price="{ item }">
-                            <v-chip variant="elevated" color="white">
-                            {{ item.price }}
-                            </v-chip>
-                        </template>
-                        <template v-slot:item.delivery_date="{ item }">
-                            <v-chip variant="text" color="success">
-                            <v-icon class="mr-1">mdi-calendar-clock</v-icon>
-                            {{ dateConverter.formatISODate(item.delivery_date) }}
-                            </v-chip>
-                        </template>
-                        </v-data-table>
+                            <v-card style="margin: 0.4em">
+                                <CardTitle 
+                                    icon="mdi-home-map-marker"
+                                    :title="logisticPlace.logistic_place_name"
+                                />
+                            <v-data-table
+                                :items="logisticPlace.positions"
+                                show-select
+                                select-strategy="multiple"
+                                :headers="[
+                                { title: 'Référence', value: 'part_reference' },
+                                { title: 'Désignation', value: 'part_designation' },
+                                { title: 'Quantité', value: 'quantity' },
+                                { title: 'Numéro d\'expédition', value: 'expedition_number' },
+                                { title: 'Date de livraison souhaitée', value: 'delivery_date' }
+                                ]"
+                                return-object
+                                v-model="selectedOrders"
+                                density="compact"
+                            >
+                                <template v-slot:item.delivery_date="{ item }">
+                                <v-chip variant="tonal" color="green">
+                                    <v-icon class="mr-1">mdi-calendar-clock</v-icon>
+                                    {{ new Date(item.delivery_date).toLocaleDateString() }}
+                                </v-chip>
+                                </template>
+                            </v-data-table>
+                            </v-card>
+                        </div>
+                    </div>
                     </v-card>
                     <v-card style="margin: 0.4em">
                         <v-row class="mr-2 ml-2 pa-2" style="margin-top: -1em;">
@@ -284,7 +428,7 @@ onMounted(async() => {
                                     label="Poids brut (kg)"
                                     clearable
                                 />
-                            </v-col>   
+                            </v-col>
                         </v-row>         
                         
                         <v-row class="mr-2 ml-2 pa-2" style="margin-top: -3em;">
@@ -301,7 +445,8 @@ onMounted(async() => {
                             <v-col cols="6">
                                 <v-select
                                     v-if="props.clientOrders"
-                                    v-model="selectedClientOrder"
+                                    v-model="selectedClientOrders"
+                                    multiple
                                     label="Commande client"
                                     variant="underlined"
                                     :items="props.clientOrders.map(c => c.client_order_number)"

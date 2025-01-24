@@ -1,18 +1,19 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import CardTitle from '@/components/CardTitle.vue';
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
 import GenerateDeliverySlipPDF from '@/components/modals/GenerateDeliverySlipPDF.vue';
+import SpinnLoader from '@/components/SpinnLoader.vue';
 
+const loading = ref(false)
 const deliverySlips = ref([])
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() }) 
 const subcontractorsList = ref([])
 const clientsList = ref([])
 const suppliersList = ref([])
 const logisticPlaceList = ref(null)
-const clientOrders = ref([])
 
 async function fetchDeliverySlips() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/delivery_slips_by_company`)
@@ -39,12 +40,37 @@ async function fetchLogisticPlaces() {
     logisticPlaceList.value = response
 }
 
+async function downloadPdf(item) {
+    loading.value = true
+    setTimeout(async() => {
+        const response = await apiCaller.getJson(`pdf_generator/${item.id}/generate_pdf`, false);
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // Open the Blob URL in a new tab
+        window.open(url, '_blank');
+        loading.value = false
+    }, 1200);
+}
+
+watch(selectedCompany, async (newCompany, oldCompany) => {
+  if (newCompany?.id !== oldCompany?.id) { // Only trigger fetchData if the company has changed
+    await refreshAllData();
+  }
+});
+
 async function refreshAllData() {
-    await fetchDeliverySlips()
-    await fetchSubContractors()
-    await fetchClients()
-    await fetchSuppliers()
-    await fetchLogisticPlaces()
+    loading.value = true;
+    setTimeout(async() => {
+        await fetchDeliverySlips()
+        await fetchSubContractors()
+        await fetchClients()
+        await fetchSuppliers()
+        await fetchLogisticPlaces()
+
+        loading.value = false;
+    }, 600);
 }
 
 onMounted(async() => {
@@ -53,6 +79,7 @@ onMounted(async() => {
 </script>
 
 <template>
+    <SpinnLoader :loading="loading"/>
     <div class="main-card">
         <v-card class="b1-container">
             <CardTitle 
@@ -77,13 +104,16 @@ onMounted(async() => {
                 </div>
                 <v-data-table
                     :items="deliverySlips"
+                    :loading="loading"
+                    loading-text="Chargement des données..."
                     :headers="[
                     { title: 'Numéro', value: 'number' },
                     { title: 'Date de transfert', value: 'transfer_date' },
                     { title: 'Poids', value: 'brut_weight' },
                     { title: 'Addresse de départ', value: 'departure_address' },
-                    { title: 'Addresse d\'arrivée', value: 'arrival_address' }
-                ]"
+                    { title: 'Addresse d\'arrivée', value: 'arrival_address' },
+                    { title: 'Actions', value: 'actions' }
+                    ]"
                 >
                     <template v-slot:item.number="{ item }">
                         <v-chip variant="elevated" color="white">
@@ -101,6 +131,12 @@ onMounted(async() => {
                         <v-chip variant="elevated" color="white">
                             <v-icon class="mr-1">mdi-weight</v-icon>
                             {{ item.brut_weight }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <v-chip @click="downloadPdf(item)" variant="elevated" color="white">
+                            <v-icon class="mr-1">mdi-download-box-outline</v-icon>
+                            Télécharger en pdf
                         </v-chip>
                     </template>
                 </v-data-table>

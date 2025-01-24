@@ -50,24 +50,23 @@ async function fetchExpeditions() {
 function getKpiIcon(key) {
   const icons = {
     runningExpeditions: 'mdi-ferry',
+    delayedOrders: 'mdi-clock-alert-outline',
     futureOrders: 'mdi-clock-outline',
     totalActiveOrders: 'mdi-package-variant'
   }
   return icons[key] || 'mdi-chart-box-outline'
 }
 
-function getKpiColor(key) {
+function getKpiIconStyle(key) {
   const colors = {
     runningExpeditions: 'blue',
-    totalActiveOrders: 'red',
-    futureOrders: 'warning',
-    openSupplierPositions: 'red-accent-2',
-    onTimeDeliveryRate: 'orange-darken-3',
+    delayedOrders: 'red',
+    futureOrders: 'success',
+    totalActiveOrders: 'warning',
   };
 
-  return colors[key] || 'grey-lighten-2'; // Default color if the key doesn't match
+  return colors[key] || 'white';
 }
-
 function formatMetricValue(value, key) {
   if (key === 'onTimeDeliveryRate') {
     return `${value}%`
@@ -78,6 +77,7 @@ function formatMetricValue(value, key) {
 function formatKpiLabel(key) {
   const labels = {
     runningExpeditions: 'Expédition(s) en cours',
+    delayedOrders: 'Commande(s) client en retard',
     futureOrders: 'Commande(s) client à livrer sur les 6 prochains mois',
     totalActiveOrders: 'Commande(s) client à livrer sur les 30 prochains jours'
   }
@@ -189,21 +189,22 @@ onMounted(async() => {
                         icon="mdi-cube-send"
                   />
                   <v-row class="mb-1 mt-0 justify-center">
-                    <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="4" md="3">
+                    <v-col v-for="(metric, key) in kpiData" :key="key">
                       <v-card
-                        elevation="12"
-                        class="kpi-card"
-                        :color="getKpiColor(key)"
+                        elevation="6"
+                        color="blue"
+                        variant="elevated"
+                        class="kpi-card mr-6 ml-6"
                       >
                         <v-card-text class="pa-2">
                           <div class="d-flex flex-column align-center">
                             <div class="kpi-icon mb-1">
-                              <v-icon size="24" color="white" :icon="getKpiIcon(key)"></v-icon>
+                              <v-icon size="24" :color="getKpiIconStyle(key)" :icon="getKpiIcon(key)"/>
                             </div>
-                            <div class="text-h6 white--text font-weight-bold mb-1">
+                            <div class="text-h6 font-weight-bold mb-1">
                               {{ formatMetricValue(metric, key) }}
                             </div>
-                            <div class="informative-text-l pa-2" style="color: white;">
+                            <div class="informative-text-l pa-2 text-white">
                               {{ formatKpiLabel(key) }}
                             </div>
                           </div>
@@ -537,14 +538,13 @@ onMounted(async() => {
 
 .kpi-card {
   transition: transform 0.2s;
-  
   &:hover {
     transform: translateY(-5px);
   }
 }
 
 .kpi-icon {
-  background: rgba(255, 255, 255, 0.2);
+  background: white;
   border-radius: 50%;
   padding: 12px;
   display: flex;
