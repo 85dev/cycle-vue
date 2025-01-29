@@ -34,6 +34,7 @@ async function fetchExpeditions() {
 async function fetchDeliveredExpeditions() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/delivered_expeditions`) 
     deliveredExpeditions.value = response
+    console.log(response);
 }
 
 function expeditionStatus(status) {
@@ -88,6 +89,7 @@ onMounted(async() => {
                 :headers="expeditionsIndexHeaders"
                 :items="runningExpeditions || []"
                 density="dense"
+                items-per-page="5"
             >
                 <template v-slot:item.real_departure_time="{ item }">
                     {{ new Date(item.real_departure_time).toLocaleDateString() }}
@@ -150,6 +152,7 @@ onMounted(async() => {
                 no-data-text="Aucune expédition passée enregsitrée"
                 :headers="deliveredExpeditionsHeaders"
                 :items="deliveredExpeditions || []"
+                items-per-page="5"
                 density="dense"
             >
                 <template v-slot:item.real_departure_time="{ item }">
@@ -164,22 +167,9 @@ onMounted(async() => {
                         {{ expeditionStatus(item.status) }}
                     </v-chip>
                 </template>
-                <template v-slot:item.supplier_names="{ item }">
-                    <div>
-                        <v-chip
-                            v-for="(supplier, index) in item.supplier_names"
-                            :key="index"
-                            variant="text"
-                            class="mr-2"
-                        >
-                        <v-icon class="mr-1">mdi-account-outline</v-icon>
-                            {{ supplier }}
-                        </v-chip>
-                    </div>
-                </template>
                 <template v-slot:item.actions="{ item }">
                     <ExpeditionDetails
-                        :user-id="userId"
+                        :selected-company-id="selectedCompany.id"
                         :expedition="item"
                     ></ExpeditionDetails>
                 </template>

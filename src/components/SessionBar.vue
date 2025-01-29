@@ -69,7 +69,8 @@ async function fetchData() {
     accessRequests.value = await sessionStore.actions.fetchAccessRequestAccounts()
     sessionStore.actions.initializeAuthState();  // Load user and auth token from localStorage
     userEmail.value = sessionStore.getters.getUserEmail();
-
+    rail.value = !rail.value
+    
     loadingData.value = false;
 }
 
@@ -210,7 +211,9 @@ onMounted(async() => {
           <span v-if="!rail">
             <v-icon class="informative-text">mdi-cloud-sync-outline</v-icon>
             <span class="informative-text" style="margin-left: -0.4em;">Compte entreprise</span>
-            <AccountModal />
+            <AccountModal 
+              @refresh-parent="fetchData"
+            />
             <HandleAccount />
             <SelectDatabaseCompany
               v-if="selectedCompany"

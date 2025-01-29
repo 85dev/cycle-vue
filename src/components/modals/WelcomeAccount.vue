@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, toRefs } from 'vue';
+import { computed, onMounted, ref, toRefs, defineEmits } from 'vue';
 import dateConverter from '@/services/dateConverter.js';
 import { pendingRequestsHeaders } from '@/models/tableHeaders.js';
 import CreateCompany from './CreateCompany.vue';
@@ -10,8 +10,7 @@ import sessionStore from '@/stores/sessionStore';
 import router from '@/router';
 import SpinnLoader from '../SpinnLoader.vue';
 
-const loading = ref(false)
-const userId = ref(0)
+const emit = defineEmits(['refreshSession']);
 
 const props = defineProps({
   showOverlay: {
@@ -23,6 +22,9 @@ const props = defineProps({
     default: () => [],
   },
 });
+
+const loading = ref(false)
+const userId = ref(0)
 
 function logoutUser() {
   loading.value = true;
@@ -36,13 +38,7 @@ function logoutUser() {
 
 const { showOverlay } = toRefs(props);
 
-const emit = defineEmits(['update:showOverlay', 'refreshSession']);
-
-const closeOverlay = () => {
-  emit('update:showOverlay', false);
-};
-
-function refreshParent() {
+function refreshData() {
   emit('refreshSession')
 }
 
@@ -122,7 +118,7 @@ onMounted(() => {
           <v-row>
             <v-col class="d-flex align-center justify-center">
               <CreateCompany 
-                @refresh-parent="refreshParent()"
+                @refresh-data="refreshData"
               />
             </v-col>
             <v-col class="d-flex align-center justify-center">

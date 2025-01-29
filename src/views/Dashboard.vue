@@ -76,10 +76,10 @@ function formatMetricValue(value, key) {
 
 function formatKpiLabel(key) {
   const labels = {
-    runningExpeditions: 'Expédition(s) en cours',
-    delayedOrders: 'Commande(s) client en retard',
-    futureOrders: 'Commande(s) client à livrer sur les 6 prochains mois',
-    totalActiveOrders: 'Commande(s) client à livrer sur les 30 prochains jours'
+    runningExpeditions: 'Expéditions en cours',
+    delayedOrders: 'Commandes en retard',
+    futureOrders: 'Commandes à 6 mois',
+    totalActiveOrders: 'Commandes à 30 jours'
   }
   return labels[key] || key
 }
@@ -188,27 +188,20 @@ onMounted(async() => {
                         title="Indicateurs d'activité courante"
                         icon="mdi-cube-send"
                   />
-                  <v-row class="mb-1 mt-0 justify-center">
-                    <v-col v-for="(metric, key) in kpiData" :key="key">
-                      <v-card
-                        elevation="6"
-                        color="blue"
-                        variant="elevated"
-                        class="kpi-card mr-6 ml-6"
-                      >
-                        <v-card-text class="pa-2">
-                          <div class="d-flex flex-column align-center">
-                            <div class="kpi-icon mb-1">
-                              <v-icon size="24" :color="getKpiIconStyle(key)" :icon="getKpiIcon(key)"/>
-                            </div>
-                            <div class="text-h6 font-weight-bold mb-1">
-                              {{ formatMetricValue(metric, key) }}
-                            </div>
-                            <div class="informative-text-l pa-2 text-white">
+                  <v-row dense class="mr-2 ml-2 mb-2">
+                    <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="3" md="4">
+                      <v-card variant="elevated" color="white">
+                        <v-card-title class="informative-text">
+                          <span class="d-flex align-center justify-lg-space-between">
+                            <div>
+                              <v-icon :color="getKpiIconStyle(key)" class="mr-2">{{ getKpiIcon(key) }}</v-icon>
                               {{ formatKpiLabel(key) }}
                             </div>
-                          </div>
-                        </v-card-text>
+                            <div class="text-center text-h6 text-black font-weight-bold">
+                              {{ formatMetricValue(metric, key) }}
+                            </div>
+                          </span>
+                        </v-card-title>
                       </v-card>
                     </v-col>
                   </v-row>
@@ -320,6 +313,7 @@ onMounted(async() => {
                       </v-chip>  
                       <ArchivateOrder 
                         origin="client"
+                        :selected-company-id="selectedCompany.id"
                         :userId="userId" 
                         :order="order" 
                         @refreshClientOrders="refreshAllData()" 
@@ -544,7 +538,7 @@ onMounted(async() => {
 }
 
 .kpi-icon {
-  background: white;
+  background: rgba(218, 218, 218, 0.2);
   border-radius: 50%;
   padding: 12px;
   display: flex;

@@ -192,19 +192,23 @@ const expeditionPositionHeaders = [
 ]
 
 const expeditionsListHeaders = [
-  { title: 'Quantité en transit', value: 'quantity'},
   { title: "Date de départ", value: 'real_departure_time'},
-  { title: "Date d'arrivée", value: 'delivery_date' },
+  { title: "Date d'arrivée", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
   { title: 'Fournisseur', value: 'supplier_name'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
+const detailedExpeditionsHeaders = [
+  { title: "Quantité", value: 'quantity' },
+  { title: 'Référence', value: 'part_reference'},
+  { title: 'Désignation', value: 'part_designation'}
+]
+
 const expeditionsIndexHeaders = [
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
-  { title: "Date d'arrivée réelle", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
   { title: 'Fournisseur', value: 'supplier_names'},
@@ -216,8 +220,8 @@ const deliveredExpeditionsHeaders = [
   { title: "Date d'arrivée", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
-  { title: 'Fournisseur', value: 'supplier_names'},
+  { title: 'Fournisseur', value: 'supplier_name'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { clientOrdersHeaders, detailedExpeditionsHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

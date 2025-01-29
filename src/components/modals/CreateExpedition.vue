@@ -1,6 +1,6 @@
 <script setup>
 // Vue essentials
-import { onMounted, ref, computed, defineEmits, watch } from 'vue';
+import { onMounted, ref, computed, defineEmits } from 'vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';

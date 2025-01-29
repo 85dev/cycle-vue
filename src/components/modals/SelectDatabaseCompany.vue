@@ -82,7 +82,7 @@ onMounted(() => {
       <v-card class="pa-2 ma-2 mb-0">
         <v-chip variant="elevated" class="d-flex align-center justify-center mb-2" color="blue" style="width: fit-content;">
           <v-icon class="mr-2">mdi-office-building-outline</v-icon>
-          <span>Sélectionnez le compte entreprise sur lequel travailler :</span>
+          <span>Sélectionnez le compte entreprise actif :</span>
         </v-chip>
         <v-radio-group
           v-if="companies && companies.length > 0"

@@ -162,8 +162,8 @@ onMounted(async() => {
                 </v-select>
             </v-col>
         </v-row>
-        <div class="aligner" style="margin: -1.6em 0em 0.2em 0em">
-            <v-icon style="margin-right: -12px;">mdi-alert-circle-outline</v-icon>
+        <div style="margin: -1.6em 0.8em 0.2em 0.8em">
+            <v-icon color="warning" style="margin-right: -8px;">mdi-alert-circle-outline</v-icon>
             <span class="informative-text">La recherche d'une pièce s'applique sur les champs <strong>référence</strong> et <strong>désignation</strong></span>
         </div>
         </v-card>

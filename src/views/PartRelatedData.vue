@@ -31,10 +31,11 @@ const currentPartId = ref(null)
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
-const clientPositionModal = ref(false);
+const clientPositionModal = computed(() => { return unsortedClientPositions.value.length > 0 })
 const calculatedStocks = ref({})
 const subContractorsList = ref([])
 const logisticPlaceList = ref([])
+const unsortedClientPositions = ref([])
 
 async function fetchPartData() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
@@ -46,15 +47,9 @@ async function fetchSupplierOrders() {
   dataFromSearch.value.supplier_orders = response
 }
 
-async function fetchUnsortedClientPositions() {
-  setTimeout(async() => {
+async function fetchUnsortedClientPositions() {  
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts/${currentPartId.value}/unsorted_client_positions`)
-    dataFromSearch.value.unsorted_client_positions = response
-
-    if (response.length > 0) {
-      clientPositionModal.value = true;
-    }
-  }, 600);
+    unsortedClientPositions.value = response
 }
 
 async function fetchCalculatedStocks() {
@@ -148,7 +143,7 @@ onMounted(async () => {
           :part-id="currentPartId"
           :selected-company-id="selectedCompany.id"
           :client="dataFromSearch.client"
-          :client-positions="dataFromSearch.unsorted_client_positions"
+          :client-positions="unsortedClientPositions"
           @refreshClientPositions="refreshAllData()"
         />
 
@@ -316,7 +311,7 @@ onMounted(async () => {
                         { type: 'En stock standard client', quantity: calculatedStocks.current_stock.standard_stock },
                         { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
                         { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
-                        { type: 'Total disponible', quantity: calculatedStocks.current_stock.total },
+                        { type: 'Total', quantity: calculatedStocks.current_stock.total },
                       ]"
                       :headers="[
                         { title: 'Stocks disponibles', value: 'type' },
@@ -327,9 +322,9 @@ onMounted(async () => {
                       hide-default-footer
                     >
                       <template v-slot:item.quantity="{ item }">
-                        <template v-if="item.type === 'Total disponible'">
+                        <template v-if="item.type === 'Total'">
                           <v-chip variant="text">
-                            <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
+                            <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
                             {{ item.quantity }}
                           </v-chip>
                         </template>
@@ -416,7 +411,7 @@ onMounted(async () => {
                           </v-chip>
                         </template>
                         <template v-else>
-                          <v-chip variant="tonal">
+                          <v-chip variant="elevated" color="white">
                             <v-icon class="mr-1">
                               {{ item.type === 'Total disponible à terme' ? 'mdi-check-circle-outline' : 'mdi-package-variant-closed-check' }}
                             </v-icon>
@@ -533,11 +528,11 @@ onMounted(async () => {
                         </v-chip>
                       </template>
                       <template v-slot:item.actions="{item}">
-                          <PositionHistory
+                          <!-- <PositionHistory
                             v-if="selectedCompany && currentPartId && item.id"
                             :selected-company-id="selectedCompany.id"
                             :client-position-id="item.id"
-                          />
+                          /> -->
                           <TransferPositionFromClient
                             v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
                             origin="consignment"
@@ -611,7 +606,7 @@ onMounted(async () => {
               >
                 <!-- Panel Title -->
                 <v-expansion-panel-title>
-                  <v-chip variant="elevated" color="blue">
+                  <v-chip variant="text" color="blue" elevation="2">
                     <v-icon class="mr-2">mdi-map-marker-circle</v-icon>
                     {{ stock.name ? stock.name : stock.address }}
                   </v-chip>
@@ -664,11 +659,11 @@ onMounted(async () => {
                         </template>
                         <template v-slot:item.actions="{item}">
                           <div class="actions-slot">
-                            <PositionHistory
-                            v-if="selectedCompany && currentPartId && item.id"
-                            :selected-company-id="selectedCompany.id"
-                            :client-position-id="item.id"
-                          />
+                            <!-- <PositionHistory
+                              v-if="selectedCompany && currentPartId && item.id"
+                              :selected-company-id="selectedCompany.id"
+                              :client-position-id="item.id"
+                            /> -->
                           <TransferPositionFromClient
                             v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
                             origin="consignment"

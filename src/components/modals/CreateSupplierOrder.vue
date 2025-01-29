@@ -15,10 +15,6 @@ const props = defineProps({
         type: Number,
         default: 0
     },
-    clientOrders: {
-        type: Array,
-        default: () => []
-    },
     clientId: {
         type: String
     },
@@ -79,11 +75,8 @@ async function submitSupplierOrder() {
 
     // Catch selected Client Id to create the 
     const selectedSupplierId = supplierList.value.find(c => c.name === supplier.value)?.id;
-    const clientOrderIds = orderPositions.value
-        .map(position => props.clientOrders.find(order => order.number === position.client_order)?.id)
-        .filter(id => id !== undefined);
 
-    await apiCaller.post(`companies/${props.selectedCompanyId}/suppliers/${selectedSupplierId}/create_supplier_order?${clientOrderIds > 0 ? `client_order_ids=${clientOrderIds.join(',')}` : ''}`, payload, true)
+    await apiCaller.post(`companies/${props.selectedCompanyId}/suppliers/${selectedSupplierId}/create_supplier_order`, payload, true)
 
     emit('refreshSupplierOrders')
 }
@@ -175,15 +168,6 @@ onMounted( async () => {
                                     ></v-select>
                                 </v-col>
                                 <v-col cols="2">
-                                        <v-select
-                                            clearable
-                                            label="Commande Client"
-                                            v-model="position.client_order"
-                                            variant="underlined"
-                                            :items="props.clientOrders.map(order => order.client_order_number)"
-                                        ></v-select>
-                                    </v-col>
-                                <v-col cols="2">
                                     <v-text-field
                                         label="Prix"
                                         clearable
@@ -203,7 +187,7 @@ onMounted( async () => {
                                         required
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="2">
+                                <v-col cols="4">
                                     <v-text-field
                                         label="Date de livraison souhaitée"
                                         v-model="position.delivery_date"
@@ -213,8 +197,8 @@ onMounted( async () => {
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="1" style="display: flex; width: 100%; justify-content: center;">
-                                    <v-btn icon @click="removeOrderPosition(index)">
-                                        <v-icon>mdi-delete</v-icon>
+                                    <v-btn class="no-effects" icon @click="removeOrderPosition(index)">
+                                        <v-icon>mdi-delete-outline</v-icon>
                                     </v-btn>
                                 </v-col>
                             </v-row>

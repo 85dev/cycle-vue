@@ -1,4 +1,7 @@
 <script setup>
+// Vue essentials
+import { ref, watch, onMounted, defineEmits } from 'vue';
+
 // Services
 import apiCaller from '@/services/apiCaller';
 import sessionStore from '@/stores/sessionStore';
@@ -8,10 +11,7 @@ import autocomplete from '@/services/addressAutocomplete.js'
 import SpinnLoader from '../Microloader.vue'
 import CardTitle from '../CardTitle.vue';
 
-// Vue essentials
-import { ref, watch, onMounted } from 'vue';
-
-const emit = defineEmits(['refreshParent'])
+const emit = defineEmits(['refreshData'])
 
 // internal logic
 const userId = ref(0)
@@ -59,10 +59,8 @@ async function submitCompany() {
         company: { ...company.value }
     };
 
-    const response = await apiCaller.post(`users/${userId.value}/companies`, payload, false)
-    if (response.ok) {
-        emit('refreshParent')
-    }
+    await apiCaller.post(`users/${userId.value}/companies`, payload, false)
+    emit('refreshData')
 }
 
 watch(() => company.value.address, (newAddress) => {

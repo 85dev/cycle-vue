@@ -7,12 +7,17 @@ import CreateCompany from './CreateCompany.vue';
 import JoinCompany from './JoinCompany.vue';
 import CardTitle from '../CardTitle.vue';
 
+const emit = defineEmits(['refreshParent'])
+
 const props = defineProps({
     origin: {
         type: String
     }
 })
 
+function refreshParent() {
+    emit('refreshParent')
+}
 </script>
 
 <template>
@@ -47,7 +52,9 @@ const props = defineProps({
                     <v-container class="mt-4">
                         <v-row>
                             <v-col class="d-flex align-center justify-center">
-                            <CreateCompany />
+                            <CreateCompany 
+                                @refresh-data="refreshParent"
+                            />
                             </v-col>
                             <v-col class="d-flex align-center justify-center">
                             <JoinCompany />
