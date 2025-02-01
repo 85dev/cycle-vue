@@ -282,9 +282,7 @@ const actions = {
     pendingRequests.value = [];
     accessRequests.value = [];
     companies.value = [];
-  
-    console.log('User logged out, localStorage cleared:', localStorage);
-  }
+    }
 };
 
 export default {

@@ -192,12 +192,12 @@ onMounted(async() => {
                     <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="3" md="4">
                       <v-card variant="elevated" color="white">
                         <v-card-title class="informative-text">
-                          <span class="d-flex align-center justify-lg-space-between">
+                          <span class="d-flex align-center justify-center">
                             <div>
                               <v-icon :color="getKpiIconStyle(key)" class="mr-2">{{ getKpiIcon(key) }}</v-icon>
                               {{ formatKpiLabel(key) }}
                             </div>
-                            <div class="text-center text-h6 text-black font-weight-bold">
+                            <div class="text-h6 text-blue font-weight-bold ml-3 mt-1">
                               {{ formatMetricValue(metric, key) }}
                             </div>
                           </span>

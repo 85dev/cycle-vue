@@ -42,12 +42,12 @@ import CreateTransporter from './CreateTransporter.vue';
             <v-container
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 16px;"
             >
-                <CreatePart :origin="'menu'" @refresh-parts="emit('refresh')" />
-                <CreateClient :origin="'menu'" @refresh-clients="emit('refresh')" />
-                <CreateSupplier :origin="'menu'" @refresh-suppliers="emit('refresh')" />
-                <CreateSubcontractor :origin="'menu'" @refresh-sub-contractors="emit('refresh')" />
-                <CreateLogisticPlace :origin="'menu'" @refresh-logistic-places="emit('refresh')" />
-                <CreateTransporter :origin="'menu'" @resfresh-logistics="emit('refresh')" />
+                <CreatePart origin="menu" @refresh-parts="emit('refresh')" />
+                <CreateClient origin="menu" @refresh-clients="emit('refresh')" />
+                <CreateSupplier origin="menu" @refresh-suppliers="emit('refresh')" />
+                <CreateSubcontractor origin="menu" @refresh-sub-contractors="emit('refresh')" />
+                <CreateLogisticPlace origin="menu" @refresh-logistic-places="emit('refresh')" />
+                <CreateTransporter origin="menu" @resfresh-logistics="emit('refresh')" />
             </v-container>
             <v-card-actions>
 

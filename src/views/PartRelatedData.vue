@@ -944,10 +944,14 @@ onMounted(async () => {
               </v-chip>
             </template>
             <template v-slot:item.real_departure_time="{ item }">
-             {{ new Date(item.real_departure_time).toLocaleDateString() }}
+              <v-chip variant="text">
+                {{ item.real_departure_time ? new Date(item.real_departure_time).toLocaleDateString() : "Pas de donnée" }}
+              </v-chip>
             </template>
-            <template v-slot:item.delivery_date="{ item }">
-             {{ new Date(item.delivery_date).toLocaleDateString() }}
+            <template v-slot:item.estimated_arrival_time="{ item }">
+              <v-chip variant="text">
+                {{ item.estimated_arrival_time ? new Date(item.estimated_arrival_time).toLocaleDateString() : "Pas de donnée" }}
+              </v-chip>
             </template>
             <template v-slot:item.status="{ item }">
               <v-chip

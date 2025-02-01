@@ -193,29 +193,39 @@ const expeditionPositionHeaders = [
 
 const expeditionsListHeaders = [
   { title: "Date de départ", value: 'real_departure_time'},
-  { title: "Date d'arrivée", value: 'arrival_time' },
+  { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
-  { title: 'Fournisseur', value: 'supplier_name'},
-  { title: 'Actions', value: 'actions', sortable: false }
+  { title: 'Fournisseur', value: 'supplier_name'}
 ]
 
-const detailedExpeditionsHeaders = [
+const detailedUndelExpeditionsHeaders = [
+  { title: "Quantité", value: 'quantity' },
+  { title: "Statut de la quantité", value: 'quantity_status' },
+  { title: 'Référence', value: 'part_reference'},
+  { title: 'Désignation', value: 'part_designation'},
+  { title: 'Numéro de commande', value: 'supplier_order_number'},
+]
+
+const detailedDelExpeditionsHeaders = [
   { title: "Quantité", value: 'quantity' },
   { title: 'Référence', value: 'part_reference'},
-  { title: 'Désignation', value: 'part_designation'}
+  { title: 'Désignation', value: 'part_designation'},
+  { title: 'Numéro de commande', value: 'supplier_order_number'},
 ]
 
 const expeditionsIndexHeaders = [
+  { title: "Numéro d'expédition", value: 'number' },
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
-  { title: 'Fournisseur', value: 'supplier_names'},
+  { title: 'Fournisseur', value: 'supplier_name'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
 const deliveredExpeditionsHeaders = [
+  { title: "Numéro d'expédition", value: 'number' },
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
@@ -224,4 +234,4 @@ const deliveredExpeditionsHeaders = [
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, detailedExpeditionsHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { clientOrdersHeaders, detailedUndelExpeditionsHeaders, detailedDelExpeditionsHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

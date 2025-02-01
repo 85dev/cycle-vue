@@ -26,7 +26,7 @@ async function fetchSuppliers() {
     suppliers.value = response
 }
 
-async function fetchExpeditions() {
+async function fetchUndeliveredExpeditions() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/undelivered_expeditions`) 
     runningExpeditions.value = response
 }
@@ -34,7 +34,6 @@ async function fetchExpeditions() {
 async function fetchDeliveredExpeditions() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/delivered_expeditions`) 
     deliveredExpeditions.value = response
-    console.log(response);
 }
 
 function expeditionStatus(status) {
@@ -49,7 +48,7 @@ async function refreshExpeditions() {
     loading.value = true;
 
     setTimeout(async() => {
-        await fetchExpeditions()
+        await fetchUndeliveredExpeditions()
         await fetchDeliveredExpeditions()
         await fetchSuppliers()
         loading.value = false;
@@ -89,38 +88,34 @@ onMounted(async() => {
                 :headers="expeditionsIndexHeaders"
                 :items="runningExpeditions || []"
                 density="dense"
+                :loading="loading"
                 items-per-page="5"
             >
                 <template v-slot:item.real_departure_time="{ item }">
                     {{ new Date(item.real_departure_time).toLocaleDateString() }}
                 </template>
-                <template v-slot:item.arrival_time="{ item }">
-                    {{ item.arrival_time ? new Date(item.arrival_time).toLocaleDateString() : 'Pas de donnée' }}
-                </template>
                 <template v-slot:item.estimated_arrival_time="{ item }">
                     {{ item.estimated_arrival_time ? new Date(item.estimated_arrival_time).toLocaleDateString() : 'Pas de donnée' }}
                 </template>
                 <template v-slot:item.status="{ item }">
-                    <v-chip variant="elevated" color="white" style="margin: 0.2em 0em">
-                        <v-icon class="mr-1">mdi-ferry</v-icon>
+                    <v-chip variant="text" style="margin: 0.2em 0em">
+                        <v-icon :color="item.status === 'undelivered' ? 'blue' : 'success'" class="mr-2">mdi-ferry</v-icon>
                         {{ expeditionStatus(item.status) }}
                     </v-chip>
                 </template>
-                <template v-slot:item.supplier_names="{ item }">
-                    <div>
-                        <v-chip
-                            v-for="(supplier, index) in item.supplier_names"
-                            :key="index"
-                            variant="text"
-                            class="mr-2"
-                        >
-                        <v-icon class="mr-1">mdi-account-outline</v-icon>
-                            {{ supplier }}
+                <template v-slot:item.supplier_name="{ item }">
+                        <v-chip variant="text">
+                            <v-icon class="mr-1">mdi-account-outline</v-icon>
+                            {{ item.supplier_name }}
                         </v-chip>
-                    </div>
                 </template>
                 <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
+                    <ExpeditionDetails
+                        origin="undelivered"
+                        :selected-company-id="selectedCompany.id"
+                        :expedition="item"
+                    />
                     <DispatchExpedition 
                         v-if="selectedCompany && item"
                         :selected-company-id="selectedCompany.id"
@@ -148,6 +143,7 @@ onMounted(async() => {
                 icon="mdi-package-variant-closed-check"
             />
             <v-data-table
+                :loading="loading"
                 v-if="deliveredExpeditions && deliveredExpeditions.length > 0"
                 no-data-text="Aucune expédition passée enregsitrée"
                 :headers="deliveredExpeditionsHeaders"
@@ -169,9 +165,10 @@ onMounted(async() => {
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <ExpeditionDetails
+                        origin="delivered"
                         :selected-company-id="selectedCompany.id"
                         :expedition="item"
-                    ></ExpeditionDetails>
+                    />
                 </template>
             </v-data-table>
             <div v-else class="d-flex flex-wrap align-items-center">

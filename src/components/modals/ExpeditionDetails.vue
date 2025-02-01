@@ -1,10 +1,13 @@
 <script setup>
 // Services
-import { statusIcon, statusIconColor, statusText } from '@/services/textIconServices.js'
 import CardTitle from '../CardTitle.vue';
-import { detailedExpeditionsHeaders } from '@/models/tableHeaders'
+import { detailedDelExpeditionsHeaders, detailedUndelExpeditionsHeaders } from '@/models/tableHeaders'
 
 const props = defineProps({
+    origin: {
+        type: String,
+        required: true,
+    },
     selectedCompanyId: {
         type: Number,
         required: true
@@ -14,8 +17,6 @@ const props = defineProps({
         required: true
     }
 })
-
-console.log(props.expedition);
 
 </script>
 
@@ -38,20 +39,32 @@ console.log(props.expedition);
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
                     <CardTitle 
-                        title="Détails de l'expédition"
+                        :title="`Détails de l\'expédition ${props.expedition.number}`"
                         icon="mdi-cube-send"
                     />
                     <v-divider style="margin: 0em 1em; padding: 6px;"></v-divider>
                     <v-card style="margin: 0.4em">
+                        <CardTitle 
+                            title="Contenu de l'expédition"
+                            variant="elevated"
+                            icon="mdi-ferry"
+                            color="dark"
+                        />
                         <v-data-table
-                            :headers="detailedExpeditionsHeaders"
+                            :headers="props.origin === 'delivered' ? detailedDelExpeditionsHeaders : detailedUndelExpeditionsHeaders"
                             :items="props.expedition.expedition_positions"
                             density="compact"
                         >
                         <template v-slot:item.quantity="{ item }">
-                            <v-chip variant="elevated" color="success" outlined>
+                            <v-chip variant="text" color="success" outlined>
                                 <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                                 {{ item.quantity }}
+                            </v-chip>
+                        </template>
+                        <template v-slot:item.quantity_status="{ item }">
+                            <v-chip variant="text" :color="item.quantity_status === 'full' ? 'success' : 'warning'" outlined>
+                                <v-icon class="mr-2">{{ item.quantity_status === 'full' ? 'mdi-package-variant-closed-check' : 'mdi-package-variant' }} </v-icon>
+                                {{ item.quantity_status === 'full' ? 'Complet' : 'Partiel' }}
                             </v-chip>
                         </template>
                         </v-data-table>

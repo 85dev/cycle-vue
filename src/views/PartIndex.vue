@@ -112,7 +112,7 @@ onMounted(async() => {
     <SpinnLoader :loading="loading" />
     <div class="main-card">
         <CreatePart 
-            :origin="'single'"
+            origin="single"
             @refresh-parts="fetchParts()"
         ></CreatePart>
 

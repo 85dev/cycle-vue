@@ -42,8 +42,6 @@ const props = defineProps({
     }
 })
 
-console.log(props.transferData);
-
 const emit = defineEmits(['catch-arrival', 'refresh']);
 
 const arrivalData = computed(() => ({
@@ -54,8 +52,7 @@ const arrivalData = computed(() => ({
             : selectedClient.value
             ? 'client'
             : null,
-    name: selectedSubcontractorArrival.value || selectedLogisticPlaceArrival.value || null,
-    isSelected: !!selectedClientArrival.value
+    name: selectedSubcontractorArrival.value || selectedLogisticPlaceArrival.value | selectedClientArrival.value || null,
 }));
 
 const loading = ref(false)
@@ -65,6 +62,7 @@ const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedLogisticPlaceDeparture = ref(null)
 const selectedSubcontractorDeparture = ref(null)
 const selectedClientArrival = ref(null)
+const selectedClientArrivalBoolean = ref(false)
 const selectedClient = ref(null)
 const selectedLogisticPlaceArrival = ref(null)
 const selectedSubcontractorArrival = ref(null)
@@ -80,6 +78,7 @@ const reactiveOrders = ref([])
 const selectedOrders = ref([])
 const reactiveClientOrder = ref(null)
 const expeditionPositions = ref([])
+const clientStocks = ref([])
 
 async function fetchContacts() {
     if (props.client) {
@@ -117,6 +116,16 @@ async function fetchExpeditionPositions() {
     expeditionPositions.value = response
 }
 
+async function fetchClientStocks() {
+    if (clientForOrders.value) {
+        const clientId = props.clientList.find(c => c.name === clientForOrders.value)?.id;
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/clients/${clientId}/stocks_by_client`);
+        
+        clientStocks.value = response;
+    }
+}
+
+
 async function generatedPdf() {
     if (props.origin === 'subcontractor' || props.origin === 'logistic_place') {
         const departureAddress = selectedSubcontractorDeparture.value
@@ -124,9 +133,17 @@ async function generatedPdf() {
             : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || "Adresse non trouvée"}`;
 
         const arrivalAddress = selectedSubcontractorArrival.value
-            ? `${selectedSubcontractorArrival.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || "Adresse non trouvée"}`
+            ? `${selectedSubcontractorArrival.value}, ${
+                props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || "Adresse non trouvée"
+            }`
             : selectedLogisticPlaceArrival.value
-            ? `${selectedLogisticPlaceArrival.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || "Adresse non trouvée"}`
+            ? `${selectedLogisticPlaceArrival.value}, ${
+                props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || "Adresse non trouvée"
+            }`
+            : selectedClientArrival.value
+            ? `${selectedClientArrival.value}, ${
+                clientStocks.value.find(stock => stock.name === selectedClientArrival.value)?.address || "Adresse stock non trouvée"
+            }`
             : `${props.client.name}, ${props.client.address || "Adresse client non trouvée"}`;
 
         const payload = {
@@ -161,12 +178,23 @@ async function generatedPdf() {
             : `${selectedLogisticPlaceDeparture.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceDeparture.value)?.address || 'Adresse non trouvée'}`;
 
         const arrivalAddress = selectedSubcontractorArrival.value
-            ? `${selectedSubcontractorArrival.value}, ${props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || 'Adresse non trouvée'}`
+            ? `${selectedSubcontractorArrival.value}, ${
+                props.subcontractors.find(subC => subC.name === selectedSubcontractorArrival.value)?.address || "Adresse non trouvée"
+            }`
             : selectedLogisticPlaceArrival.value
-            ? `${selectedLogisticPlaceArrival.value}, ${props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || 'Adresse non trouvée'}`
-            : props.client
-            ? `${props.client.name}, ${props.client.address || 'Adresse client non trouvée'}`
-            : 'Adresse non spécifiée';
+            ? `${selectedLogisticPlaceArrival.value}, ${
+                props.logisticPlaces.find(lp => lp.name === selectedLogisticPlaceArrival.value)?.address || "Adresse non trouvée"
+            }`
+            : selectedClientArrival.value
+            ? (() => {
+                const selectedStock = clientStocks.value.find(stock => stock.name === selectedClientArrival.value);
+                const clientName = props.clientList.find(client => client.name === clientForOrders.value)?.name;
+                return selectedStock
+                    ? `${clientName ? `${clientName}` : ""}, ${selectedStock.name}, ${selectedStock.address || "Adresse stock non trouvée"}`
+                    : "Adresse stock non trouvée";
+            })()
+            : `${props.client?.name || "Client inconnu"}, ${props.client?.address || "Adresse client non trouvée"}`;
+                console.log("Final Arrival Address:", arrivalAddress);
 
         const payload = {
             expedition_position_ids: selectedOrders.value.map(item => item.expedition_position_id),
@@ -201,6 +229,7 @@ async function processDataFetches() {
         await fetchClientOrders(); 
         await fetchExpeditionPositions(); 
         await fetchContacts();
+        await fetchClientStocks();
         loading.value = false
     }, 400);
 }
@@ -236,13 +265,13 @@ onMounted(async() => {
         if (props.transferData.type === 'subcontractor') {
         selectedSubcontractorArrival.value = props.transferData.name;
         selectedLogisticPlaceArrival.value = null;
-        selectedClientArrival.value = false;
+        selectedClientArrival.value = null;
         } else if (props.transferData.type === 'logistic_place') {
             selectedLogisticPlaceArrival.value = props.transferData.name;
             selectedSubcontractorArrival.value = null;
-            selectedClientArrival.value = false;
+            selectedClientArrival.value = null;
         } else if (props.transferData.type === 'client') {
-            selectedClientArrival.value = props.transferData.isSelected;
+            selectedClientArrival.value = props.transferData.name;
             selectedSubcontractorArrival.value = null;
             selectedLogisticPlaceArrival.value = null;
         }
@@ -253,6 +282,7 @@ onMounted(async() => {
     } else if (props.origin === 'logistic_place') {
         selectedLogisticPlaceDeparture.value = props.position.logistic_place_name
     }
+
     await fetchLastSlip()
     await fetchContacts()
 })
@@ -303,7 +333,8 @@ onMounted(async() => {
                             :items="props.clientList.map(c => c.name)"
                             v-model="clientForOrders"
                             variant="underlined"
-                            label="Sélectionnez un client afin d'en choisir les positions"
+                            clearable
+                            label="Sélectionnez un client pour définir les positions et les addresses des stocks"
                             @update:model-value="processDataFetches()"
                         />
                         <v-row class="mr-3 ml-3" style="margin-top: -1.6em;" v-if="clientForOrders">
@@ -326,14 +357,6 @@ onMounted(async() => {
                                 />
                             </v-col>
                         </v-row>
-                        <span class="d-flex align-center justify-center mb-5" v-if="reactiveOrders && reactiveOrders.length">
-                            <v-chip variant="elevated" color="white">
-                                <v-icon color="warning" class="mr-2">mdi-alert-circle-outline</v-icon>
-                                <span>
-                                    Sélectionnez les positions qui apparaitront sur le bordereau
-                                </span>
-                            </v-chip>
-                        </span>
                         <div v-if="expeditionPositions.subcontractors && expeditionPositions.subcontractors.length">
                             <div
                                 v-for="subcontractor in expeditionPositions.subcontractors"
@@ -501,16 +524,24 @@ onMounted(async() => {
                         </v-row>
                     </v-card>
 
-
                     <v-card style="margin:0.4em">
-                        <span class="informative-text">
-                            <v-chip variant="elevated" color="blue" class="mt-2" elevation="4">
-                                <v-icon class="mr-2">mdi-subdirectory-arrow-left</v-icon>
-                                Lieu d'arrivée :
-                            </v-chip>
-                        </span>
+                        <div class="d-flex flex-column">
+                            <span class="informative-text">
+                                <v-chip variant="elevated" color="blue" class="mt-2" elevation="4">
+                                    <v-icon class="mr-2">mdi-subdirectory-arrow-left</v-icon>
+                                    Lieu d'arrivée :
+                                </v-chip>
+                            </span>
 
-                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -0.3em;">
+                            <span class="informative-text" v-if="!clientForOrders && props.origin !== 'subcontractor' && props.origin !== 'logistic_place'">
+                                <v-chip variant="text">
+                                    <v-icon color="warning" class="mr-2">mdi-alert-circle-outline</v-icon>
+                                    Sélectionnez d'abord un client pour afficher ses stocks :
+                                </v-chip>
+                            </span>
+                        </div>
+    
+                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -1.4em;">
                                 <v-select
                                     class="field-slot mr-2"
                                     v-model="selectedSubcontractorArrival"
@@ -529,22 +560,23 @@ onMounted(async() => {
                                     clearable
                                     :disabled="selectedClientArrival || selectedSubcontractorArrival || selectedClient"
                                 />
-                                <v-checkbox
-                                    v-if="props.origin !== 'subcontractor' || props.origin !== 'logistic_place'"
-                                    class="ml-2"
-                                    v-model="selectedClientArrival"
-                                    label="Chez le client"
-                                    variant="underlined"
-                                    color="blue"
-                                    :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival || selectedClient"
-                                />
                                 <v-select
-                                    v-else
+                                    v-if="props.origin !== 'subcontractor' && props.origin !== 'logistic_place'"
+                                    class="ml-2"
+                                    variant="underlined"
+                                    v-model="selectedClientArrival"
+                                    label="Sélectionnez un stock client"
+                                    :items="clientStocks.map(c => c.name) || ['Sélectionnez un client']"
+                                    clearable
+                                    :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival || clientStocks.length === 0"
+                                />
+                                <v-checkbox
+                                     v-if="props.origin === 'subcontractor' || props.origin === 'logistic_place'"
+                                    color="blue"
                                     class="ml-2"
                                     variant="underlined"
                                     v-model="selectedClient"
-                                    label="Sélectionnez un client"
-                                    :items="props.clientList.map(c => c.name) || []"
+                                    label="Chez le client"
                                     :disabled="selectedLogisticPlaceArrival || selectedSubcontractorArrival || selectedClientArrival"
                                 />
                         </v-row>

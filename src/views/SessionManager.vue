@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, resolveComponent } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import Popup from '@/components/Popup.vue';
 import router from '@/router/index.js';
+import ResetPassword from '@/components/modals/ResetPassword.vue';
 
 // Form input states
 const signUpEmail = ref('')
@@ -20,7 +21,6 @@ const snackbarVisible = ref(false);
 const snackbarMessage = ref('');
 const snackbarType = ref('');
 
-// Function to trigger the snackbar
 function triggerSnackbar(message, type) {
   snackbarMessage.value = message;
   snackbarType.value = type;
@@ -92,7 +92,7 @@ async function onLogin(event) {
     setTimeout(async() => {
       const response = await sessionStore.actions.loginUser(data);
 
-      if (response !== undefined) {
+      if (!response.ok) {
         triggerSnackbar('Email ou mot de passe incorrect', 'warning'); // Trigger success snackbar
       }
       loading.value = false;
@@ -102,6 +102,14 @@ async function onLogin(event) {
     console.error('Login failed:', error);
     triggerSnackbar('An unexpected error occurred.', 'error'); // Handle unexpected errors
   }
+}
+
+function launchResetNotification(response) {
+    if (response.ok) {
+      triggerSnackbar('Password reset successful', 'success');
+    } else {
+      triggerSnackbar('Password reset failed', 'error');
+    }
 }
 
 onMounted(async() => {
@@ -197,6 +205,9 @@ onMounted(async() => {
               <v-icon class="mr-1">mdi-account-arrow-right-outline</v-icon>
               Se connecter
             </v-btn>
+            <ResetPassword 
+              @reset-success="launchResetNotification"
+            />
           </v-form>
         </div>
       </v-card>

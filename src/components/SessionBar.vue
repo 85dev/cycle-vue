@@ -231,7 +231,7 @@ onMounted(async() => {
           <div 
             v-if="!rail"
           >
-           <DataAddingModal @refresh="rail = !rail" />
+           <DataAddingModal @refresh="fetchData" />
           </div>
 
           <span v-if="!rail">

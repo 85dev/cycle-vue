@@ -70,7 +70,7 @@ async function refreshAllData() {
         await fetchLogisticPlaces()
 
         loading.value = false;
-    }, 600);
+    }, 1200);
 }
 
 onMounted(async() => {
@@ -103,6 +103,7 @@ onMounted(async() => {
                     />
                 </div>
                 <v-data-table
+                    no-data-text="Pas de bordereau enregistré"
                     :items="deliverySlips"
                     :loading="loading"
                     loading-text="Chargement des données..."

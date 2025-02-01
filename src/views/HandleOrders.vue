@@ -259,29 +259,60 @@ onMounted(async() => {
                     title="Gestion des commandes fournisseur"
                     icon="mdi-package-variant-plus"
                 />
-                <div class="d-flex ml-4 mt-1 mr-4 justify-lg-space-between" style="margin-bottom: -8px; align-items: center;">
-                    <div class="d-flex align-center">
-                    <v-select
-                        v-model="selectedSupplierFilter"
-                        clearable
-                        prepend-icon="mdi-account-outline"
-                        label="Filtre fournisseur"
-                        :items="[...new Set(supplierOrders.map(order => order.supplier_name))]"
-                        variant="underlined"
-                        class="mr-2"
-                        style="max-width: 16vw; min-width: 12vw;"
-                    />
-                    <v-text-field
-                        v-model="supplierCommandNumberFilter"
-                        clearable
-                        prepend-icon="mdi-file-document-outline"
-                        label="Filtrer par numéro de commande"
-                        variant="underlined"
-                        class="ml-2"
-                        style="max-width: 36vw; min-width: 24vw;"
-                    />
+                <v-card v-if="clientOrders && clientOrders.length > 0" style="margin: 0.4em;">
+                    <div class="d-flex justify-space-between align-center">
+                        <span class="informative-text">
+                            <v-chip
+                                class="mt-1"
+                                variant="tonal"
+                                color="secondary"
+                            >
+                                <v-icon start class="ml-0">mdi-sort</v-icon>
+                                Filtrer par fournisseur et numéro de commande
+                            </v-chip>
+                        </span>
+                        <span class="informative-text">
+                            <v-chip
+                                class="mt-1"
+                                variant="tonal"
+                                :color="selectedClientFilter || commandNumberFilter ? 'blue' : 'secondary'"
+                            >
+                                <v-icon start class="ml-0">mdi-file-document-outline</v-icon>
+                                <span v-if="selectedClientFilter || commandNumberFilter">
+                                    Résultats de la recherche : {{ filteredClientOrders.length }}
+                                </span>
+                                <span v-else>
+                                    Commandes client en cours : {{ clientOrders.length }}
+                                </span>
+                            </v-chip>
+                        </span>
+                    </div>
+
+                    <div class="d-flex justify-space-between align-center ml-4">
+                        <div class="d-flex align-center">
+                        <v-select
+                            v-model="selectedSupplierFilter"
+                            clearable
+                            prepend-icon="mdi-account-outline"
+                            label="Filtre fournisseur"
+                            :items="[...new Set(supplierOrders.map(order => order.supplier_name))]"
+                            variant="underlined"
+                            class="mr-2"
+                            style="max-width: 16vw; min-width: 12vw;"
+                        />
+                        <v-text-field
+                            v-model="supplierCommandNumberFilter"
+                            clearable
+                            prepend-icon="mdi-file-document-outline"
+                            label="Filtrer par numéro de commande"
+                            variant="underlined"
+                            class="ml-2"
+                            style="max-width: 36vw; min-width: 24vw;"
+                        />
                     </div>
                 </div>
+                </v-card>
+
                 <v-data-table
                     :loading="loadingSupplier"
                     density="compact"
