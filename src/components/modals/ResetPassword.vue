@@ -60,15 +60,29 @@ async function sendEmail() {
         loading.value = true
         setTimeout(async () => {
             const response = await apiCaller.post('users/request_password_reset', { email: userEmail.value })
-            console.log("Reset code sent to email");
-            response.ok ? step.value ++ : null;
+            if (response.ok) {
+                triggerSnackbar('Code de réinitialisation envoyé', 'success');
+                step.value++;
+            } else {
+                triggerSnackbar('Échec de l\'envoi du code de réinitialisation', 'warning');
+            }
             loading.value = false
         }, 600)
     }
 }
 
-async function stepFurther() {
-    step.value ++
+async function validateCode() {
+    loading.value = true
+    setTimeout(async () => {
+        const response = await apiCaller.post('users/verify_reset_code', { reset_code: accessCode.value, email: userEmail.value  })
+        if (response.ok) {
+            triggerSnackbar('Code de réinitialisation validée', 'success');
+            step.value ++ 
+        } else {
+            triggerSnackbar('Code de réinitialisation invalide', 'warning');
+        }
+        loading.value = false
+    }, 600)
 }
 
 const resetValid = computed(() => {
@@ -195,7 +209,7 @@ async function submitNewPassword() {
                                     />
                                 </v-form>
                                 <div class="d-flex align-center justify-center mb-2">
-                                    <v-chip variant="elevated" @click="stepFurther()" color="success">
+                                    <v-chip variant="elevated" @click="validateCode()" color="success">
                                         <v-icon class="mr-2">mdi-check-circle-outline</v-icon>
                                         Valider
                                     </v-chip>
