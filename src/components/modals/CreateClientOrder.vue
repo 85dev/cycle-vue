@@ -176,6 +176,7 @@ onMounted( async () => {
                                     v-if="props.client"
                                     variant="underlined"
                                     class="form-part"
+                                    disabled
                                     label="Client"
                                     v-model="props.client.name"
                                     required
@@ -213,7 +214,7 @@ onMounted( async () => {
                             </v-row>
                         </v-form>
 
-                        <v-chip class="ml-4" v-if="!selectedClient" variant="elevated">
+                        <v-chip class="ml-4" v-if="!selectedClient && !props.client" variant="elevated">
                             <v-icon color="orange" class="mr-1">mdi-alert-circle-outline</v-icon>
                             Renseignez d'abord un client afin d'afficher les pièces qui lui sont liées
                         </v-chip>

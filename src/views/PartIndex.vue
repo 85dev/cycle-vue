@@ -129,11 +129,11 @@ onMounted(async() => {
                     </v-chip>
                 </span>
             </div>
-        <v-row style="width: 100%;">
+        <v-row style="width: 100%; margin-top: -8px;">
             <v-col cols="8" class="d-flex align-content-center">
                 <v-text-field
                     class="ml-4"
-                    variant="underlined"
+                    variant="solo"
                     prepend-icon="mdi-magnify"
                     label="Recherchez une pièce..."
                     clearable
@@ -143,7 +143,7 @@ onMounted(async() => {
             <v-col cols="4">
                 <v-select
                     prepend-icon="mdi-account-outline"  
-                    variant="underlined"
+                    variant="solo"
                     :items="clients.map(cl => cl.name) || []"
                     label="Filtrez par client"
                     clearable
@@ -154,7 +154,7 @@ onMounted(async() => {
                         v-if="item"
                         class="ma-1"
                         variant="elevated"
-                        color="primary"
+                        color="blue"
                     >
                         {{ item.title }}
                     </v-chip>
@@ -162,7 +162,7 @@ onMounted(async() => {
                 </v-select>
             </v-col>
         </v-row>
-        <div style="margin: -1.6em 0.8em 0.2em 0.8em">
+        <div style="margin: -1.6em 0.8em 0.4em 3.2em">
             <v-icon color="warning" style="margin-right: -8px;">mdi-alert-circle-outline</v-icon>
             <span class="informative-text">La recherche d'une pièce s'applique sur les champs <strong>référence</strong> et <strong>désignation</strong></span>
         </div>
@@ -185,7 +185,7 @@ onMounted(async() => {
             >
             <template v-slot:item.reference="{ item }">
                 <v-chip variant="elevated" color="white">
-                    <v-icon class="mr-1">mdi-cog-outline</v-icon>
+                    <v-icon class="mr-1">mdi-barcode-scan</v-icon>
                     {{ item.reference + ' ' + item.designation }}
                 </v-chip>
             </template>

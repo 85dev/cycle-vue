@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, resolveComponent } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import sessionStore from '../stores/sessionStore.js' // Import the new store
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import Popup from '@/components/Popup.vue';
 import router from '@/router/index.js';
 import ResetPassword from '@/components/modals/ResetPassword.vue';
+import apiCaller from '@/services/apiCaller.js';
 
 // Form input states
 const signUpEmail = ref('')
@@ -20,6 +21,8 @@ const loading = ref(false)
 const snackbarVisible = ref(false);
 const snackbarMessage = ref('');
 const snackbarType = ref('');
+const accessCode = ref(null)
+const codeSent = ref(false)
 
 function triggerSnackbar(message, type) {
   snackbarMessage.value = message;
@@ -54,29 +57,86 @@ const isSignUpValid = computed(() => {
 });
 
 // Methods for signup, login, and reset
-async function onSignUp(event) {
-  event.preventDefault()
+async function onSignUp() {
+  loading.value = true;
+
   const data = {
     user: {
       email: signUpEmail.value,
       password: signUpPassword.value,
     },
-  }
+  };
+
   try {
-    loading.value = true;
-
-    setTimeout(async() => {
-      await sessionStore.actions.registerUser(data)
-      loading.value = false;
-    }, 1200);
-
+    const response = await sessionStore.actions.registerUser(data);
+    
+    if (response.ok) {
+      triggerSnackbar('Inscription réussie !', 'success');
+    } else {
+      triggerSnackbar('Erreur lors de l\'inscription.', 'error');
+    }
   } catch (error) {
-    console.error(error)
+    console.error('Signup failed:', error);
+    triggerSnackbar('Une erreur s\'est produite.', 'error');
+  } finally {
+    loading.value = false;
   }
 }
 
 function toggleHandler() {
   toggleMenu.value = !toggleMenu.value
+}
+
+async function sendVerificationEmail() {
+    if (!isSignUpValid.value) {
+      triggerSnackbar('Entrez un email et un mot de passe valide', 'warning');
+      return;
+    }
+
+    loading.value = true;
+    setTimeout(async () => {
+        const response = await apiCaller.post('users/send_verification_email', { email: signUpEmail.value })
+        if (response.ok) {
+            codeSent.value = true;
+            triggerSnackbar('Code d\'authentification envoyé', 'success');
+        } else {
+            triggerSnackbar('Échec de l\'envoi du code : Email déjà enregistré', 'error');
+        }
+        loading.value = false;
+    }, 600)
+}
+
+async function validateCode() {
+    if (!accessCode.value) {
+        triggerSnackbar('Veuillez entrer le code reçu par email', 'warning');
+        return;
+    }
+
+    if (!isSignUpValid.value) {
+      triggerSnackbar('Entrez un email et un mot de passe valide', 'warning');
+      return;
+    }
+
+    try {
+        loading.value = true;
+        const response = await apiCaller.post('users/verify_unconfirmed_user_access_code', { 
+            access_code: accessCode.value, 
+            email: signUpEmail.value  
+        });
+
+        if (response.ok) {
+            triggerSnackbar('Compte validé. Inscription en cours', 'success');
+            
+            await onSignUp();
+        } else {
+            throw new Error('Code invalide.');
+        }
+    } catch (error) {
+        triggerSnackbar(error.message, 'error');
+    } finally {
+        // ✅ Ensure loading is reset correctly
+        loading.value = false;
+    }
 }
 
 async function onLogin(event) {
@@ -133,7 +193,7 @@ onMounted(async() => {
       :alertType="snackbarType"
       @updateSnackbar="(value) => (snackbarVisible = value)"
     />
-  <SpinnLoader :loading="loading" text="Connexion..."/>
+  <SpinnLoader :loading="loading" text="Chargement..."/>
   <div class="toggle-container">
       <!-- Sign Up Form -->
       <v-card class="login-menu">
@@ -142,6 +202,7 @@ onMounted(async() => {
           <span class="informative-text-l" style="margin-bottom: 1em;">Inscription</span>
           <v-form @submit.prevent="onSignUp" class="form-container">
             <v-text-field
+              v-if="!codeSent"
               variant="underlined"
               class="field-input"
               v-model="signUpEmail"
@@ -149,8 +210,9 @@ onMounted(async() => {
               label="Email"
               type="email"
               required
-            ></v-text-field>
+            />
             <v-text-field
+              v-if="!codeSent"
               variant="underlined"
               class="field-input"
               :rules="getPasswordRules()"
@@ -160,8 +222,9 @@ onMounted(async() => {
               @click:append="() => (showSignUpPassword = !showSignUpPassword)"
               :type="showSignUpPassword ? 'text' : 'password'"
               required
-            ></v-text-field>
+            />
             <v-text-field
+              v-if="!codeSent"
               variant="underlined"
               class="field-input"
               v-model="confirmPassword"
@@ -171,11 +234,45 @@ onMounted(async() => {
               @click:append="() => (showConfirmPassword = !showConfirmPassword)"
               :type="showConfirmPassword ? 'text' : 'password'"
               required
-          ></v-text-field>
-            <v-btn variant="elevated" :loading="loading" :disabled="!isSignUpValid" type="submit" @click="onSignUp" style="margin-bottom: 1em;">
-              <v-icon class="mr-1">mdi-account-plus-outline</v-icon>
-              S'inscrire
+          />
+          <v-btn 
+              v-if="!codeSent"
+              variant="elevated"
+              :loading="loading"
+              :disabled="!signUpEmail"
+              @click="sendVerificationEmail"
+              style="margin-bottom: 1em;">
+              <v-icon class="mr-1">mdi-email-check-outline</v-icon>
+              Vérifier l'email
+          </v-btn>
+
+            <v-chip v-if="codeSent" color="warning" class="d-flex align-center text-center justify-center flex-column informative-text" variant="text" style="height: fit-content;">
+              Consultez votre boîte mail !<br>
+              Un code de vérificaton <br>
+              vous a été envoyé
+            </v-chip>
+
+            <v-text-field
+              v-if="codeSent"
+              variant="underlined"
+              class="field-input"
+              v-model="accessCode"
+              label="Code de vérification"
+              type="text"
+              required
+            ></v-text-field>
+
+            <v-btn 
+              v-if="codeSent"
+              variant="elevated"
+              :loading="loading"
+              :disabled="!accessCode"
+              @click="validateCode"
+              style="margin-bottom: 1em;">
+              <v-icon class="mr-1">mdi-check-circle-outline</v-icon>
+              Valider le code
             </v-btn>
+      
           </v-form>
         </div>
 

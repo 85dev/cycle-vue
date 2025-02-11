@@ -11,7 +11,7 @@ import Popup from '@/components/Popup.vue';
 const loading = ref(false)
 const consumptionRows = ref([])
 const parts = ref([])
-const number =ref('')
+const number =ref(null)
 const beginDate = ref(dateConverter.formatISODate(new Date()))
 const endDate = ref(dateConverter.formatISODate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)))
 const selectedCompany = computed(() => {
@@ -21,15 +21,26 @@ const selectedRows = ref([])
 
 const clients = ref([])
 const clientsListDisplayed = ref([])
-const selectedClient = ref('')
+const selectedClient = ref(null)
 
 const stocks = ref([])
 const stocksListDisplayed = ref([])
-const selectedStock = ref('')
+const selectedStock = ref(null)
+
+// For popups
+const snackbarVisible = ref(false);
+const snackbarMessage = ref('');
+const snackbarType = ref('');
 
 const deleteRow = (index) => {
     consumptionRows.value.splice(index, 1);
 };
+
+function triggerSnackbar(message, type) {
+  snackbarMessage.value = message;
+  snackbarType.value = type;
+  snackbarVisible.value = true;
+}
 
 async function fetchParts() {
     const stock = stocks.value.find(stock => stock.address === selectedStock.value)
@@ -69,8 +80,12 @@ async function submitConsumption() {
     }
 
     const response = await apiCaller.post(`companies/${selectedCompany.value.id}/consignment_stocks/${stock.id}/create_consignment_consumption`, payload, true)
-
-    resetData()
+    console.log(response);
+    
+    if (response.status === "ok") {
+        triggerSnackbar('Consommation enregistrée', 'success')
+        resetData()
+    }
 }
 
 function resetData() {
@@ -93,7 +108,8 @@ async function handleStockChange() {
             part_reference: `${part.reference} ${part.designation}`,
             current_quantity: part.current_quantity,
             quantity: 0,
-            price: 0
+            price: 0,
+            latest_client_order_price: part.latest_client_order_price
         }));
     selectedRows.value = []
 }
@@ -125,6 +141,12 @@ onMounted(async() => {
 </script>
 
 <template>
+    <Popup
+        :alertText="snackbarMessage"
+        :snackbar="snackbarVisible"
+        :alertType="snackbarType"
+        @updateSnackbar="(value) => (snackbarVisible = value)"
+    />
     <SpinnLoader :loading="loading" />
     <div class="main-card">
         <v-card class="b1-container mt-3 mb-3">
@@ -192,7 +214,7 @@ onMounted(async() => {
             <v-card v-if="selectedStock && selectedClient && consumptionRows.length > 0" class="mt-4">
                 <CardTitle
                     title="Sélectionnez les références consommées"
-                    icon="mdi-cog-outline"
+                    icon="mdi-barcode-scan"
                 />
                 <v-card class="ma-2">
                     <v-divider class="mb-2"/>
@@ -238,11 +260,15 @@ onMounted(async() => {
                     <template v-slot:item.reference="{ item }">
                         {{ item.part_reference }}
                     </template>
-
+                    <template v-slot:item.latest_client_order_price="{ item }">
+                        <v-chip variant="outlined" color="blue">
+                            {{ item.latest_client_order_price ? item.latest_client_order_price : "Pas de donnée" }}
+                        </v-chip>
+                    </template>
                     <template v-slot:item.current_quantity="{ item }">
                         <v-chip
                             v-if="item.current_quantity > 0"
-                            variant="elevated"
+                            variant="text"
                         >
                             <v-icon class="mr-1" color="orange">mdi-package-variant-closed</v-icon>
                             {{ item.current_quantity }}

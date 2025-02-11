@@ -127,7 +127,7 @@ onMounted(() => {
           </v-row>
         </v-container>
         <v-chip @click="logoutUser" variant="elevated" color="white" class="mb-2 mt-4">
-          <v-icon class="mr-1">mdi-logout</v-icon>
+          <v-icon class="mr-1">mdi-account-arrow-left-outline</v-icon>
             Déconnexion
         </v-chip>
       </div>

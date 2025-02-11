@@ -20,6 +20,7 @@ const runningExpeditions = ref(null)
 const deliveredExpeditions = ref(null)
 const suppliers = ref([])
 const loading = ref(false)
+const tab = ref(null)
 
 async function fetchSuppliers() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`)
@@ -71,25 +72,38 @@ onMounted(async() => {
 <template>
     <SpinnLoader :loading="loading" />
     <v-card class="main-card">
-        <CreateExpedition
-            v-if="selectedCompany && suppliers && suppliers.length > 0"
-            origin="single"
-            :selected-company-id="selectedCompany.id"
-            :suppliers="suppliers"
-            @refresh-expeditions="refreshExpeditions()"
-        ></CreateExpedition>
-        <v-card class="b1-container mt-3">
-            <CardTitle
-                title="Expeditions en cours"
-                icon="mdi-ferry"
-            />
+        <v-tabs
+            v-model="tab"
+            grow
+            >
+            <v-tab value="one">
+                <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
+                Expéditions en cours
+            </v-tab>
+            <v-tab value="two">
+                <v-icon start class="mr-2">mdi-chart-box</v-icon>
+                Expéditions terminées
+            </v-tab>
+        </v-tabs>
+        <v-tabs-window v-model="tab">
+            <v-tabs-window-item value="one">
+                <v-card class="b1-container mt-3">
+            <div class="d-flex align-center justify-lg-space-between ml-3 mt-2 mb-2 mr-3">
+                <CreateExpedition
+                    v-if="selectedCompany && suppliers && suppliers.length > 0"
+                    origin="single"
+                    :selected-company-id="selectedCompany.id"
+                    :suppliers="suppliers"
+                    @refresh-expeditions="refreshExpeditions()"
+                />
+            </div>
+            
             <v-data-table
                 v-if="runningExpeditions && runningExpeditions.length > 0"
                 :headers="expeditionsIndexHeaders"
                 :items="runningExpeditions || []"
                 density="dense"
                 :loading="loading"
-                items-per-page="5"
             >
                 <template v-slot:item.real_departure_time="{ item }">
                     {{ new Date(item.real_departure_time).toLocaleDateString() }}
@@ -111,17 +125,17 @@ onMounted(async() => {
                 </template>
                 <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
-                    <ExpeditionDetails
-                        origin="undelivered"
-                        :selected-company-id="selectedCompany.id"
-                        :expedition="item"
-                    />
                     <DispatchExpedition 
                         v-if="selectedCompany && item"
                         :selected-company-id="selectedCompany.id"
                         :expedition="item"
                         @refresh-expeditions="refreshExpeditions()"
                     />
+                    <ExpeditionDetails
+                        origin="undelivered"
+                        :selected-company-id="selectedCompany.id"
+                        :expedition="item"
+                    /> 
                 </div>
                 </template>
             </v-data-table>
@@ -137,18 +151,16 @@ onMounted(async() => {
               </v-chip>
             </div>
         </v-card>
-        <v-card class="b1-container mb-3">
-            <CardTitle
-                title="Expeditions arrivées à destination"
-                icon="mdi-package-variant-closed-check"
-            />
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="two">
+                <v-card class="b1-container mb-3">
             <v-data-table
                 :loading="loading"
                 v-if="deliveredExpeditions && deliveredExpeditions.length > 0"
                 no-data-text="Aucune expédition passée enregsitrée"
                 :headers="deliveredExpeditionsHeaders"
                 :items="deliveredExpeditions || []"
-                items-per-page="5"
                 density="dense"
             >
                 <template v-slot:item.real_departure_time="{ item }">
@@ -183,6 +195,11 @@ onMounted(async() => {
               </v-chip>
             </div>
         </v-card>
+            </v-tabs-window-item>
+        </v-tabs-window>
+        
+
+
     </v-card>
 </template>
 

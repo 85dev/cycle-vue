@@ -38,7 +38,7 @@ const emit = defineEmits(['refreshClientOrders'])
                 <v-card :title="`Modification de la commande client n°${props.order.client_order_number}`" style="padding: 0.4em;">
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 

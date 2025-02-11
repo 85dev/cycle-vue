@@ -59,7 +59,7 @@ async function sendEmail() {
     if (emailValidation.value) {
         loading.value = true
         setTimeout(async () => {
-            const response = await apiCaller.post('users/request_password_reset', { email: userEmail.value })
+            const response = await apiCaller.post('users/request_user_access_code', { email: userEmail.value })
             if (response.ok) {
                 triggerSnackbar('Code de réinitialisation envoyé', 'success');
                 step.value++;
@@ -74,7 +74,7 @@ async function sendEmail() {
 async function validateCode() {
     loading.value = true
     setTimeout(async () => {
-        const response = await apiCaller.post('users/verify_reset_code', { reset_code: accessCode.value, email: userEmail.value  })
+        const response = await apiCaller.post('users/verify_access_code', { access_code: accessCode.value, email: userEmail.value  })
         if (response.ok) {
             triggerSnackbar('Code de réinitialisation validée', 'success');
             step.value ++ 
@@ -122,7 +122,7 @@ async function submitNewPassword() {
     setTimeout(async() => {
         const payload = {
             email: userEmail.value,
-            reset_code: accessCode.value,
+            access_code: accessCode.value,
             new_password: newPassword.value
         };
 

@@ -52,7 +52,7 @@ const arrivalData = computed(() => ({
             : selectedClient.value
             ? 'client'
             : null,
-    name: selectedSubcontractorArrival.value || selectedLogisticPlaceArrival.value | selectedClientArrival.value || null,
+    name: selectedSubcontractorArrival.value || selectedLogisticPlaceArrival.value || selectedClientArrival.value || null,
 }));
 
 const loading = ref(false)
@@ -62,7 +62,6 @@ const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedLogisticPlaceDeparture = ref(null)
 const selectedSubcontractorDeparture = ref(null)
 const selectedClientArrival = ref(null)
-const selectedClientArrivalBoolean = ref(false)
 const selectedClient = ref(null)
 const selectedLogisticPlaceArrival = ref(null)
 const selectedSubcontractorArrival = ref(null)
@@ -124,7 +123,6 @@ async function fetchClientStocks() {
         clientStocks.value = response;
     }
 }
-
 
 async function generatedPdf() {
     if (props.origin === 'subcontractor' || props.origin === 'logistic_place') {
@@ -237,13 +235,14 @@ async function processDataFetches() {
 async function downloadPdf() {
     loading.value = true
     setTimeout(async() => {
-        const response = await apiCaller.getJson(`pdf_generator/${createdObjectId.value}/generate_pdf`, false);
+        const response = await apiCaller.getJson(`pdf_generator/${createdObjectId.value}/generate_delivery_slip_pdf`, false);
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
 
         // Open the Blob URL in a new tab
         window.open(url, '_blank');
+        emit('refresh')
         loading.value = false
     }, 1200);
 }
@@ -295,8 +294,9 @@ onMounted(async() => {
             <v-chip
                 v-if="props.origin === 'subcontractor' || props.origin === 'logistic_place'"
                 v-bind="activatorProps"
+                style="font-weight: 500;"
                 variant="elevated"
-                color="white"
+                color="blue"
                 elevation="2"
             >
                 <v-icon start class="mr-1 ml-1">mdi-download-box-outline</v-icon>
@@ -305,8 +305,9 @@ onMounted(async() => {
             <v-chip 
                 v-else
                 v-bind="activatorProps"
+                style="font-weight: 500;"
                 variant="elevated"
-                color="white"
+                color="blue"
                 elevation="2"
             >
                 <v-icon start class="mr-1 ml-1">mdi-download-box-outline</v-icon>
@@ -322,7 +323,7 @@ onMounted(async() => {
                         icon="mdi-file-pdf-box"
                     />
                     <span class="informative-text d-flex align-center mb-4" v-if="lastDeliverySlip && props.client">
-                        <v-chip variant="tonal" color="secundary">
+                        <v-chip variant="tonal" color="secondary">
                             Dernier bordereau généré pour {{ props.client.name }} :
                             <strong class="ml-1">{{ lastDeliverySlip.number }}</strong>
                         </v-chip>
@@ -541,7 +542,7 @@ onMounted(async() => {
                             </span>
                         </div>
     
-                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -1.4em;">
+                        <v-row class="mr-4 ml-4 pa-2" style="margin-top: -0.6em;">
                                 <v-select
                                     class="field-slot mr-2"
                                     v-model="selectedSubcontractorArrival"
@@ -593,7 +594,7 @@ onMounted(async() => {
                             class="ml-4 d-flex align-center"
                             color="success"
                             variant="elevated"
-                            @click="processPdf()"
+                            @click="processPdf(); isActive.value = false"
                         >
                             <v-icon class="ml-1 mr-1">mdi-download-box-outline</v-icon>
                             Télécharger .PDF

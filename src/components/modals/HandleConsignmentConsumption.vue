@@ -2,6 +2,7 @@
 import { ref, defineEmits, onMounted } from 'vue';
 import apiCaller from '@/services/apiCaller';
 import dateConverter from '@/services/dateConverter';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
     selectedCompanyId: {
@@ -105,9 +106,10 @@ onMounted(async() => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <v-card-title>
-                        ENREGISTRER UNE CONSOMMATION AU {{ props.stock.address.toUpperCase() }}
-                    </v-card-title>
+                    <CardTitle 
+                        :title="`Enregistrer une consommation au ${props.stock.address}`"
+                        icon="mdi-cart-outline"
+                    />
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
                     <v-row align="d-flex align-center pa-4" style="margin-bottom: -2em;" dense>

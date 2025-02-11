@@ -7,6 +7,7 @@ import Logo from '@/assets/img/cycle_app.svg'
 // Components import
 import PendingRequests from './modals/PendingRequests.vue';
 import AccessRequests from './modals/AccessRequests.vue';
+import SendAccessRequest from './modals/SendAccessRequest.vue';
 import SelectDatabaseCompany from './modals/SelectDatabaseCompany.vue';
 import HandleAccount from './modals/HandleAccount.vue';
 import SpinnLoader from './SpinnLoader.vue';
@@ -52,7 +53,7 @@ function updateLoading(event) {
 const items = ref( 
   [
     { title: 'Tableau de bord', icon: 'mdi-gesture-double-tap', path: '/dashboard' },
-    { title: 'Gestion des commandes', icon: 'mdi-package-variant', path: '/handle_orders' },
+    { title: 'Gestion des commandes', icon: 'mdi-cart-outline', path: '/handle_orders' },
     { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
     { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
     { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle_consumptions' },
@@ -137,7 +138,7 @@ onMounted(async() => {
             <img :src="Logo" style="margin: 0.6em 0.2em; padding: 0.1em;" :style="!rail ? 'height: 140px' : 'height: 52px'"/>
           </div>
           <v-list-item
-            title="Menu - Cycle App v0.2.0"
+            title="Menu - Cycle App v0.4.0"
             style="display: flex; align-items: center; justify-content: center;"
             nav
           >
@@ -221,6 +222,9 @@ onMounted(async() => {
               :selected-company="selectedCompany"
               @updateLoading="updateLoading($event)"
               origin="menu" 
+            />
+            <SendAccessRequest 
+              @refresh="fetchData"
             />
             <div v-if="!rail" class="mt-1">
               <v-icon class="informative-text">mdi-database-plus-outline</v-icon>

@@ -323,7 +323,7 @@ onMounted(async() => {
                         </v-data-table>
                     </v-card>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 

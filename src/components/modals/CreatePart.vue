@@ -53,16 +53,13 @@ async function fetchSuppliers() {
 
 async function submitPart() {
     const selectedClient = clientsList.value.find(c => c.name === client.value);
-    const selectedSupplierIds = supplier.value.map(name =>
-        suppliersList.value.find(supplier => supplier.name === name)?.id
-    );    const selectedSubcontractorIds = subcontractor.value.map(name =>
-        subcontractorsList.value.find(sub => sub.name === name)?.id
-    );
+    const selectedSupplierIds = supplier.value.map(name => suppliersList.value.find(supplier => supplier.name === name)?.id);    
+    const selectedSubcontractorIds = subcontractor.value ? subcontractor.value.map(name => subcontractorsList.value.find(sub => sub.name === name)?.id) : [];
 
     const payload = {
         supplier_ids: selectedSupplierIds,
-        client_id: selectedClient?.id || null,
-        subcontractor_ids: selectedSubcontractorIds,
+        client_id: selectedClient?.id,
+        subcontractor_ids: selectedSubcontractorIds.length > 0 ? selectedSubcontractorIds : null,
         part: {
             reference: reference.value,
             designation: designation.value,

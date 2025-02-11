@@ -40,20 +40,20 @@ const props = defineProps({
                             :headers="accessRequestsHeaders"
                         >
                         <template v-slot:item.company_name="{ item }">
-                            <v-chip variant="elevated">
+                            <v-chip variant="elevated" color="white">
                                 <v-icon class="mr-2">mdi-office-building</v-icon>
                                 {{ item.company_name }}
                             </v-chip> 
                         </template>
                         <template v-slot:item.requester_email="{ item }">
-                            <v-chip variant="elevated" color="blue">
+                            <v-chip variant="text">
                                 <v-icon class="mr-2">mdi-email-lock-outline</v-icon>
                                 {{ item.requester_email }}
                             </v-chip> 
                         </template>
                         <template v-slot:item.requested_owner_rights="{ item }">
                             <v-chip
-                                :variant="'elevated'"
+                                variant="outlined"
                                 :color="item.requested_owner_rights ? 'warning' : 'blue'"
                             >
                                 <v-icon class="mr-2">{{ item.requested_owner_rights ? 'mdi-account-key-outline' : 'mdi-account-child-outline' }}</v-icon>

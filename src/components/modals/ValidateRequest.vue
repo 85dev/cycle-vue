@@ -5,7 +5,8 @@ import sessionStore from '@/stores/sessionStore';
 import SpinnLoader from '../SpinnLoader.vue';
 
 // Services
-import { ref, defineEmits, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import CardTitle from '../CardTitle.vue';
 
 const props = defineProps({
     accessRequest: {
@@ -48,11 +49,13 @@ onMounted(async() => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <v-card-title>VALIDER L'ACCES</v-card-title>
+                    <CardTitle 
+                        title="Valider l'accès"
+                        icon="mdi-account-check-outline"
+                    />
                     <v-divider style="margin: 0em 1em;"></v-divider>
 
                     <div class="mt-2 mb-2" style="padding: 0.4em 1em">
-               
                         Souhaitez vous valider l'accès de
                         <v-chip variant="outlined" color='blue'>
                             <v-icon class="mr-1">mdi-account-outline</v-icon>

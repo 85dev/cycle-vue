@@ -23,6 +23,9 @@ const props = defineProps({
     },
     partPrice: {
         type: Number
+    },
+    supplierFromParent: {
+        type: Array
     }
 })
 
@@ -32,11 +35,12 @@ const supplierList = ref(null)
 const supplierListDisplayed = ref(null)
 const parts = ref([])
 const orderPositions = ref([])
+const orderDate = ref(dateConverter.formatISODate(new Date(Date.now())));
 
 const emit = defineEmits(['refreshSupplierOrders'])
 
 async function fetchParts() {
-    if (props.referenceAndDesignation) {
+    if (!supplier.value) {
         const response = await apiCaller.get(`companies/${props.selectedCompanyId}/parts`);
         parts.value = response;
     } else {
@@ -54,15 +58,18 @@ async function fetchParts() {
 }
 
 async function fetchSuppliers() {
-    const response = await apiCaller.get(`companies/${props.selectedCompanyId}/suppliers`)
-    supplierList.value = response
-    supplierListDisplayed.value = response.map(supplier => supplier.name)
+    if (!supplierList.value) {
+        const response = await apiCaller.get(`companies/${props.selectedCompanyId}/suppliers`)
+        supplierList.value = response
+        supplierListDisplayed.value = response.map(supplier => supplier.name)
+    }
 }
 
 async function submitSupplierOrder() {
     const payload = {
         supplier_order: {
             number: number.value,
+            emission_date: orderDate.value,
             order_positions: orderPositions.value.map(position => ({
                 part_id: parts.value.find(p => `${p.reference} ${p.designation}` === position.part)?.id,
                 price: parseFloat(position.price),
@@ -73,7 +80,6 @@ async function submitSupplierOrder() {
             }
         }
 
-    // Catch selected Client Id to create the 
     const selectedSupplierId = supplierList.value.find(c => c.name === supplier.value)?.id;
 
     await apiCaller.post(`companies/${props.selectedCompanyId}/suppliers/${selectedSupplierId}/create_supplier_order`, payload, true)
@@ -82,7 +88,7 @@ async function submitSupplierOrder() {
 }
 
 function addOrderPosition() {
-    orderPositions.value.push({ part: props.referenceAndDesignation, price: props.latestSupplierPrice || 0, quantity: null, delivery_date: dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)) });
+    orderPositions.value.push({ part: props.referenceAndDesignation || null, price: props.latestSupplierPrice || 0, quantity: null, delivery_date: dateConverter.formatISODate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)) });
 }
 
 function removeOrderPosition(index) {
@@ -95,13 +101,19 @@ watch(supplier, async () => {
     await fetchParts();
 })
 
-onMounted( async () => {
-    await fetchSuppliers()
+onMounted(async () => {
+    if (props.supplierFromParent && props.supplierFromParent.length > 0) {
+        supplierList.value = props.supplierFromParent
+        supplierListDisplayed.value = props.supplierFromParent.map(s => s.name)
+    } else {
+        await fetchSuppliers()
+    }
+
     if (props.referenceAndDesignation) {
         supplier.value = supplierList.value[0].name
     }
-    await fetchParts()
 
+    await fetchParts()
     addOrderPosition()
 })
 </script>
@@ -123,10 +135,13 @@ onMounted( async () => {
         <template v-slot:default="{ isActive }">
             <div class="card-container" style="padding: 0.4em;">
                 <v-card style="padding: 0.4em;">
-                    <CardTitle
-                        title="Ajouter une commande fournisseur" 
-                        icon="mdi-factory"
-                    />
+                    <div class="d-flex align-center justify-lg-space-between mr-4">
+                        <CardTitle
+                            title="Ajouter une commande fournisseur" 
+                            icon="mdi-factory"
+                        />
+                    </div>
+                    
                     <v-divider style="margin: 0em 1em; padding: 6px;"></v-divider>
 
                         <v-form class="form-container">
@@ -139,7 +154,7 @@ onMounted( async () => {
                                     class="form-part"
                                     :items="supplierListDisplayed ? supplierListDisplayed : []"
                                     required
-                                ></v-select>
+                                />
 
                                 <v-text-field
                                     clearable
@@ -148,7 +163,17 @@ onMounted( async () => {
                                     v-model="number"
                                     label="Numéro de commande"
                                     required
-                                ></v-text-field>
+                                />
+
+                                <v-text-field
+                                    clearable
+                                    type="date"
+                                    class="form-part"
+                                    variant="underlined"   
+                                    v-model="orderDate"
+                                    label="Date d'émission"
+                                    required
+                                />
                             </v-row>
                            
 
@@ -214,7 +239,7 @@ onMounted( async () => {
 
                         </v-form>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 

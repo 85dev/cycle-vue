@@ -325,80 +325,6 @@ onMounted(async() => {
 
             <!-- Consignment Stocks Section -->
             <v-row no-gutters>
-              <!-- Left Column: Consignment Stocks -->
-              <v-col cols="12" md="6" class="pr-2">
-                <v-card outlined style="margin: 0.4em;">
-                  <CardTitle
-                    title="Lieux de stockage consignation"
-                    icon="mdi-package-variant-closed-check"
-                    color="dark"
-                  />
-                  <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
-                  
-                  <v-row 
-                    v-for="(stock, index) in consignmentStocks" 
-                    :key="'consignment-' + index" 
-                    class="mb-4 align-center"
-                    no-gutters
-                    style="margin-top: -2em; padding: 0em 0.8em"
-                  >
-                  <v-col cols="12" md="4">
-                    <v-text-field
-                      v-model="stock.name"
-                      label="Nom du stock"
-                      required
-                      variant="underlined"
-                      class="mr-2"
-                      clearable
-                    ></v-text-field>
-                  </v-col>
-                    <v-col cols="12" md="7">
-                      <v-text-field
-                        v-model="stock.address"
-                        label="Adresse"
-                        @input="fetchAddressAutocomplete(stock.address, 'consignment', index)"
-                        required
-                        variant="underlined"
-                        class="mr-2"
-                        clearable
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="1" class="d-flex justify-end">
-                      <v-btn @click="removeConsignmentStock(index)" class="no-effects" icon small>
-                        <v-icon>mdi-delete-outline</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col cols="12">
-                      <v-chip-group
-                        v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
-                        active-class="primary--text"
-                        column
-                        style="display: flex; flex-wrap: wrap; margin-top: -0.6em; margin-bottom: 0.6em;"
-                      >
-                        <v-chip
-                          v-for="(address, idx) in stock.autocompleteOptions"
-                          :key="'consignment-address-' + idx"
-                          @click="selectAddress(address, 'consignment', index)"
-                          style="margin: 0.2em;"
-                        >
-                          {{ address }}
-                          <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
-                        </v-chip>
-                      </v-chip-group>
-                    </v-col>
-                    <div v-if="stock.loading" class="aligner" style="margin-top: 1em; margin-bottom: 3em; width: 100%;">
-                      <SpinnLoader :loading="stock.loading"></SpinnLoader>
-                    </div>
-                  </v-row>
-                  <div class="aligner">
-                    <v-btn @click="addConsignmentStock" variant="elevated">
-                      <v-icon start>mdi-plus-circle-outline</v-icon>
-                      Ajouter
-                    </v-btn>
-                  </div>
-                </v-card>
-              </v-col>
-
               <!-- Right Column: Standard Stocks -->
               <v-col cols="12" md="6" class="pl-2">
                 <v-card outlined style="margin: 0.4em;">
@@ -466,6 +392,79 @@ onMounted(async() => {
                   </v-row>
                   <div class="aligner">
                     <v-btn @click="addStandardStock" variant="elevated">
+                      <v-icon start>mdi-plus-circle-outline</v-icon>
+                      Ajouter
+                    </v-btn>
+                  </div>
+                </v-card>
+              </v-col>
+              <!-- Right Column: Consignment Stocks -->
+              <v-col cols="12" md="6" class="pr-2">
+                <v-card outlined style="margin: 0.4em;">
+                  <CardTitle
+                    title="Lieux de stockage consignation"
+                    icon="mdi-package-variant-closed-check"
+                    color="dark"
+                  />
+                  <v-divider color="transparent" style="margin: 0em 1em 1.4em 1em; padding: 0em 2em;"></v-divider>
+                  
+                  <v-row 
+                    v-for="(stock, index) in consignmentStocks" 
+                    :key="'consignment-' + index" 
+                    class="mb-4 align-center"
+                    no-gutters
+                    style="margin-top: -2em; padding: 0em 0.8em"
+                  >
+                  <v-col cols="12" md="4">
+                    <v-text-field
+                      v-model="stock.name"
+                      label="Nom du stock"
+                      required
+                      variant="underlined"
+                      class="mr-2"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                    <v-col cols="12" md="7">
+                      <v-text-field
+                        v-model="stock.address"
+                        label="Adresse"
+                        @input="fetchAddressAutocomplete(stock.address, 'consignment', index)"
+                        required
+                        variant="underlined"
+                        class="mr-2"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="1" class="d-flex justify-end">
+                      <v-btn @click="removeConsignmentStock(index)" class="no-effects" icon small>
+                        <v-icon>mdi-delete-outline</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-chip-group
+                        v-if="stock.autocompleteOptions && stock.autocompleteOptions.length"
+                        active-class="primary--text"
+                        column
+                        style="display: flex; flex-wrap: wrap; margin-top: -0.6em; margin-bottom: 0.6em;"
+                      >
+                        <v-chip
+                          v-for="(address, idx) in stock.autocompleteOptions"
+                          :key="'consignment-address-' + idx"
+                          @click="selectAddress(address, 'consignment', index)"
+                          style="margin: 0.2em;"
+                        >
+                          {{ address }}
+                          <v-icon style="margin-left: 0.4em;" color="success">mdi-plus-circle-outline</v-icon>
+                        </v-chip>
+                      </v-chip-group>
+                    </v-col>
+                    <div v-if="stock.loading" class="aligner" style="margin-top: 1em; margin-bottom: 3em; width: 100%;">
+                      <SpinnLoader :loading="stock.loading"></SpinnLoader>
+                    </div>
+                  </v-row>
+                  <div class="aligner">
+                    <v-btn @click="addConsignmentStock" variant="elevated">
                       <v-icon start>mdi-plus-circle-outline</v-icon>
                       Ajouter
                     </v-btn>

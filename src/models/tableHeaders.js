@@ -63,12 +63,12 @@ const supplierOrdersHeaders = [
 
 const expeditionHeaders = [
   { title: 'Numéro de commande', value: 'supplier_order_number' },
-  { title: 'Fournisseur', value: 'supplier_name' },
-  { title: 'Partiel', value: 'partial'},
-  { title: 'Quantité commandée', value: 'quantity'},
-  { title: 'Quantité expédiée', value: 'real_quantity'},
   { title: 'Référence', value: 'part_reference'},
-  { title: 'Désignation', value: 'part_designation'}
+  { title: 'Désignation', value: 'part_designation'},
+  { title: 'Commande partielle', value: 'partial'},
+  { title: 'Quantité réelle expédiée', value: 'real_quantity'},
+  { title: 'Quantité commandée', value: 'quantity'},
+  { title: 'Fournisseur', value: 'supplier_name' },
 ]
 
 const supplierHeaders = [
@@ -173,6 +173,7 @@ const globalConsumptionHeaders = [
   { title: 'Quantité à disposition', value: 'current_quantity' },
   { title: 'Quantité consommée', value: 'quantity' },
   { title: 'Prix', value: 'price' },
+  { title: 'Dernier prix facturé', value: 'latest_client_order_price' },
 ]
 
 const sortingClientPositionHeaders = [
@@ -192,8 +193,11 @@ const expeditionPositionHeaders = [
 ]
 
 const expeditionsListHeaders = [
+  { title: "Expédition", value: 'expedition_number'},
+  { title: "Commande", value: 'supplier_order_number'},
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
+  { title: "Quantité", value: 'quantity' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
   { title: 'Fournisseur', value: 'supplier_name'}

@@ -113,7 +113,6 @@ onMounted( async () => {
           <v-chip
                 v-bind="activatorProps" 
                 v-if="props.origin === 'single'"
-                style="margin-top: 1em;"
                 variant="elevated"
                 elevation="4"
                 color="blue"
@@ -180,6 +179,7 @@ onMounted( async () => {
                                     icon=mdi-package-variant-closed-plus
                                 />
                                 <v-select
+                                    style="margin-top: -0.4em; margin-bottom: 0.8em; width: fit-content; min-width: 240px"
                                     label="Filtrer les commandes par fournisseur"
                                     clearable
                                     variant="underlined"
@@ -201,7 +201,6 @@ onMounted( async () => {
                                     v-if="supplierOrders.length > 0"
                                     variant="underlined"
                                     density="compact"
-                                    items-per-page="5"
                                     :headers="expeditionHeaders"
                                     class="form-part"
                                     label="Liste des commandes fournisseurs"
@@ -217,8 +216,7 @@ onMounted( async () => {
                                     </v-chip>
                                 </template>
                                 <template v-slot:item.partial="{ item }">
-                                    <v-switch
-                                        style="display: flex; align-items: center;"
+                                    <v-checkbox
                                         variant="underlined"
                                         v-model="modifiedPartials[item.id]"
                                         color="success"
@@ -228,22 +226,17 @@ onMounted( async () => {
                                     />
                                 </template>
                                 <template v-slot:item.quantity="{ item }">
-                                    <div style="display: flex; align-items: baseline;">
-                                        <v-text-field
-                                        style="padding: 1em 0em 0em 0em;"
-                                        variant="underlined"
-                                        v-model="item.quantity"
-                                        label="Reste à livrer"
-                                        :disabled="true"
-                                        density="compact"
-                                        />
-                                    </div>
+                                    <v-chip
+                                        variant="text"
+                                    > 
+                                    <v-icon color="success" class="mr-2">mdi-cube-send</v-icon>
+                                    {{ item.quantity }}
+                                    </v-chip>
                                 </template>
                                 <template v-slot:item.real_quantity="{ item }">
                                     <v-text-field
-                                        style="padding: 1em 0em 0em 0em;"
                                         variant="underlined"
-                                        label="Quantité expédiée"
+                                        label="Quantité réelle"
                                         v-model="modifiedQuantities[item.id]"
                                         type="number"
                                         density="compact"
@@ -262,7 +255,12 @@ onMounted( async () => {
                                 </div>
                             </v-card>
 
-                            <v-card class="mr-6 ml-6 mt-4" v-if="selectedOrdersSummary && selectedOrdersSummary.length > 0">
+                            <span v-if="selectedOrdersSummary && selectedOrdersSummary.length > 0" class="informative-text mt-5" style="display: flex; align-items: center;">
+                                <v-icon color="warning" style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
+                                Les commandes cochées <strong class="mr-1 ml-1"> partielles </strong> ne seront pas considérées comme complètes
+                            </span>
+
+                            <v-card class="mr-9 ml-9 mt-4" v-if="selectedOrdersSummary && selectedOrdersSummary.length > 0">
                                 <CardTitle
                                     title="Récapitulatif des commandes sélectionnées"
                                     icon="mdi-format-list-checkbox"
@@ -291,7 +289,7 @@ onMounted( async () => {
                                     <template v-slot:item.partial="{ item }">
                                         <v-chip
                                             :color="item.partial ? 'success' : 'secondary'"
-                                            variant="outlined"
+                                            variant="elevated"
                                         >
                                             <v-icon>
                                             {{ item.partial ? 'mdi-check-circle-outline' : 'mdi-close-circle-outline' }}
@@ -332,4 +330,7 @@ onMounted( async () => {
 <style scoped lang="scss">
 @import "../../assets/main.scss";
 
+:deep(.v-input__details ){
+    display: none;
+}
 </style>
