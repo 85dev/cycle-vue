@@ -2,60 +2,68 @@
 // Services
 import { ref, onMounted, watch, computed } from 'vue'
 import sessionStore from '@/stores/sessionStore';
-import { partHeaders } from '@/models/tableHeaders';
+import { partHeaders, stockHeaders } from '@/models/tableHeaders';
 import { useRouter } from 'vue-router';
 
 // Components
 import apiCaller from '@/services/apiCaller';
 import DeletePart from '@/components/modals/DeletePart.vue';
 import CreatePart from '@/components/modals/CreatePart.vue';
-import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 
 const userParts = ref(null)
+const stockParts = ref(null)
 const filteredParts = ref(null)
-const selectedCompany = computed(() => {
-  return sessionStore.getters.getSelectedCompany()
-})
+const filteredStockParts = ref(null)
+
+const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const router = useRouter();
 const searchKeyword = ref(null)
+const stockSearchKeyword = ref(null)
 const loading = ref(false)
 const clients = ref([])
 const selectedClient = ref(null)
+const tab = ref(null)
 
 let timeout = null
 
-function routeToPart(event, {item}) {
-    const parsedItem = JSON.parse(JSON.stringify(item));
-
-    router.push({ name: `PartRelatedData`, params: { id: parsedItem.id } });
+function routeToPart(event, { item }) {
+    router.push({ name: "PartRelatedData", params: { id: item.id } });
 }
 
 async function fetchParts() {
-    loading.value = true
-    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts`);
-
-    userParts.value = response;
-    filteredParts.value = response;
-
-    loading.value = false
+    loading.value = true;
+    try {
+        const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts`);
+        userParts.value = response;
+        filteredParts.value = response;
+    } catch (error) {
+        console.error("Error fetching parts:", error);
+    }
+    loading.value = false;
 }
 
+async function fetchStockParts() {
+    loading.value = true;
+    try {
+        const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts_stocks`);
+        stockParts.value = response;
+        filteredStockParts.value = response;
+    } catch (error) {
+        console.error("Error fetching stock parts:", error);
+    }
+    loading.value = false;
+}
+
+// Fetch clients (for filtering in General Catalog)
 async function fetchClients() {
     const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients`);
-
     clients.value = response;
 }
 
-// Watch function to filter parts based on searchKeyword
+// Watch for filters in the General Catalog
 watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
-    if (newClientName == null && newKeyword == null) {
-        return;
-    }
-    
-    if (timeout) {
-        clearTimeout(timeout);
-    }
+    if (timeout) clearTimeout(timeout);
 
     loading.value = true;
 
@@ -76,234 +84,350 @@ watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
 
         filteredParts.value = filtered;
         loading.value = false;
-    }, 800); // Set a debounce delay of 300ms
+    }, 500);
 });
 
-watch(() => selectedCompany.value, // Watching the computed value's reactive property
-    async (newCompany, oldCompany) => {
-        if (newCompany && newCompany.id !== oldCompany?.id) {
-            await fetchClients();
-            await fetchParts();
-        }
-    }
-);
+// Watch for search in Stock & Availability
+watch(stockSearchKeyword, (newKeyword) => {
+    if (timeout) clearTimeout(timeout);
 
-async function fetchData() {
+    loading.value = true;
+
+    timeout = setTimeout(() => {
+        if (!newKeyword) {
+            filteredStockParts.value = stockParts.value;
+        } else {
+            const keyword = newKeyword.toLowerCase();
+            filteredStockParts.value = stockParts.value.filter(part =>
+                part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword)
+            );
+        }
+        loading.value = false;
+    }, 500);
+});
+
+async function refreshAllData() {
     loading.value = true
 
     setTimeout(async() => {
-        await fetchParts()
-        await fetchClients()
+        await fetchParts();
+        await fetchStockParts();
+        await fetchClients();
         loading.value = false
-    }, 600);
+    }, 500);
 }
 
-onMounted(async() => {
-    sessionStore.actions.initializeAuthState()
+onMounted(async () => {
+    sessionStore.actions.initializeAuthState();
     selectedCompany.value = sessionStore.getters.getSelectedCompany();
 
     if (selectedCompany.value) {
-        await fetchData()
+        await refreshAllData()
     }
-})
+});
 </script>
 
 <template>
     <SpinnLoader :loading="loading" />
-    <div class="main-card">
-        <CreatePart 
-            origin="single"
-            @refresh-parts="fetchParts()"
-        ></CreatePart>
-
-        <v-card class="b1-container" style="margin-top: 1.4em;">
-            <div class="d-flex flex-column">
-                <span class="informative-text">
-                    <v-chip
-                      class="mt-2"
-                      variant="tonal"
-                      color="secondary"
-                    >
-                      <v-icon start class="ml-0">mdi-sort</v-icon>
-                      Filtrer par référence, désignation et client
-                    </v-chip>
-                </span>
-            </div>
-        <v-row style="width: 100%; margin-top: -8px;">
-            <v-col cols="8" class="d-flex align-content-center">
-                <v-text-field
-                    class="ml-4"
-                    variant="solo"
-                    prepend-icon="mdi-magnify"
-                    label="Recherchez une pièce..."
-                    clearable
-                    v-model="searchKeyword"
-                />
-            </v-col>
-            <v-col cols="4">
-                <v-select
-                    prepend-icon="mdi-account-outline"  
-                    variant="solo"
-                    :items="clients.map(cl => cl.name) || []"
-                    label="Filtrez par client"
-                    clearable
-                    v-model="selectedClient"
-                >
-                <template v-slot:selection="{ item }">
-                    <v-chip
-                        v-if="item"
-                        class="ma-1"
-                        variant="elevated"
-                        color="blue"
-                    >
-                        {{ item.title }}
-                    </v-chip>
-                </template>
-                </v-select>
-            </v-col>
-        </v-row>
-        <div style="margin: -1.6em 0.8em 0.4em 3.2em">
-            <v-icon color="warning" style="margin-right: -8px;">mdi-alert-circle-outline</v-icon>
-            <span class="informative-text">La recherche d'une pièce s'applique sur les champs <strong>référence</strong> et <strong>désignation</strong></span>
-        </div>
+    <div class="main-card mt-6 mb-6">
+        <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
+          <v-tabs v-model="tab">
+            <v-tab value="one">
+              <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
+              Catalogue des pièces
+            </v-tab>
+            <v-tab value="two">
+              <v-icon start class="mr-2">mdi-warehouse</v-icon>
+              Stocks & Disponibilités
+            </v-tab>
+          </v-tabs>
         </v-card>
 
-        <v-card class="b1-container" style="margin-bottom: 0.8em; margin-top: 0.2em;">
-            <CardTitle
-                title="Catalogue des pièces"
-                icon="mdi-list-box-outline"
-            />
-            <v-data-table
-                :loading="loading"
-                loading-text="Recherche..."
-                density="compact"
-                hover
-                no-data-text="Aucune pièce ne répond à vos critères de recherche"
-                :headers="partHeaders"
-                :items="filteredParts || []"
-                @click:row="routeToPart"
-            >
-            <template v-slot:item.reference="{ item }">
-                <v-chip variant="elevated" color="white">
-                    <v-icon class="mr-1">mdi-barcode-scan</v-icon>
-                    {{ item.reference + ' ' + item.designation }}
-                </v-chip>
-            </template>
-            <template v-slot:item.latest_supplier_price="{ item }">
-                <v-chip
-                    v-if="item.latest_supplier_price"
-                    variant="outlined"
-                    color="blue"
-                >
-                    {{ item.latest_supplier_price }}
-                </v-chip>
-                <v-chip 
-                    variant="tonal"
-                    color="secondary"
-                    v-else
-                >
-                    <v-icon>
-                        mdi-help-circle-outline
-                    </v-icon>
-                </v-chip>
-            </template>
-            <template v-slot:item.latest_client_price="{ item }">
-                <v-chip
-                    v-if="item.latest_client_price"
-                    class="index-slot"
-                    variant="outlined"
-                    color="blue"
-                >
-                    {{ item.latest_client_price }}
-                </v-chip>
-                <v-chip 
-                    variant="tonal"
-                    color="secondary"
-                    v-else
-                >
-                    <v-icon>
-                        mdi-help-circle-outline
-                    </v-icon>
-                </v-chip>
-            </template>
-            <template v-slot:item.urgencies="{ item }">
-                <div class="actions-slot">
-                    <v-chip
-                        v-if="item.unsorted_positions_count > 0"
-                        class="index-slot"
-                        variant="elevated"
-                        color="red"
-                        style="margin-right: 0.6em; font-weight: 600;"
-                    >
-                        <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
-                        <span class="mr-1">Position à trier</span>
-                    </v-chip>
-                    <v-chip
-                        v-else
-                        class="index-slot"
-                        variant="outlined"
-                        color="success"
-                        style="font-weight: 500;"
-                    >
-                        <v-icon>mdi-check-circle-outline</v-icon>
-                    </v-chip>
+        <v-tabs-window v-model="tab">
+            <!-- 🟢 General Parts Catalog -->
+            <v-tabs-window-item value="one">
+                <div class="d-flex align-center justify-center" style="margin-top: -0.8em;">
+                    <CreatePart origin="single" @refresh-parts="fetchParts()" />
                 </div>
-            </template>
-            <template v-slot:item.actions="{ item }">     
-                <div class="actions-slot">
-                    <DeletePart
-                        v-if="selectedCompany && item"
-                        :selected-company-id="selectedCompany.id"
-                        :part-id="item.id"
-                        :designation="item.designation"
-                        :reference="item.reference"
-                        @refresh-parts="fetchParts()"
-                    />
-                    <td class="arrow-cell">
-                        <v-icon class="hover-arrow ml-2">mdi-chevron-right</v-icon>
-                    </td>
-                </div>  
-            </template>
-            </v-data-table>
-    
-        </v-card>
+                <v-card class="b1-container" style="margin-top: 1.4em;">
+                    <div class="d-flex flex-column">
+                        <span class="informative-text">
+                            <v-chip class="mt-2" variant="tonal" color="secondary">
+                                <v-icon start class="ml-0">mdi-sort</v-icon>
+                                Filtrer par référence, désignation et client
+                            </v-chip>
+                        </span>
+                    </div>
+                    <v-row style="width: 100%; margin-top: -8px;">
+                        <v-col cols="8">
+                            <v-text-field
+                                class="ml-4"
+                                variant="solo"
+                                prepend-icon="mdi-magnify"
+                                label="Recherchez une pièce..."
+                                clearable
+                                v-model="searchKeyword"
+                            />
+                        </v-col>
+                        <v-col cols="4">
+                            <v-select
+                                prepend-icon="mdi-account-outline"
+                                variant="solo"
+                                :items="clients.map(cl => cl.name) || []"
+                                label="Filtrez par client"
+                                clearable
+                                v-model="selectedClient"
+                            />
+                        </v-col>
+                    </v-row>
+                </v-card>
+
+                <v-card class="b1-container" style="margin-top: 0.8em;">
+                    <v-data-table
+                        :loading="loading"
+                        density="compact"
+                        hover
+                        no-data-text="Aucune pièce ne correspond"
+                        :headers="partHeaders"
+                        :items="filteredParts || []"
+                        @click:row="routeToPart"
+                    >
+                    <template v-slot:item.reference="{ item }">
+                        <v-chip variant="elevated" color="white">
+                            <v-icon class="mr-1">mdi-barcode-scan</v-icon>
+                            {{ item.reference + ' ' + item.designation }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.material="{ item }">
+                        <v-chip variant="text">
+                            <v-icon class="mr-1">mdi-cube-scan</v-icon>
+                            {{ item.material }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.drawing="{ item }">
+                        <v-chip variant="text">
+                            {{ item.drawing }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.latest_supplier_price="{ item }">
+                        <v-chip
+                            v-if="item.latest_supplier_price"
+                            variant="outlined"
+                            color="blue"
+                        >
+                            {{ item.latest_supplier_price }}
+                        </v-chip>
+                        <v-chip variant="tonal" color="secondary" v-else>
+                            <v-icon>mdi-help-circle-outline</v-icon>
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.latest_client_price="{ item }">
+                        <v-chip
+                            v-if="item.latest_client_price"
+                            class="index-slot"
+                            variant="outlined"
+                            color="blue"
+                        >
+                            {{ item.latest_client_price }}
+                        </v-chip>
+                        <v-chip variant="tonal" color="secondary" v-else>
+                            <v-icon>mdi-help-circle-outline</v-icon>
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.urgencies="{ item }">
+                        <div class="actions-slot">
+                            <v-chip
+                                v-if="item.unsorted_positions_count > 0"
+                                class="index-slot"
+                                variant="elevated"
+                                color="red"
+                                style="margin-right: 0.6em; font-weight: 600;"
+                            >
+                                <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
+                                <span class="mr-1">Position à trier</span>
+                            </v-chip>
+                            <v-chip
+                                v-else
+                                class="index-slot"
+                                variant="outlined"
+                                color="success"
+                                style="font-weight: 500;"
+                            >
+                                <v-icon>mdi-check-circle-outline</v-icon>
+                            </v-chip>
+                        </div>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <div class="actions-slot">
+                            <DeletePart
+                                v-if="selectedCompany && item"
+                                :selected-company-id="selectedCompany.id"
+                                :part-id="item.id"
+                                :designation="item.designation"
+                                :reference="item.reference"
+                                @refresh-parts="refreshAllData()"
+                            />
+                            <td class="arrow-cell">
+                                <v-icon class="hover-arrow ml-2">mdi-chevron-right</v-icon>
+                            </td>
+                        </div>  
+                    </template>
+                    </v-data-table>
+                </v-card>
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="two">
+                <v-card class="b1-container">
+                    <div class="d-flex flex-column">
+                        <span class="informative-text">
+                            <v-chip class="mt-2" variant="tonal" color="secondary">
+                                <v-icon start class="ml-0">mdi-sort</v-icon>
+                                Filtrer par référence et désignation
+                            </v-chip>
+                        </span>
+                    </div>
+                    <v-row style="width: 100%; margin-top: -8px;">
+                        <v-col cols="8">
+                            <v-text-field
+                                class="ml-4"
+                                variant="solo"
+                                prepend-icon="mdi-magnify"
+                                label="Recherchez une pièce..."
+                                clearable
+                                v-model="stockSearchKeyword"
+                            />
+                        </v-col>
+                    </v-row>
+                </v-card>
+
+                <v-card class="b1-container" style="margin-top: 0.8em;">
+                    <v-data-table
+                        :loading="loading"
+                        density="comfortable"
+                        hover
+                        no-data-text="Aucune pièce en stock"
+                        :headers="stockHeaders"
+                        :items="filteredStockParts || []"
+                        @click:row="routeToPart"
+                    >
+                    <template v-slot:item.reference_and_designation="{ item }">
+                        <v-chip variant="elevated" color="white">
+                            <v-icon class="mr-1">mdi-barcode-scan</v-icon>
+                            {{ item.reference_and_designation }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.consignment_stock="{ item }">
+                        <v-chip
+                            variant="text"
+                            :color="item.consignment_stock > 0 ? 'dark' : 'warning'"
+                        >
+                            <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.consignment_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.standard_stock="{ item }">
+                        <v-chip
+                            variant="text"
+                            :color="item.standard_stock > 0 ? 'dark' : 'warning'"
+                        >
+                        <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.standard_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.subcontractor_stock="{ item }">
+                        <v-chip
+                            variant="text"
+                            :color="item.subcontractor_stock > 0 ? 'dark' : 'warning'"
+                        >
+                        <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.subcontractor_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.logistic_place_stock="{ item }">
+                        <v-chip
+                            variant="text"
+                            :color="item.logistic_place_stock > 0 ? 'dark' : 'warning'"
+                        >
+                        <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.logistic_place_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.total_current_stock="{ item }">
+                        <v-chip
+                            variant="outlined"
+                            :color="item.total_current_stock > 0 ? 'black' : 'warning'"
+                        >
+                        <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.total_current_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.reserved_stock="{ item }">
+                        <v-chip
+                            variant="text"
+                        >
+                            <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
+                            {{ item.reserved_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.supplier_orders="{ item }">
+                        <v-chip
+                            variant="text"
+                        >
+                            <v-icon class="mr-1">mdi-package-variant</v-icon>
+                            {{ item.supplier_orders }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.expeditions="{ item }">
+                        <v-chip variant="text">
+                            <v-icon class="mr-1">mdi-truck-fast-outline</v-icon>
+                            {{ item.expeditions }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.total_available_stock="{ item }">
+                        <v-chip
+                            variant="elevated"
+                            color="white"
+                        >
+                        <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
+                            {{ item.total_available_stock }}
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.total_future_stock="{ item }">
+                        <v-chip
+                            variant="elevated"
+                            color="white"
+                        >
+                            <v-icon class="mr-1">mdi-calendar-clock</v-icon>
+                            {{ item.total_future_stock }}
+                        </v-chip>
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+                        <div class="actions-slot">
+                            <td class="arrow-cell">
+                                <v-icon class="hover-arrow ml-2">mdi-chevron-right</v-icon>
+                            </td>
+                        </div>
+                    </template>
+                    </v-data-table>
+                </v-card>
+            </v-tabs-window-item>
+        </v-tabs-window>
     </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 @import url(../assets/main.scss);
 
-
-.parts-table .table-row {
-    position: relative;
-    cursor: pointer;
+.v-chip {
+    font-weight: 500;
 }
-
-.parts-table .arrow-cell {
-    text-align: right;
-    padding: 0 16px;
-}
-
-.parts-table .hover-arrow {
-    visibility: hidden;
-    transition: visibility 0.2s, opacity 0.2s;
-    opacity: 0;
-    font-size: 1.5rem;
-    color: var(--v-primary-base);
-}
-
-.parts-table .table-row:hover .hover-arrow {
-    visibility: visible;
-    opacity: 1;
-}
-
-.top-card {
-    margin: 0.4em 0.4em;
-    width: 52vw;
-}
-
-.index-slot {
-    margin: 0.4em 0em;
-}
-
 </style>

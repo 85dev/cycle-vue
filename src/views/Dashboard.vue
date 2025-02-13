@@ -229,8 +229,8 @@ onMounted(async() => {
 
 <template>
     <SpinnLoader :loading="loading" />
-      <div class="main-card mb-2">
-        <v-card class="b1-container" color="dark" variant="elevated">
+      <div class="main-card mb-6 mt-6">
+        <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
           <v-tabs v-model="tab">
             <v-tab value="one">
               <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
@@ -251,7 +251,7 @@ onMounted(async() => {
 
         <v-tabs-window v-model="tab">
         <v-tabs-window-item value="one">
-        <div class="b1-container ma-2" style="z-index:0">
+        <div class="b1-container ma-2 mt-0" style="z-index:0">
           <v-card v-if="clientOrders && clientOrders.length > 0" class="mb-3">
             <CardTitle
               :title="`Planning des commandes client (${clientOrders ? clientOrders.length : 0} actives)`"
@@ -588,7 +588,8 @@ onMounted(async() => {
           </v-tabs-window-item>
 
           <v-tabs-window-item value="two">
-                <v-row dense class="mr-2 ml-2 mb-2 mt-2">
+            <div class="b1-container mt-0">
+              <v-row dense class="mr-2 ml-2 mb-2 mt-2">
                   <v-col v-for="(metric, key) in kpiData" :key="key" cols="6" sm="3" md="4">
                     <v-card class="card-hover" variant="elevated" color="white">
                       <v-card-title class="informative-text">
@@ -605,6 +606,7 @@ onMounted(async() => {
                     </v-card>
                   </v-col>
                 </v-row>
+            </div>
           </v-tabs-window-item>
 
           <v-tabs-window-item value="three">

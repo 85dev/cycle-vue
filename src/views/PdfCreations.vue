@@ -120,10 +120,9 @@ onMounted(async() => {
 
 <template>
     <SpinnLoader :loading="loading"/>
-    <div class="main-card">
+    <div class="main-card mt-6 mb-6">
         <v-tabs
             v-model="tab"
-            grow
             >
             <v-tab value="one">
                 <v-icon start class="mr-2">mdi-view-dashboard</v-icon>

@@ -53,9 +53,9 @@ function updateLoading(event) {
 const items = ref( 
   [
     { title: 'Tableau de bord', icon: 'mdi-gesture-double-tap', path: '/dashboard' },
+    { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
     { title: 'Gestion des commandes', icon: 'mdi-cart-outline', path: '/handle_orders' },
     { title: 'Gestion des expéditions', icon: 'mdi-ferry', path: '/expeditions' },
-    { title: 'Catalogue des pièces', icon: 'mdi-list-box-outline', path: '/parts' },
     { title: 'Gestion des consommations', icon: 'mdi-package-variant-minus', path: '/handle_consumptions' },
     { title: 'Gestion des documents', icon: 'mdi-file-pdf-box', path: '/pdf_creations' },
   ]

@@ -148,7 +148,7 @@ onMounted(async() => {
         @updateSnackbar="(value) => (snackbarVisible = value)"
     />
     <SpinnLoader :loading="loading" />
-    <div class="main-card">
+    <div class="main-card mt-6 mb-6">
         <v-card class="b1-container mt-3 mb-3">
             <CardTitle
                 title="Enregistrer des consommations en stock consignation client"

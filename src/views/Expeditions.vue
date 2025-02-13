@@ -71,10 +71,9 @@ onMounted(async() => {
 
 <template>
     <SpinnLoader :loading="loading" />
-    <v-card class="main-card">
+    <v-card class="main-card mt-6 mb-6">
         <v-tabs
             v-model="tab"
-            grow
             >
             <v-tab value="one">
                 <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
@@ -88,7 +87,7 @@ onMounted(async() => {
         <v-tabs-window v-model="tab">
             <v-tabs-window-item value="one">
                 <v-card class="b1-container mt-3">
-            <div class="d-flex align-center justify-lg-space-between ml-3 mt-2 mb-2 mr-3">
+            <div class="d-flex align-center justify-center ml-3 mt-2 mb-2 mr-3">
                 <CreateExpedition
                     v-if="selectedCompany && suppliers && suppliers.length > 0"
                     origin="single"

@@ -3,6 +3,7 @@ import { defineEmits } from 'vue'
 
 // Services
 import apiCaller from '../../services/apiCaller.js'
+import CardTitle from '../CardTitle.vue'
 
 // Emit to allow refresh of the parent component
 const emit = defineEmits(['refreshParts'])
@@ -53,23 +54,27 @@ async function deletePart() {
   
         <template v-slot:default="{ isActive }">
 
-          <v-card title="Suppression d'une commande">
+          <v-card>
+            <CardTitle 
+              title="Suppression d'une pièce du catalogue"
+              icon="mdi-barcode"
+            />
 
-            <v-form style="width: 94%; margin: 0 auto;">
-                <span class="informative-text-m">Vous êtes sur le point de supprimer la pièce {{ props.reference + ' ' + props.designation }}</span>
+            <v-form class="d-flex align-center ma-4 pl-6">
+                <v-icon color="warning" class="mr-2">mdi-alert-circle-outline</v-icon>
+                <span class="informative-text-m">Vous êtes sur le point de supprimer la pièce {{ props.reference + ' ' + props.designation }} de votre catalogue de références</span>
             </v-form>
   
-            <v-card-actions style="margin-bottom: 0.8em;">
+            <v-card-actions>
 
                 <v-spacer></v-spacer>
 
                 <v-btn
-                    color="red"
                     text="FERMER"
                     @click="isActive.value = false"
                 ></v-btn>
 
-                <v-btn color="red" @click="deletePart(); isActive.value = false">
+                <v-btn color="red" variant="elevated" @click="deletePart(); isActive.value = false">
                     Supprimer la pièce
                 </v-btn>
 

@@ -150,7 +150,7 @@ onMounted(async () => {
     :client-positions="unsortedClientPositions"
     @refreshClientPositions="refreshAllData()"
   />
-  <v-card class="main-card">
+  <v-card class="main-card mt-6 mb-6">
     <v-card class="b1-container ma-2" color="dark" variant="elevated">
       <v-tabs v-model="tab" show-arrows class="part-data-tabs">
         <v-tab value="one">
@@ -171,138 +171,118 @@ onMounted(async () => {
       <v-tabs-window v-model="tab">
         <v-tabs-window-item value="one">
           <v-card class="b1-container ma-2">
-        <CardTitle 
+            <CardTitle 
               title="Pièces commandées, réservées et à terme"
               icon="mdi-package-variant-closed"
             />
-              <v-card style="padding:0.4em; margin: 0.4em">
-                <CardTitle 
-                  title="Détail des stocks"
-                  icon="mdi-package-variant"
-                  color="dark"
-                  elevation="2"
-                />
-                  <div v-if="calculatedStocks.current_stock" class="mb-2 mt-2">
-                    <v-data-table
-                      :items="[
-                        { type: 'En stock consignation client', quantity: calculatedStocks.current_stock.consignment_stock },
-                        { type: 'En stock standard client', quantity: calculatedStocks.current_stock.standard_stock },
-                        { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
-                        { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
-                        { type: 'Total', quantity: calculatedStocks.current_stock.total },
-                      ]"
-                      :headers="[
-                        { title: 'Stocks disponibles', value: 'type' },
-                        { title: 'Quantité', value: 'quantity' },
-                      ]"
-                      class="elevation-1"
-                      density="compact"
-                      hide-default-footer
-                    >
-                      <template v-slot:item.quantity="{ item }">
-                        <template v-if="item.type === 'Total'">
-                          <v-chip variant="elevated" :color="item.quantity <= 0 ? 'red' : 'success'">
-                            <v-icon class="mr-1">
-                              {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
-                            </v-icon>
-                            {{ item.quantity }}
-                          </v-chip>
-                        </template>
-                        <template v-else>
-                          <!-- Default Display for Other Rows -->
-                          <v-chip variant="text">
-                            <v-icon class="mr-1">
-                              {{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}
-                            </v-icon>
-                            {{ item.quantity }}
-                          </v-chip>
-                        </template>
-                      </template>
-                    </v-data-table>
-                  </div>
+            <v-card style="padding: 0.4em; margin: 0.4em;">
+            <CardTitle 
+              title="Détail des stocks"
+              icon="mdi-package-variant"
+              color="dark"
+              elevation="2"
+            />
+              <v-row dense class="mt-2">
+                <v-col cols="12" md="6" v-if="calculatedStocks.current_stock">
+                  <v-data-table
+                    :items="[
+                      { type: 'Consignation client', quantity: calculatedStocks.current_stock.consignment_stock },
+                      { type: 'Standard client', quantity: calculatedStocks.current_stock.standard_stock },
+                      { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
+                      { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
+                      { type: 'Total général', quantity: calculatedStocks.current_stock.total },
+                    ]"
+                    :headers="[
+                      { title: 'Type de stock', value: 'type' },
+                      { title: 'Quantité', value: 'quantity' },
+                    ]"
+                    class="elevation-1"
+                    density="compact"
+                    hide-default-footer
+                  >
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'success'">
+                        <v-icon class="mr-1">
+                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
+                        </v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+                  </v-data-table>
+                </v-col>
 
-                  <div v-if="calculatedStocks.ordered_stock" class="mb-2">
-                    <v-data-table
-                      :items="[
-                        { type: 'Total des expéditions en cours', quantity: calculatedStocks.ordered_stock.expeditions },
-                        { type: 'Total des commandes fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
-                      ]"
-                      :headers="[
-                        { title: 'Stocks en commande', value: 'type' },
-                        { title: 'Quantité', value: 'quantity' },
-                      ]"
-                      class="elevation-1"
-                      density="compact"
-                      hide-default-footer
-                    >
-                      <template v-slot:item.quantity="{ item }">
-                        <v-chip variant="text">
-                          <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}</v-icon>
-                          {{ item.quantity }}
-                        </v-chip>
-                      </template>
-                    </v-data-table>
-                  </div>
+                <v-col cols="12" md="6" v-if="calculatedStocks.ordered_stock">
+                  <v-data-table
+                    :items="[
+                      { type: 'Total en commandes client', quantity: calculatedStocks.reserved_stock },
+                    ]"
+                    :headers="[
+                      { title: 'Stocks réservés au client', value: 'type' },
+                      { title: 'Quantité', value: 'quantity' },
+                    ]"
+                    class="elevation-1"
+                    density="compact"
+                    hide-default-footer
+                  >
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="text" :color="item.quantity > 0 ? 'warning' : 'success'">
+                        <v-icon class="mr-1"> mdi-package-variant-closed </v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+                  </v-data-table>
+                </v-col>
 
-                  <div v-if="calculatedStocks.reserved_stock" class="mb-2">
-                    <v-data-table
-                      :items="[
-                        { type: 'Total des commandes client', quantity: calculatedStocks.reserved_stock },
-                      ]"
-                      :headers="[
-                        { title: 'Stocks réservés au client', value: 'type' },
-                        { title: 'Quantité', value: 'quantity' },
-                      ]"
-                      class="elevation-1"
-                      density="compact"
-                      hide-default-footer
-                    >
-                      <template v-slot:item.quantity="{ item }">
-                          <v-chip variant="text">
-                            <v-icon class="mr-1">
-                              {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
-                            </v-icon>
-                            {{ item.quantity }}
-                          </v-chip>
-                      </template>
-                    </v-data-table>
-                  </div>
+                <!-- Second Row: Reserved Stock & Future Stock -->
+                <v-col class="mt-2" cols="12" md="6" v-if="calculatedStocks.reserved_stock">
+                  <v-data-table
+                    :items="[
+                      { type: 'Total des expéditions en cours', quantity: calculatedStocks.ordered_stock.expeditions },
+                      { type: 'Total des commandes fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
+                    ]"
+                    :headers="[
+                      { title: 'Stocks en commande', value: 'type' },
+                      { title: 'Quantité', value: 'quantity' },
+                    ]"
+                    class="elevation-1"
+                    density="compact"
+                    hide-default-footer
+                  >
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="text">
+                        <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}</v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+                  </v-data-table>
+                </v-col>
 
-                  <div v-if="calculatedStocks.total_current_stock || calculatedStocks.total_future_stock">
-                    <v-data-table
-                      :items="[
-                        { type: 'Total actuel disponible', quantity: calculatedStocks.total_current_stock },
-                        { type: 'Total disponible à terme', quantity: calculatedStocks.total_future_stock }
-                      ]"
-                      :headers="[
-                        { title: 'Stock à terme', value: 'type' },
-                        { title: 'Quantité', value: 'quantity' },
-                      ]"
-                      class="elevation-1"
-                      density="compact"
-                      hide-default-footer
-                    >
-                      <template v-slot:item.quantity="{ item }">
-                        <template v-if="item.type === 'Total disponible à terme'">
-                          <v-chip variant="elevated" :color="item.quantity <= 0 ? 'red' : 'success'">
-                            <v-icon class="mr-1">
-                              {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
-                            </v-icon>
-                            {{ item.quantity }}
-                          </v-chip>
-                        </template>
-                        <template v-if="item.type === 'Total actuel disponible'">
-                          <v-chip variant="elevated" :color="item.quantity <= 0 ? 'red' : 'success'">
-                            <v-icon class="mr-1">
-                              {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
-                            </v-icon>
-                            {{ item.quantity }}
-                          </v-chip>
-                        </template>
-                      </template>
-                    </v-data-table>
-                  </div>
-              </v-card>
+                <v-col class="mt-2" cols="12" md="6" v-if="calculatedStocks.total_current_stock || calculatedStocks.total_future_stock">
+                  <v-data-table
+                    :items="[
+                      { type: 'Total actuel disponible', quantity: calculatedStocks.total_current_stock },
+                      { type: 'Total disponible à terme', quantity: calculatedStocks.total_future_stock }
+                    ]"
+                    :headers="[
+                      { title: 'Stock à terme', value: 'type' },
+                      { title: 'Quantité', value: 'quantity' },
+                    ]"
+                    class="elevation-1"
+                    density="compact"
+                    hide-default-footer
+                  >
+                    <template v-slot:item.quantity="{ item }">
+                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'success'">
+                        <v-icon class="mr-1">
+                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
+                        </v-icon>
+                        {{ item.quantity }}
+                      </v-chip>
+                    </template>
+                  </v-data-table>
+                </v-col>
+              </v-row>
+        </v-card>
       </v-card>
       <v-card class="b1-container ma-2">
           <div v-if="dataFromSearch.consignment_stock_positions">
@@ -321,7 +301,7 @@ onMounted(async () => {
             </div>
 
               <v-card
-                style="padding:0.4em; margin: 0.4em"
+                style="padding:0.4em; margin: 0.4em;"
                 v-for="stock in dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0)"
                 :key="'consignment-' + stock.id"
               >
@@ -331,7 +311,7 @@ onMounted(async () => {
                   color="dark" 
                   elevation="2"
                  />
-                  <v-card class="b1-middle-content" style="padding:0.4em; margin: 0.4em">
+                  <v-card class="b1-middle-content mb-0" style="padding:0.4em; margin: 0.4em;">
                     <v-card>
                       <v-row class="pa-4" align="center" justify="space-between">
                         <v-col cols="12" md="6" class="d-flex flex-column">
@@ -350,7 +330,7 @@ onMounted(async () => {
                         </v-col>
   
                         <v-col cols="12" md="6" class="d-flex flex-column">
-                          <div v-if="stock.current_quantity !== undefined && stock.current_quantity !== null" class="d-flex flex-column">
+                          <div v-if="stock.current_quantity && stock.current_quantity" class="d-flex flex-column">
                             <v-chip
                               style="z-index:1; width: fit-content;"
                               class="d-flex align-center text-body-2 mb-1"
@@ -390,6 +370,7 @@ onMounted(async () => {
                         :items="stock.client_positions"
                         :headers="clientStockPositionsHeaders"
                         density="dense"
+                        items-per-page="5"
                       >
                         <template v-slot:item.quantity="{item}">
                           <v-chip variant="text" color="success" style="margin: 0.2em">
@@ -430,6 +411,7 @@ onMounted(async () => {
                         :items="stock.consumption_positions"
                         :headers="consumptionPositionsHeaders"
                         density="dense"
+                        items-per-page="5"
                       >
                         <template v-slot:item.quantity="{item}">
                           <v-chip variant="text" color="success" style="margin: 0.2em">
@@ -449,7 +431,7 @@ onMounted(async () => {
               </v-card>
           </div>
           <div class="ml-5" v-if="dataFromSearch.consignment_stock_positions">
-              <div style="margin-top: -1.2em;" class="mb-1" v-if="dataFromSearch.consignment_stock_positions && dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
+              <div class="mb-1" v-if="dataFromSearch.consignment_stock_positions && dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
                 <v-chip
                   variant="text"
                   color="secondary"
@@ -484,14 +466,12 @@ onMounted(async () => {
                       <v-card>
                         <v-row class="pa-4" align="center" justify="space-between">
                           <v-col cols="12" md="6" class="d-flex flex-column">
-                            <!-- Stock Address -->
                             <div>
                               <v-chip variant="text" class="text-body-2">
                                 <v-icon class="mr-2">mdi-location-enter</v-icon>
                                 {{ stock.name }}
                               </v-chip> 
                             </div>
-                            <!-- Contact Name -->
                             <div>
                               <v-chip variant="text" class="text-body-2 mt-1">
                                 <v-icon class="mr-2">mdi-map-marker-circle</v-icon>
@@ -561,7 +541,7 @@ onMounted(async () => {
           </v-card>
           <v-card class="b1-container ma-2">
             <div class="b1-hand-container">
-            <v-card class="b1-container"  style="padding:0.4em; margin: 0.4em">
+            <v-card class="b1-container"  style="padding:0.4em; margin: 0.4em;">
               <div class="b1-top-content">
                 <CardTitle
                   title="Stock sous-traitant(s)" 
@@ -571,7 +551,7 @@ onMounted(async () => {
               <div class="b1-middle-content">
                 <div v-if="dataFromSearch.positions_by_sub_contractors && dataFromSearch.positions_by_sub_contractors.length > 0">
                   <div v-for="subcontractor in dataFromSearch.positions_by_sub_contractors" :key="subcontractor.subcontractor_id" class="mb-4">
-                    <v-card style="padding:0.4em; margin: 0.4em">
+                    <v-card style="padding:0.4em; margin: 0.4em; margin-bottom: -0.8em;">
                       <v-card-title>
                         <v-chip variant="elevated">
                           <v-icon class="mr-1">mdi-account-wrench-outline</v-icon>
@@ -585,15 +565,12 @@ onMounted(async () => {
                         density="dense"
                         :headers="subcontractorHeaders"
                       >
-                        <!-- Quantity Column -->
                         <template v-slot:item.quantity="{ item }">
                           <v-chip variant="text" style="margin: 0.2em">
                             <v-icon color="orange" class="mr-2">mdi-cog-sync-outline</v-icon>
                             {{ item.quantity }}
                           </v-chip>
                         </template>
-
-                        <!-- Actions Column -->
                         <template v-slot:item.actions="{ item }">
                           <div class="actions-slot">
                             <TransferPosition
@@ -619,13 +596,13 @@ onMounted(async () => {
                     color="secondary"
                   >
                     <v-icon class="mr-2">mdi-note-remove-outline</v-icon>
-                    Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} sur les lieux de stockage n'est enregistrée
+                    Aucune {{ dataFromSearch.designation + ' ' + dataFromSearch.reference }} chez les sous-traitants n'est enregistrée
                   </v-chip>
                 </div>
               </div>
             </v-card>
 
-            <v-card class="b1-container" style="margin:0.4em; padding: 0.4em">
+            <v-card class="b1-container" style="margin:0.4em; padding: 0.4em;">
               <div class="b1-top-content">
                 <CardTitle
                   title="Stock lieu(x) de stockage" 
@@ -635,7 +612,7 @@ onMounted(async () => {
               <div class="b1-middle-content">
                 <div v-if="dataFromSearch.positions_by_logistic_place && dataFromSearch.positions_by_logistic_place.length > 0">
                   <div v-for="logisticPlace in dataFromSearch.positions_by_logistic_place" :key="logisticPlace.logistic_place_id" class="mb-4">
-                    <v-card style="margin:0.4em; padding: 0.4em">
+                    <v-card style="margin:0.4em; padding: 0.4em; margin-bottom: -1em;">
                       <v-card-title>
                         <v-chip variant="elevated">
                           <v-icon class="mr-1">mdi-human-dolly</v-icon>
