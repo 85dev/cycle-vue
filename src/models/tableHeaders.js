@@ -41,10 +41,9 @@ const partHeaders = [
 const stockHeaders = [
   { title: 'Référence & Désignation', value: 'reference_and_designation' },
   { title: 'Stock Consignation Client', value: 'consignment_stock' },
-  { title: 'Stock Standard Client', value: 'standard_stock' },
   { title: 'Stock Sous-traitant', value: 'subcontractor_stock' },
   { title: 'Stock Logistique', value: 'logistic_place_stock' },
-  { title: 'Stock Total', value: 'total_current_stock' },
+  { title: 'Stock Total Actuel', value: 'total_current_stock' },
   { title: 'Commandes Client', value: 'reserved_stock' },
   { title: 'Commandes Fournisseur', value: 'supplier_orders' },
   { title: 'Expéditions en cours', value: 'expeditions' },
@@ -233,13 +232,23 @@ const detailedDelExpeditionsHeaders = [
   { title: 'Numéro de commande', value: 'supplier_order_number'},
 ]
 
+const passedConsumptionHeaders = [
+  { title: "Numéro", value: "number" },
+  { title: "Date de début", value: "begin_date" },
+  { title: "Date de fin", value: "end_date" },
+  { title: "Créé le", value: "created_at" },
+  { title: "Pièces consommées", value: "parts" },
+  { title: "Quantité totale", value: "total_quantity" },
+  { title: "Prix total (€)", value: "total_price" }
+];
+
 const expeditionsIndexHeaders = [
   { title: "Numéro d'expédition", value: 'number' },
   { title: "Date de départ", value: 'real_departure_time'},
   { title: "Date d'arrivée estimée", value: 'estimated_arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
-  { title: 'Fournisseur', value: 'supplier_name'},
+  { title: 'Fournisseur(s)', value: 'supplier_names'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
@@ -249,8 +258,8 @@ const deliveredExpeditionsHeaders = [
   { title: "Date d'arrivée", value: 'arrival_time' },
   { title: "Statut", value: 'status' },
   { title: 'Transporteur', value: 'transporter_name'},
-  { title: 'Fournisseur', value: 'supplier_name'},
+  { title: 'Fournisseur', value: 'supplier_names'},
   { title: 'Actions', value: 'actions', sortable: false }
 ]
 
-export { clientOrdersHeaders, stockHeaders, detailedUndelExpeditionsHeaders, detailedDelExpeditionsHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };
+export { passedConsumptionHeaders, clientOrdersHeaders, stockHeaders, detailedUndelExpeditionsHeaders, detailedDelExpeditionsHeaders, deliveredExpeditionsHeaders, transferClientHeaders, clientOrdersHeadersSPE, supplierOrdersHeadersSPE, searchCompanyHeaders, handleAccountHeaders, pendingRequestsHeaders, accessRequestsHeaders, globalConsumptionHeaders, consumptionPositionsHeaders, transferHeaders, clientStockPositionsHeaders, sortingClientPositionHeaders, logisticplacesIndexHeaders, subcontractorIndexHeaders, supplierHeaders, clientHeaders, expeditionPositionHeaders, logisticplacesHeaders, subcontractorHeaders, multipleDestinationHeaders, partHeaders, supplierOrdersHeaders, expeditionHeaders, expeditionsListHeaders, expeditionsIndexHeaders };

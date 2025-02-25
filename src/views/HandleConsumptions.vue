@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue';
 import apiCaller from '@/services/apiCaller';
 import dateConverter from '@/services/dateConverter';
 import sessionStore from '@/stores/sessionStore';
-import { globalConsumptionHeaders } from '@/models/tableHeaders';
+import { globalConsumptionHeaders, passedConsumptionHeaders } from '@/models/tableHeaders';
 import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import Popup from '@/components/Popup.vue';
@@ -18,6 +18,7 @@ const selectedCompany = computed(() => {
   return sessionStore.getters.getSelectedCompany()
 })
 const selectedRows = ref([])
+const isModalOpen = ref(false);
 
 const clients = ref([])
 const clientsListDisplayed = ref([])
@@ -26,6 +27,7 @@ const selectedClient = ref(null)
 const stocks = ref([])
 const stocksListDisplayed = ref([])
 const selectedStock = ref(null)
+const passedConsumptions = ref([])
 
 // For popups
 const snackbarVisible = ref(false);
@@ -48,6 +50,15 @@ async function fetchParts() {
     if (stock && clientId) {
         const response = await apiCaller.get(`companies/${selectedCompany.value.id}/clients/${clientId}/consignment_stocks/${stock.id}/parts_by_client_and_consignment_stock`);
         parts.value = response;
+    }
+}
+
+async function fetchConsumptions() {
+    const stock = stocks.value.find(stock => stock.address === selectedStock.value)
+    const clientId = clients.value.find(client => client.name === selectedClient.value).id
+    if (stock && clientId) {
+        const response = await apiCaller.get(`clients/${clientId}/consignment_stocks/${stock.id}/consumptions_by_consignment_stock`);
+        passedConsumptions.value = response;
     }
 }
 
@@ -93,6 +104,7 @@ function resetData() {
     consumptionRows.value = []
     selectedStock.value = null
     selectedClient.value = null
+    passedConsumptions.value = []
 }
 
 function handleClientChange() {
@@ -104,6 +116,7 @@ function handleClientChange() {
 async function handleStockChange() {
     consumptionRows.value = []
     await fetchParts()
+    await fetchConsumptions()
     consumptionRows.value = parts.value.map(part => ({
             part_reference: `${part.reference} ${part.designation}`,
             current_quantity: part.current_quantity,
@@ -212,10 +225,93 @@ onMounted(async() => {
             </div>
 
             <v-card v-if="selectedStock && selectedClient && consumptionRows.length > 0" class="mt-4">
-                <CardTitle
-                    title="Sélectionnez les références consommées"
-                    icon="mdi-barcode-scan"
-                />
+                <div class="d-flex align-center justify-lg-space-between mr-4">
+                    <CardTitle
+                        title="Sélectionnez les références consommées"
+                        icon="mdi-barcode-scan"
+                    />
+                    <v-dialog v-model="isModalOpen" class="dialog-width">
+                        <template v-slot:activator="{ props: activatorProps }">
+                            <v-chip
+                                v-bind="activatorProps"
+                                v-if="selectedStock && passedConsumptions"
+                                variant="elevated"
+                                color="blue"
+                            >
+                                <v-icon class="mr-2">mdi-history</v-icon>
+                                Voir l'historique des consommations
+                            </v-chip>
+                        </template>
+
+                        <v-card v-if="selectedStock && passedConsumptions">
+                            <CardTitle 
+                                :title="`Historique des consommations du ${selectedStock}`"
+                                icon="mdi-cube-scan"
+                            />
+                            <v-data-table
+                                :headers="passedConsumptionHeaders"
+                                :items="passedConsumptions"
+                                items-per-page="10"
+                            >
+                                <template v-slot:item.number="{ item }">
+                                    <v-chip variant="elevated" color="white">
+                                        <v-icon class="mr-1">mdi-barcode</v-icon>
+                                        {{ item.number }}
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.begin_date="{ item }">
+                                    <v-chip variant="text">
+                                        <v-icon class="mr-1">mdi-calendar-start</v-icon>
+                                        {{ new Date(item.begin_date).toLocaleDateString() }}
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.end_date="{ item }">
+                                    <v-chip variant="text">
+                                        <v-icon class="mr-1">mdi-calendar-end</v-icon>
+                                        {{ new Date(item.end_date).toLocaleDateString() }}
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.parts="{ item }">
+                                    <v-chip-group column>
+                                        <v-chip
+                                            v-for="part in item.parts"
+                                            :key="part.part_id"
+                                            variant="text"
+                                            color="indigo"
+                                        >
+                                            <v-icon class="mr-1">mdi-cube-outline</v-icon>
+                                            {{ part.part_reference }} - {{ part.part_designation }}
+                                        </v-chip>
+                                    </v-chip-group>
+                                </template>
+
+                                <template v-slot:item.total_quantity="{ item }">
+                                    <v-chip variant="elevated" color="white">
+                                        <v-icon class="mr-1">mdi-package-variant</v-icon>
+                                        {{ item.parts.reduce((sum, part) => sum + part.quantity, 0) }}
+                                    </v-chip>
+                                </template>
+
+                                <template v-slot:item.total_price="{ item }">
+                                    <v-chip variant="elevated" color="white">
+                                        <v-icon class="mr-1">mdi-cash</v-icon>
+                                        {{
+                                            item.parts.reduce((sum, part) => sum + part.quantity * part.price, 0).toFixed(2)
+                                        }} €
+                                    </v-chip>
+                                </template>
+                            </v-data-table>
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                    <v-btn variant="elevated" color="red" @click="isModalOpen = false"/>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </div>
                 <v-card class="ma-2">
                     <v-divider class="mb-2"/>
                     <span v-if="!number || !beginDate || !endDate" class="informative-text">
@@ -340,6 +436,7 @@ onMounted(async() => {
                 </v-btn>  
             </v-card-actions> 
         </v-card>
+
     </div>
 </template>
 

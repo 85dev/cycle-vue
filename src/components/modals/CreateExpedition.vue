@@ -1,6 +1,6 @@
 <script setup>
 // Vue essentials
-import { onMounted, ref, computed, defineEmits } from 'vue';
+import { onMounted, reactive, ref, computed, defineEmits } from 'vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -33,7 +33,7 @@ const selectedSupplier = ref(null)
 const selectedTransporter = ref(null)
 const number = ref(null)
 const transporters = ref([])
-const modifiedQuantities = ref([])
+const modifiedQuantities = ref({});
 const modifiedPartials = ref({})
 const filteredSupplierOrders = ref([])
 
@@ -49,10 +49,10 @@ const selectedOrdersSummary = computed(() => {
     return {
       part: `${order.part_reference} ${order.part_designation}`,
       supplier_name: order.supplier_name,
-      partial: modifiedPartials.value[order.id] || false, // Default to false if not set
-      quantity: modifiedQuantities.value[order.id] || order.quantity  ||  0, // Default to original quantity if not modified
+      partial: modifiedPartials.value[order.id] ?? false,
+      quantity: modifiedQuantities.value[order.id] ?? order.quantity ?? 0,
     };
-  }).filter(order => order !== null); // Filter out nulls for unmatched IDs
+  }).filter(order => order !== null);
 });
 
 const emit = defineEmits(['refreshExpeditions'])
@@ -61,12 +61,29 @@ async function fetchSupplierOrders() {
     const response = await apiCaller.get(`companies/${props.selectedCompanyId}/company_uncompleted_supplier_orders_positions`)
 
     supplierOrders.value = response
+
+    response.forEach(order => {
+        if (!(order.id in modifiedQuantities.value)) {
+            modifiedQuantities.value[order.id] = order.quantity || 0;
+        }
+    });
 }
 
 async function fetchTransporters() {
     const response = await apiCaller.get(`companies/${props.selectedCompanyId}/transporters_index`)
 
     transporters.value = response
+}
+
+function resetForm() {
+    selectedSupplierOrders.value = [];
+    selectedSupplier.value = null;
+    selectedTransporter.value = null;
+    number.value = null;
+    modifiedQuantities.value = {};
+    modifiedPartials.value = {};
+    departureDate.value = dateConverter.formatISODate(new Date());
+    estimatedArrivalTime.value = dateConverter.formatISODate(new Date(Date.now() + 42 * 24 * 60 * 60 * 1000));
 }
 
 function applyFilter() {
@@ -98,6 +115,8 @@ async function submitExpedition() {
     await apiCaller.post(`companies/${props.selectedCompanyId}/create_expedition?supplier_order_position_ids=${selectedSupplierOrders.value}&supplier_order_position_quantities=${quantities}&supplier_order_position_partials=${partials}&transporter_id=${selectedTransporterId}`, expedition, true)
 
     emit('refreshExpeditions')
+    resetForm();
+    await fetchSupplierOrders();
 }
 
 onMounted( async () => {

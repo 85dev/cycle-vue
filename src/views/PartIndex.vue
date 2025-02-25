@@ -24,6 +24,7 @@ const loading = ref(false)
 const clients = ref([])
 const selectedClient = ref(null)
 const tab = ref(null)
+const selectedStockClient = ref(null)
 
 let timeout = null
 
@@ -88,22 +89,36 @@ watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
 });
 
 // Watch for search in Stock & Availability
-watch(stockSearchKeyword, (newKeyword) => {
+watch([selectedStockClient, stockSearchKeyword], ([newClientName, newKeyword]) => {
     if (timeout) clearTimeout(timeout);
 
     loading.value = true;
 
     timeout = setTimeout(() => {
-        if (!newKeyword) {
-            filteredStockParts.value = stockParts.value;
-        } else {
+        let filtered = stockParts.value;
+
+        // 🟢 Filter by client name
+        if (newClientName) {
+            filtered = filtered.filter(part => part.client_name === newClientName);
+        }
+
+        // 🟢 Filter by search keyword
+        if (newKeyword) {
             const keyword = newKeyword.toLowerCase();
-            filteredStockParts.value = stockParts.value.filter(part =>
-                part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword)
+            filtered = filtered.filter(part =>
+                (part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword))
             );
         }
+
+        filteredStockParts.value = filtered;
         loading.value = false;
     }, 500);
+});
+
+watch(selectedCompany, async (newCompany, oldCompany) => {
+  if (newCompany?.id !== oldCompany?.id) { // Only trigger fetchData if the company has changed
+    await refreshAllData();
+  }
 });
 
 async function refreshAllData() {
@@ -147,12 +162,12 @@ onMounted(async () => {
             <!-- 🟢 General Parts Catalog -->
             <v-tabs-window-item value="one">
                 <div class="d-flex align-center justify-center" style="margin-top: -0.8em;">
-                    <CreatePart origin="single" @refresh-parts="fetchParts()" />
+                    <CreatePart origin="single" @refresh-parts="fetchParts(true); fetchStockParts(true)" />
                 </div>
                 <v-card class="b1-container" style="margin-top: 1.4em;">
                     <div class="d-flex flex-column">
                         <span class="informative-text">
-                            <v-chip class="mt-2" variant="tonal" color="secondary">
+                            <v-chip class="mt-2" variant="text" color="secondary">
                                 <v-icon start class="ml-0">mdi-sort</v-icon>
                                 Filtrer par référence, désignation et client
                             </v-chip>
@@ -187,7 +202,7 @@ onMounted(async () => {
                         :loading="loading"
                         density="compact"
                         hover
-                        no-data-text="Aucune pièce ne correspond"
+                        no-data-text="Aucune pièce enregistrée"
                         :headers="partHeaders"
                         :items="filteredParts || []"
                         @click:row="routeToPart"
@@ -244,7 +259,7 @@ onMounted(async () => {
                                 style="margin-right: 0.6em; font-weight: 600;"
                             >
                                 <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
-                                <span class="mr-1">Position à trier</span>
+                                <span class="mr-1">Position à répartir</span>
                             </v-chip>
                             <v-chip
                                 v-else
@@ -280,7 +295,7 @@ onMounted(async () => {
                 <v-card class="b1-container">
                     <div class="d-flex flex-column">
                         <span class="informative-text">
-                            <v-chip class="mt-2" variant="tonal" color="secondary">
+                            <v-chip class="mt-2" variant="text" color="secondary">
                                 <v-icon start class="ml-0">mdi-sort</v-icon>
                                 Filtrer par référence et désignation
                             </v-chip>
@@ -297,6 +312,16 @@ onMounted(async () => {
                                 v-model="stockSearchKeyword"
                             />
                         </v-col>
+                        <v-col cols="4">
+                            <v-select
+                                prepend-icon="mdi-account-outline"
+                                variant="solo"
+                                :items="clients.map(cl => cl.name) || []"
+                                label="Filtrez par client"
+                                clearable
+                                v-model="selectedStockClient"
+                            />
+                        </v-col>
                     </v-row>
                 </v-card>
 
@@ -305,7 +330,7 @@ onMounted(async () => {
                         :loading="loading"
                         density="comfortable"
                         hover
-                        no-data-text="Aucune pièce en stock"
+                        no-data-text="Aucune pièce enregistrée"
                         :headers="stockHeaders"
                         :items="filteredStockParts || []"
                         @click:row="routeToPart"
@@ -323,16 +348,6 @@ onMounted(async () => {
                         >
                             <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
                             {{ item.consignment_stock }}
-                        </v-chip>
-                    </template>
-
-                    <template v-slot:item.standard_stock="{ item }">
-                        <v-chip
-                            variant="text"
-                            :color="item.standard_stock > 0 ? 'dark' : 'warning'"
-                        >
-                        <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
-                            {{ item.standard_stock }}
                         </v-chip>
                     </template>
 
@@ -393,20 +408,22 @@ onMounted(async () => {
 
                     <template v-slot:item.total_available_stock="{ item }">
                         <v-chip
-                            variant="elevated"
-                            color="white"
+                            variant="outlined"
                         >
-                        <v-icon class="mr-1">mdi-package-variant-closed-check</v-icon>
-                            {{ item.total_available_stock }}
+                        <v-icon class="mr-1" :color="item.total_available_stock < 0 ? 'red' : 'black'">
+                            {{ item.total_available_stock < 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
+                        </v-icon>
+                        {{ item.total_available_stock }}
                         </v-chip>
                     </template>
 
                     <template v-slot:item.total_future_stock="{ item }">
                         <v-chip
-                            variant="elevated"
-                            color="white"
+                            variant="outlined"
                         >
-                            <v-icon class="mr-1">mdi-calendar-clock</v-icon>
+                            <v-icon class="mr-1" :color="item.total_future_stock < 0 ? 'red' : 'black'">
+                            {{ item.total_future_stock < 0 ? 'mdi-alert-circle-outline' : 'mdi-calendar-clock' }}
+                            </v-icon>
                             {{ item.total_future_stock }}
                         </v-chip>
                     </template>

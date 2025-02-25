@@ -1,34 +1,31 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from 'vue';
 import Chart from "chart.js/auto";
-import apiCaller from "@/services/apiCaller";
 
 // Props
 const props = defineProps({
-  companyId: Number,
-});
+  companyId: { 
+        type: Number, 
+        required: true 
+    },
+    data: {
+        type: String,
+    },
+})
 
+let chartInstance = null; 
 const chartData = ref({ labels: [], datasets: [] });
 
-async function fetchMarginsByPart() {
-  try {
-    const response = await apiCaller.get(`companies/${props.companyId}/margins_by_part`);
-    processChartData(response);
-  } catch (error) {
-    console.error("Error fetching margin data:", error);
-  }
-}
-
 async function processChartData(data) {
-  if (!data || data.length === 0 || data.error) {
+  if (! data ||  data.length === 0 ||  data.error) {
     chartData.value = { labels: [], datasets: [] };
     return;
   }
 
   const partLabels = data.map(entry => `${entry.part_reference} ${entry.part_designation}`);
   const clientPrices = data.map(entry => entry.last_client_price);
-  const supplierCosts = data.map(entry => entry.last_supplier_price);
-  const margins = data.map(entry => entry.margin);
+  const supplierCosts =  data.map(entry => entry.last_supplier_price);
+  const margins =  data.map(entry => entry.margin);
 
   chartData.value = {
     labels: partLabels,
@@ -58,7 +55,7 @@ async function processChartData(data) {
   renderChart();
 }
 
-watch(() => props.companyId, fetchMarginsByPart);
+watch(() => props.companyId, processChartData(props.data));
 
 watch(chartData, () => {
   renderChart();
@@ -66,9 +63,15 @@ watch(chartData, () => {
 
 async function renderChart() {  
   await nextTick();
-  const ctx = document.getElementById("marginChart").getContext("2d");
 
-  new Chart(ctx, {
+  const ctx = document.getElementById("marginChart")?.getContext("2d");
+  if (!ctx) return;
+  
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new Chart(ctx, {
     type: "bar",
     data: chartData.value,
     options: {
@@ -85,7 +88,7 @@ async function renderChart() {
 }
 
 onMounted(async () => {
-  await fetchMarginsByPart();
+    processChartData(props.data)
 });
 </script>
 

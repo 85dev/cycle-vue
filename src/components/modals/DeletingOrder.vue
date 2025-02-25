@@ -3,6 +3,7 @@ import { defineEmits } from 'vue'
 
 // Services
 import apiCaller from '../../services/apiCaller.js'
+import CardTitle from '../CardTitle.vue'
 
 // Emit to allow refresh of the parent component
 const emit = defineEmits(['orderRefresh'])
@@ -31,9 +32,9 @@ const props = defineProps({
 
 async function deleteOrder() {
     if (props.orderType === 'client') {
-        await apiCaller.deleteData(`companies/${props.selectedCompanyId}/client_orders/${props.clientOrderId}`, false);
+        await apiCaller.get(`companies/${props.selectedCompanyId}/client_orders/${props.clientOrderId}`, false);
     } else if (props.orderType === 'supplier') {
-        await apiCaller.deleteData(`companies/${props.selectedCompanyId}/supplier_orders/${props.supplierOrderId}`, false);
+        await apiCaller.get(`companies/${props.selectedCompanyId}/supplier_orders/${props.supplierOrderId}`, false);
     }
 
     emit("orderRefresh");
@@ -47,34 +48,39 @@ async function deleteOrder() {
             <v-chip
                 v-bind="activatorProps"
                 variant="text"
-                color="red"
+                color="warning"
             >
                 <v-icon class='mr-1'>mdi-delete-outline</v-icon>
-                <span>Supprimer</span>
+                <span>Archiver</span>
             </v-chip> 
 
         </template>
   
         <template v-slot:default="{ isActive }">
 
-          <v-card title="Suppression d'une commande fournisseur">
+          <v-card>
+            <CardTitle 
+                title="Archivage d'une commande fournisseur"
+                icon="mdi-history"
+            />
 
             <v-form style="width: 94%; margin: 0 auto;">
-                <span class="informative-text-m">Vous êtes sur le point de supprimer la commande fournisseur <strong>{{ props.orderNumber }}</strong></span>
+                <span class="informative-text-m">Vous êtes sur le point d'archiver la commande fournisseur. <strong>{{ props.orderNumber }}</strong>
+                    Elle n'apparaîtra plus dans le suivi logistique.
+                </span>
             </v-form>
   
-            <v-card-actions style="margin-bottom: 0.8em;">
+            <v-card-actions>
 
                 <v-spacer></v-spacer>
 
                 <v-btn
-                    color="red"
                     text="FERMER"
                     @click="isActive.value = false"
                 ></v-btn>
 
                 <v-btn color="red" @click="deleteOrder(); isActive.value = false">
-                    Supprimer la commande
+                    Archiver
                 </v-btn>
 
             </v-card-actions>

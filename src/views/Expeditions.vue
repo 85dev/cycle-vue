@@ -11,7 +11,6 @@ import { expeditionsIndexHeaders, deliveredExpeditionsHeaders } from '@/models/t
 import DispatchExpedition from '@/components/modals/DispatchExpedition.vue';
 import CreateExpedition from '@/components/modals/CreateExpedition.vue';
 import ExpeditionDetails from '@/components/modals/ExpeditionDetails.vue';
-import CardTitle from '@/components/CardTitle.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 
 // Internal component logic
@@ -107,6 +106,15 @@ onMounted(async() => {
                 <template v-slot:item.real_departure_time="{ item }">
                     {{ new Date(item.real_departure_time).toLocaleDateString() }}
                 </template>
+                <template v-slot:item.number="{ item }">
+                    <v-chip
+                        variant="elevated"
+                        color="white"
+                    >
+                    <v-icon class="mr-1">mdi-list-box-outline</v-icon>
+                    {{ item.number }}
+                    </v-chip>
+                </template>
                 <template v-slot:item.estimated_arrival_time="{ item }">
                     {{ item.estimated_arrival_time ? new Date(item.estimated_arrival_time).toLocaleDateString() : 'Pas de donnée' }}
                 </template>
@@ -116,11 +124,18 @@ onMounted(async() => {
                         {{ expeditionStatus(item.status) }}
                     </v-chip>
                 </template>
-                <template v-slot:item.supplier_name="{ item }">
-                        <v-chip variant="text">
+                <template v-slot:item.supplier_names="{ item }">
+                    <div class="d-flex flex-wrap">
+                        <v-chip
+                            v-for="(supplier, index) in item.supplier_names"
+                            :key="index"
+                            variant="text"
+                            class="mr-1"
+                        >
                             <v-icon class="mr-1">mdi-account-outline</v-icon>
-                            {{ item.supplier_name }}
+                            {{ supplier }}
                         </v-chip>
+                    </div>
                 </template>
                 <template v-slot:item.actions="{ item }">
                 <div class="actions-slot">
@@ -173,6 +188,19 @@ onMounted(async() => {
                         <v-icon color="success" style="margin-right: 4px;" left>mdi-check-circle-outline</v-icon>
                         {{ expeditionStatus(item.status) }}
                     </v-chip>
+                </template>
+                <template v-slot:item.supplier_names="{ item }">
+                    <div class="d-flex flex-wrap">
+                        <v-chip
+                            v-for="(supplier, index) in item.supplier_names"
+                            :key="index"
+                            variant="text"
+                            class="mr-1"
+                        >
+                            <v-icon class="mr-1">mdi-account-outline</v-icon>
+                            {{ supplier }}
+                        </v-chip>
+                    </div>
                 </template>
                 <template v-slot:item.actions="{ item }">
                     <ExpeditionDetails

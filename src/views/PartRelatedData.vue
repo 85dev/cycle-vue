@@ -10,16 +10,18 @@ import { useRoute, useRouter } from 'vue-router';
 // Components
 import CreateClientOrder from '@/components/modals/CreateClientOrder.vue'
 import CreateSupplierOrder from '@/components/modals/CreateSupplierOrder.vue'
-import EditClientOrder from '@/components/modals/EditClientOrder.vue'
+import ArchivePosition from '@/components/modals/ArchivePosition.vue';
 import EditPart from '@/components/modals/EditPart.vue';
 import ArchivateOrder from '@/components/modals/ArchivateOrder.vue'
 import DeletingOrder from '@/components/modals/DeletingOrder.vue'
 import SortClientPositionsModal from '@/components/modals/SortClientPositions.vue';
-import PositionHistory from '@/components/modals/PositionHistory.vue';
+
 import TransferPosition from '@/components/modals/TransferPosition.vue';
 import HandleConsignmentConsumption from '@/components/modals/HandleConsignmentConsumption.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 import TransferPositionFromClient from '@/components/modals/TransferPositionFromClient.vue';
+// import PositionHistory from '@/components/modals/PositionHistory.vue';
+// import EditClientOrder from '@/components/modals/EditClientOrder.vue'
 
 // Constant data
 import { clientOrdersHeaders, consumptionPositionsHeaders, supplierOrdersHeaders, clientStockPositionsHeaders, expeditionsListHeaders, subcontractorHeaders, logisticplacesHeaders } from '@/models/tableHeaders.js'
@@ -167,7 +169,13 @@ onMounted(async () => {
         </v-tab>
       </v-tabs>
     </v-card>
-
+      <v-card variant="elevated" color="blue" elevation="6" class="attached-container d-flex align-center flex-column" style="font-size: 14px;">
+        <span class="pl-2 pr-2">Vous consultez actuellement la référence :</span>
+        <div class="pl-2 pr-2" v-if="dataFromSearch.designation">
+            <v-icon class="mr-2">mdi-barcode-scan</v-icon>
+            <span class="mr-1"><strong>{{ dataFromSearch.designation }} {{ dataFromSearch.reference }}</strong></span>
+        </div>
+      </v-card>
       <v-tabs-window v-model="tab">
         <v-tabs-window-item value="one">
           <v-card class="b1-container ma-2">
@@ -395,6 +403,13 @@ onMounted(async () => {
                               :position="item"
                               @refresh="refreshAllData()"
                             />
+                            <ArchivePosition 
+                              v-if="selectedCompany && item"
+                              :position-id="item.id"
+                              :selected-company-id="selectedCompany.id"
+                              position-type="client"
+                              @refreshPositions="refreshAllData()"
+                            />
                         </template>
                       </v-data-table>
                     </v-card>
@@ -461,7 +476,6 @@ onMounted(async () => {
                     color="dark"
                     elevation="2"
                    />
-            
                     <v-card class="b1-middle-content" style="padding:0.4em; margin: 0.4em">
                       <v-card>
                         <v-row class="pa-4" align="center" justify="space-between">
@@ -509,17 +523,24 @@ onMounted(async () => {
                                 :selected-company-id="selectedCompany.id"
                                 :client-position-id="item.id"
                               /> -->
-                            <TransferPositionFromClient
-                              v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
-                              origin="consignment"
-                              :logistic-place-list="logisticPlaceList"
-                              :sub-contractors-list="subContractorsList"
-                              :client-orders=" dataFromSearch.client_orders"
-                              :client="dataFromSearch.client"
-                              :selected-company-id="selectedCompany.id" 
-                              :position="item"
-                              @refresh="refreshAllData()"
-                            />
+                              <TransferPositionFromClient
+                                v-if="selectedCompany && item && dataFromSearch.client && dataFromSearch.client_orders"
+                                origin="consignment"
+                                :logistic-place-list="logisticPlaceList"
+                                :sub-contractors-list="subContractorsList"
+                                :client-orders=" dataFromSearch.client_orders"
+                                :client="dataFromSearch.client"
+                                :selected-company-id="selectedCompany.id" 
+                                :position="item"
+                                @refresh="refreshAllData()"
+                              />
+                              <ArchivePosition 
+                                v-if="selectedCompany && item"
+                                :position-id="item.id"
+                                :selected-company-id="selectedCompany.id"
+                                position-type="client"
+                                @refreshPositions="refreshAllData()"
+                              />
                             </div>
                           </template>
                         </v-data-table>           
@@ -584,6 +605,13 @@ onMounted(async () => {
                               :position="item"
                               @refresh="refreshAllData()"
                             />
+                            <ArchivePosition 
+                              v-if="selectedCompany && item"
+                              :position-id="item.expedition_position_id"
+                              :selected-company-id="selectedCompany.id"
+                              position-type="expedition"
+                              @refreshPositions="refreshAllData()"
+                            />
                           </div>
                         </template>
                       </v-data-table>
@@ -626,15 +654,12 @@ onMounted(async () => {
                         density="dense"
                         :headers="logisticplacesHeaders"
                       >
-                        <!-- Quantity Column -->
                         <template v-slot:item.quantity="{ item }">
                           <v-chip variant="text" style="margin: 0.2em">
                             <v-icon color="success" class="mr-2">mdi-package-variant-closed-check</v-icon>
                             {{ item.quantity }}
                           </v-chip>
                         </template>
-
-                        <!-- Actions Column -->
                         <template v-slot:item.actions="{ item }">
                           <div class="actions-slot">
                             <TransferPosition
@@ -647,6 +672,13 @@ onMounted(async () => {
                               :selected-company-id="selectedCompany.id"
                               :position="item"
                               @refresh="refreshAllData()"
+                            />
+                            <ArchivePosition 
+                              v-if="selectedCompany && item"
+                              :position-id="item.expedition_position_id"
+                              :selected-company-id="selectedCompany.id"
+                              position-type="expedition"
+                              @refreshPositions="refreshAllData()"
                             />
                           </div>
                         </template>
@@ -734,7 +766,7 @@ onMounted(async () => {
             </template>
             <template v-slot:item.real_delivery_time="{ item }">
               <v-chip :variant="item.real_delivery_time ? 'elevated' : 'text'" :color="item.real_delivery_time ? 'white' : 'dark'" class="delivery-time-cell ma-1">
-                {{ item.real_delivery_time ? new Date(item.real_delivery_time).toLocaleDateString() : 'Pas de donée' }}
+                {{ item.real_delivery_time ? new Date(item.real_delivery_time).toLocaleDateString() : 'Pas de donnée' }}
               </v-chip>
             </template>
             <template v-slot:item.actions="{ item }">
@@ -826,17 +858,17 @@ onMounted(async () => {
                 </v-chip>
             </template>
             <template v-slot:item.quantity="{ item }">
-                <v-chip variant="text" color="success" v-if="item.quantity < 0 && !item.delivered">
+                <v-chip variant="text" color="success" v-if="item.quantity < 0 && item.status !== 'completed'">
                   <v-icon class="mr-2">mdi-progress-check</v-icon>
                   Excédent de {{ Math.abs(item.quantity) }} 
                 </v-chip>
-                <v-chip variant="text" color="warning" v-else-if="item.quantity > 0 && !item.delivered"> 
+                <v-chip variant="text" color="warning" v-else-if="item.quantity > 0 && item.status !== 'completed'"> 
                   <v-icon class="mr-2">mdi-progress-download</v-icon>
                   {{ item.quantity }} 
                 </v-chip>
-                <v-chip variant="text" color="success" v-if="item.delivered"> 
+                <v-chip variant="text" color="success" v-if="item.status === 'completed'">
                   <v-icon class="mr-2">mdi-cube-send</v-icon>
-                  {{ 'Expédiée (0 à livrer)' }} 
+                  Expédiée (Total livré : {{ item.quantity }})
                 </v-chip>
             </template>
             <template v-slot:item.status="{ item }">
@@ -869,7 +901,7 @@ onMounted(async () => {
                     :order="item"
                   />
                   <ArchivateOrder
-                    v-if="selectedCompany && item && !item.delivered"
+                    v-if="selectedCompany && item && item.status !== 'completed'"
                     origin="supplier"
                     :order="item"
                     :selected-company-id="selectedCompany.id"

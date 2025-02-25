@@ -1,10 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 
-// Emits for parent communication
 const emit = defineEmits(['updateSnackbar']);
 
-// Props for configuration
 const props = defineProps({
   alertText: String,
   snackbar: Boolean,
@@ -12,10 +10,8 @@ const props = defineProps({
   visibilityTime: Number,
 });
 
-// Local state
 const snackbarState = ref(props.snackbar);
 
-// Watch for prop changes to sync the state
 watch(
   () => props.snackbar,
   (newVal) => {
@@ -24,24 +20,19 @@ watch(
   }
 );
 
-// Watch for local state changes to emit updates
 watch(snackbarState, (newVal) => {
   emit('updateSnackbar', newVal);
 });
 
-// Handle auto-closing
 let autoCloseTimeout = null;
 function startAutoCloseTimer() {
   if (autoCloseTimeout) clearTimeout(autoCloseTimeout);
 
-  if (props.visibilityTime > 0) {
     autoCloseTimeout = setTimeout(() => {
       snackbarState.value = false;
-    }, props.visibilityTime);
-  }
+    }, props.visibilityTime ? props.visibilityTime : 5000);
 }
 
-// Handle manual close
 function closeSnackbar() {
   snackbarState.value = false;
 }

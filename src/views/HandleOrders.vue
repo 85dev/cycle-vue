@@ -304,7 +304,7 @@ onMounted(async() => {
                                     Résultats de la recherche : {{ filteredClientOrders.length }}
                                 </span>
                                 <span v-else>
-                                    Commandes client en cours : {{ clientOrders.length }}
+                                    Commandes fournisseur en cours : {{ supplierOrders.length }}
                                 </span>
                             </v-chip>
                         </span>

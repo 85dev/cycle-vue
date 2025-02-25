@@ -29,44 +29,45 @@ const runningExpeditions = ref([])
 const kpiData = ref({})
 const loading = ref(false)
 const userId = ref(0)
-const partsSoldData = ref({ labels: [], datasets: [] });
 const tab = ref(null)
+const marginsByPart = ref({})
+const partsSoldByMonth = ref({});
 
 async function fetchPartsSold() {
-  try {
-    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts_sold_by_month`);
-    processChartData(response);
-  } catch (error) {
-    console.error("Failed to fetch parts sold data:", error);
-  }
-}
+  const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts_sold_by_month`);
 
-function processChartData(data) {
-  if (!data || data.length === 0) {
-    partsSoldData.value = { labels: [], datasets: [] };
+  if (!response || !Array.isArray(response) || response.length === 0) {
+    partsSoldByMonth.value = { labels: [], datasets: [] };
     return;
   }
 
-  const colorPalette = ['#F388A7', '#FEDF7A', '#4698CB', '#7D5BA6', '#50B4AA']; 
-  const months = [...new Set(data.map(entry => entry.month))];
-  
-  const parts = [...new Map(data.map(entry => [entry.part_reference, {
-    reference: entry.part_reference,
-    designation: entry.part_designation
-  }])).values()];
+  const colors = ["#F388A7", "#FEDF7A", "#4698CB", "#85E3FF", "#B3D4E0"];
+  const groupedData = {};
+  const months = new Set();
 
-  const datasets = parts.map((part, index) => ({
-    label: `${part.designation} ${part.reference}`,
-    data: months.map(month => {
-      const entry = data.find(e => e.month === month && e.part_reference === part.reference);
-      return entry ? entry.quantity : 0;
-    }),
-    backgroundColor: colorPalette[index % colorPalette.length],
-    borderColor: colorPalette[index % colorPalette.length],
-    borderWidth: 1
+  response.forEach(({ month, part_reference, part_designation, quantity }) => {
+    const key = `${part_reference} ${part_designation}`;
+    months.add(month);
+    if (!groupedData[key]) groupedData[key] = {};
+    groupedData[key][month] = quantity;
+  });
+
+  const sortedMonths = Array.from(months).sort();
+  const datasets = Object.entries(groupedData).map(([label, data]) => ({
+    label,
+    data: sortedMonths.map(month => data[month] || 0),
+    borderColor: 'white',
+    backgroundColor: colors.slice(0, colors.length),
+    borderWidth: 2,
+    fill: false
   }));
 
-  partsSoldData.value = { labels: months, datasets };
+  partsSoldByMonth.value = { labels: sortedMonths, datasets };
+}
+
+async function fetchMarginsByPart() {
+    const response = await apiCaller.get(`companies/${selectedCompany.value.id}/margins_by_part`);
+    marginsByPart.value = response
 }
 
 async function fetchKPIs() {
@@ -153,8 +154,11 @@ const filteredOrders = computed(() => {
 const filteredExpeditions = computed(() => {
   let expeditions = runningExpeditions.value;
 
-  if (selectedSupplier.value) {
-    expeditions = expeditions.filter(expedition => expedition.supplier_name === selectedSupplier.value)
+  if (selectedSupplier.value && selectedSupplier.value.length > 0) {
+    expeditions = expeditions.filter(expedition => 
+      Array.isArray(expedition.supplier_names) &&
+      expedition.supplier_names.some(supplier => selectedSupplier.value.includes(supplier))
+    );
   }
 
   return expeditions;
@@ -202,6 +206,7 @@ async function refreshAllData() {
   loading.value = true;
   
   setTimeout(async() => {
+    await fetchMarginsByPart()
     await fetchPartsSold()
     await fetchClientOrders()
     await fetchClients()
@@ -360,10 +365,17 @@ onMounted(async() => {
                       <v-chip
                         class="mb-1"
                         variant="outlined"
-                        :color="daysLeft(order.position_delivery_date) <= 30 ? 'red' : 'black'"
+                        color="warning"
                       >
-                        <v-icon class="mr-2 ml-1">mdi-truck-alert-outline</v-icon>
-                        Livraison dans {{ daysLeft(order.position_delivery_date) }} jour(s)
+                        <v-icon class="mr-2 ml-1">
+                          {{ daysLeft(order.position_delivery_date) < 0 ? 'mdi-alert-circle-outline' : 'mdi-truck-alert-outline' }}
+                        </v-icon>
+                        <span v-if="daysLeft(order.position_delivery_date) < 0">
+                          Retard de {{ Math.abs(daysLeft(order.position_delivery_date)) }} jour(s)
+                        </span>
+                        <span v-else>
+                          Livraison dans {{ daysLeft(order.position_delivery_date) }} jour(s)
+                        </span>
                       </v-chip>
                       <ArchivateOrder
                         origin="client"
@@ -386,10 +398,10 @@ onMounted(async() => {
                           <v-chip
                             class="text-body-2 mt-2 mr-2 ml-2 mb-0"
                             variant="elevated"
-                            color="warning"
+                            color="white"
                             style="width: fit-content;"
                           >
-                            <v-icon class="mr-1">mdi-account-outline</v-icon>
+                            <v-icon color="warning" class="mr-1">mdi-account-outline</v-icon>
                             <span style="margin-left: 2px; display: flex; align-items: center;">
                               Client :
                               <strong style="margin-left: 4px;">{{ order.client_name }}</strong>
@@ -526,11 +538,17 @@ onMounted(async() => {
                   >
                     <span class="d-flex flex-column justify-center ga-1">
                       <v-card class="d-flex align-start flex-column mt-1">
-                        <v-chip variant="elevated" color="blue" class="ml-2 mr-2 mt-2">
-                          <v-icon class="mr-2 ml-1">mdi-factory</v-icon>
+                        <v-chip
+                          v-for="(supplier, index) in expedition.supplier_names"
+                          :key="index"
+                          variant="elevated"
+                          color="white"
+                          class="ml-2 mr-2 mt-1"
+                        >
+                          <v-icon color="blue" class="mr-2 ml-1">mdi-factory</v-icon>
                           <span class="mr-3">
                             Fournisseur :
-                            <strong>{{ expedition.supplier_name }}</strong>
+                            <strong>{{ supplier }}</strong>
                           </span>
                         </v-chip>
                         <v-chip
@@ -617,7 +635,10 @@ onMounted(async() => {
                       title="Volumes de ventes par mois et par référence"
                       icon="mdi-barcode"
                   />
-                  <LineChart v-if="partsSoldData && partsSoldData.labels.length > 0" :chartData="partsSoldData" />
+                  <LineChart 
+                    v-if="selectedCompany && partsSoldByMonth" 
+                    :chartData="partsSoldByMonth" 
+                  />
                   <v-chip v-else variant="text" color="secondary" class="informative-text">
                     Aucune référence enregistrée en commandes client
                   </v-chip>
@@ -625,7 +646,8 @@ onMounted(async() => {
                 <v-card class="mr-3 ml-3 mb-2 mt-2">
                   <CardTitle title="Marge brute par référence" icon="mdi-margin" />
                   <StackedBarChart 
-                    v-if="selectedCompany" 
+                    v-if="selectedCompany && marginsByPart.length > 0" 
+                    :data="marginsByPart"
                     :companyId="selectedCompany.id" 
                   />
                 </v-card>
@@ -638,7 +660,7 @@ onMounted(async() => {
                   </v-col>
                   <v-col cols="12" md="6">
                     <v-card>
-                    
+                      <CardTitle title="TO BE IMPLEMENTED" icon="mdi-chart-pie" />
                     </v-card>
                   </v-col>
                 </v-row>
