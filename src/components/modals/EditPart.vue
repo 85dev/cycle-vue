@@ -78,7 +78,7 @@ const emit = defineEmits(['refreshPart'])
                         required
                     ></v-text-field>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 
@@ -93,7 +93,7 @@ const emit = defineEmits(['refreshPart'])
                             color="success"
                             @click="submitClientOrder(); isActive.value = false"
                         >
-                            Modifier les informations
+                            ENREGISTRER
                         </v-btn>
 
                     </v-card-actions>

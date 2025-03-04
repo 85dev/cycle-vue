@@ -339,7 +339,7 @@ onMounted(async() => {
                   :key="order.id"
                   elevation="12"
                   icon="mdi-truck-fast-outline"
-                  :dot-color="daysLeft(order.position_delivery_date) <= 30 ? 'warning' : 'blue'"
+                  dot-color="white"
                 >
                   <template v-slot:opposite>
                     <div class="d-flex flex-column align-center">
@@ -364,8 +364,8 @@ onMounted(async() => {
                       </v-chip>
                       <v-chip
                         class="mb-1"
-                        variant="outlined"
-                        color="warning"
+                        variant="elevated"
+                        :color="daysLeft(order.position_delivery_date) < 0 ? 'red' : 'warning'"
                       >
                         <v-icon class="mr-2 ml-1">
                           {{ daysLeft(order.position_delivery_date) < 0 ? 'mdi-alert-circle-outline' : 'mdi-truck-alert-outline' }}
@@ -504,8 +504,8 @@ onMounted(async() => {
                 :key="expedition.id"
                 elevation="12"
                 icon="mdi-ferry"
-                icon-color="white"
-                dot-color="blue"
+                icon-color="dark"
+                dot-color="white"
               >
                 <template v-slot:opposite>
                   <v-chip

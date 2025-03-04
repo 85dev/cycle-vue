@@ -170,7 +170,7 @@ onMounted(async () => {
       </v-tabs>
     </v-card>
       <v-card variant="elevated" color="blue" elevation="6" class="attached-container d-flex align-center flex-column" style="font-size: 14px;">
-        <span class="pl-2 pr-2">Vous consultez actuellement la référence :</span>
+        <span class="pl-2 pr-2">Référence en consultation:</span>
         <div class="pl-2 pr-2" v-if="dataFromSearch.designation">
             <v-icon class="mr-2">mdi-barcode-scan</v-icon>
             <span class="mr-1"><strong>{{ dataFromSearch.designation }} {{ dataFromSearch.reference }}</strong></span>
@@ -187,7 +187,6 @@ onMounted(async () => {
             <CardTitle 
               title="Détail des stocks"
               icon="mdi-package-variant"
-              color="dark"
               elevation="2"
             />
               <v-row dense class="mt-2">
@@ -195,7 +194,6 @@ onMounted(async () => {
                   <v-data-table
                     :items="[
                       { type: 'Consignation client', quantity: calculatedStocks.current_stock.consignment_stock },
-                      { type: 'Standard client', quantity: calculatedStocks.current_stock.standard_stock },
                       { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
                       { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
                       { type: 'Total général', quantity: calculatedStocks.current_stock.total },
@@ -445,7 +443,7 @@ onMounted(async () => {
                   </v-card>
               </v-card>
           </div>
-          <div class="ml-5" v-if="dataFromSearch.consignment_stock_positions">
+          <div class="ml-5 mt-3" v-if="dataFromSearch.consignment_stock_positions">
               <div class="mb-1" v-if="dataFromSearch.consignment_stock_positions && dataFromSearch.consignment_stock_positions.filter(stock => stock.client_positions.length > 0).length === 0">
                 <v-chip
                   variant="text"
@@ -1176,7 +1174,7 @@ onMounted(async () => {
   padding: 0.4em 0.6em;
 }
 
-:deep .v-slide-group__content {
+:deep(.v-slide-group__content) {
   display: flex;
   justify-content: center;
 }

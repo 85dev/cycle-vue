@@ -71,7 +71,9 @@ onMounted(async() => {
 <template>
     <SpinnLoader :loading="loading" />
     <v-card class="main-card mt-6 mb-6">
-        <v-tabs
+
+        <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
+            <v-tabs
             v-model="tab"
             >
             <v-tab value="one">
@@ -82,7 +84,9 @@ onMounted(async() => {
                 <v-icon start class="mr-2">mdi-chart-box</v-icon>
                 Expéditions terminées
             </v-tab>
-        </v-tabs>
+            </v-tabs>
+        </v-card>
+        
         <v-tabs-window v-model="tab">
             <v-tabs-window-item value="one">
                 <v-card class="b1-container mt-3">

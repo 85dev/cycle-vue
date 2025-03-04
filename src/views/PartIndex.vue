@@ -10,11 +10,13 @@ import apiCaller from '@/services/apiCaller';
 import DeletePart from '@/components/modals/DeletePart.vue';
 import CreatePart from '@/components/modals/CreatePart.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
+import CardTitle from '@/components/CardTitle.vue';
 
 const userParts = ref(null)
 const stockParts = ref(null)
 const filteredParts = ref(null)
 const filteredStockParts = ref(null)
+const suppliers = ref(null)
 
 const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const router = useRouter();
@@ -23,6 +25,8 @@ const stockSearchKeyword = ref(null)
 const loading = ref(false)
 const clients = ref([])
 const selectedClient = ref(null)
+const selectedSupplier = ref(null)
+const selectedStockSupplier = ref(null)
 const tab = ref(null)
 const selectedStockClient = ref(null)
 
@@ -33,7 +37,6 @@ function routeToPart(event, { item }) {
 }
 
 async function fetchParts() {
-    loading.value = true;
     try {
         const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts`);
         userParts.value = response;
@@ -41,11 +44,9 @@ async function fetchParts() {
     } catch (error) {
         console.error("Error fetching parts:", error);
     }
-    loading.value = false;
 }
 
 async function fetchStockParts() {
-    loading.value = true;
     try {
         const response = await apiCaller.get(`companies/${selectedCompany.value.id}/parts_stocks`);
         stockParts.value = response;
@@ -53,7 +54,15 @@ async function fetchStockParts() {
     } catch (error) {
         console.error("Error fetching stock parts:", error);
     }
-    loading.value = false;
+}
+
+async function fetchSuppliers() {
+    try {
+        const response = await apiCaller.get(`companies/${selectedCompany.value.id}/suppliers`);
+        suppliers.value = response;
+    } catch (error) {
+        console.error("Error fetching stock parts:", error);
+    }
 }
 
 // Fetch clients (for filtering in General Catalog)
@@ -62,8 +71,7 @@ async function fetchClients() {
     clients.value = response;
 }
 
-// Watch for filters in the General Catalog
-watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
+watch([selectedClient, searchKeyword, selectedSupplier], ([newClientName, newKeyword, newSupplier]) => {
     if (timeout) clearTimeout(timeout);
 
     loading.value = true;
@@ -83,13 +91,18 @@ watch([selectedClient, searchKeyword], ([newClientName, newKeyword]) => {
             );
         }
 
+        if (newSupplier) {
+            filtered = filtered.filter(part => 
+                Array.isArray(part.supplier_ids) && part.supplier_ids.includes(newSupplier)
+            );
+        }
+
         filteredParts.value = filtered;
         loading.value = false;
     }, 500);
 });
 
-// Watch for search in Stock & Availability
-watch([selectedStockClient, stockSearchKeyword], ([newClientName, newKeyword]) => {
+watch([selectedStockClient, stockSearchKeyword, selectedStockSupplier], ([newClientName, newKeyword, newSupplier]) => {
     if (timeout) clearTimeout(timeout);
 
     loading.value = true;
@@ -97,17 +110,19 @@ watch([selectedStockClient, stockSearchKeyword], ([newClientName, newKeyword]) =
     timeout = setTimeout(() => {
         let filtered = stockParts.value;
 
-        // 🟢 Filter by client name
         if (newClientName) {
             filtered = filtered.filter(part => part.client_name === newClientName);
         }
 
-        // 🟢 Filter by search keyword
         if (newKeyword) {
             const keyword = newKeyword.toLowerCase();
             filtered = filtered.filter(part =>
                 (part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword))
             );
+        }
+
+        if (newSupplier) {
+            filtered = filtered.filter(part => part.supplier_ids.includes(newSupplier));
         }
 
         filteredStockParts.value = filtered;
@@ -116,7 +131,7 @@ watch([selectedStockClient, stockSearchKeyword], ([newClientName, newKeyword]) =
 });
 
 watch(selectedCompany, async (newCompany, oldCompany) => {
-  if (newCompany?.id !== oldCompany?.id) { // Only trigger fetchData if the company has changed
+  if (newCompany?.id !== oldCompany?.id) {
     await refreshAllData();
   }
 });
@@ -125,6 +140,7 @@ async function refreshAllData() {
     loading.value = true
 
     setTimeout(async() => {
+        await fetchSuppliers();
         await fetchParts();
         await fetchStockParts();
         await fetchClients();
@@ -161,20 +177,18 @@ onMounted(async () => {
         <v-tabs-window v-model="tab">
             <!-- 🟢 General Parts Catalog -->
             <v-tabs-window-item value="one">
-                <div class="d-flex align-center justify-center" style="margin-top: -0.8em;">
-                    <CreatePart origin="single" @refresh-parts="fetchParts(true); fetchStockParts(true)" />
-                </div>
                 <v-card class="b1-container" style="margin-top: 1.4em;">
-                    <div class="d-flex flex-column">
-                        <span class="informative-text">
-                            <v-chip class="mt-2" variant="text" color="secondary">
-                                <v-icon start class="ml-0">mdi-sort</v-icon>
-                                Filtrer par référence, désignation et client
-                            </v-chip>
-                        </span>
+                    <div class="d-flex align-center justify-lg-space-between">
+                        <CardTitle 
+                            title="Filtres de recherche"
+                            icon="mdi-sort"
+                        />
+                        <div class="mr-3 mb-5">
+                            <CreatePart origin="single" @refresh-parts="fetchParts(true); fetchStockParts(true)" />
+                        </div>
                     </div>
                     <v-row style="width: 100%; margin-top: -8px;">
-                        <v-col cols="8">
+                        <v-col cols="4">
                             <v-text-field
                                 class="ml-4"
                                 variant="solo"
@@ -182,6 +196,17 @@ onMounted(async () => {
                                 label="Recherchez une pièce..."
                                 clearable
                                 v-model="searchKeyword"
+                            />
+                        </v-col>
+                        <v-col cols="4">
+                            <v-select
+                                v-if="suppliers"
+                                prepend-icon="mdi-factory"
+                                variant="solo"
+                                :items="suppliers.map(supplier => ({ title: supplier.name, value: supplier.id })) || []"
+                                label="Filtrez par fournisseur"
+                                clearable
+                                v-model="selectedSupplier"
                             />
                         </v-col>
                         <v-col cols="4">
@@ -294,15 +319,13 @@ onMounted(async () => {
             <v-tabs-window-item value="two">
                 <v-card class="b1-container">
                     <div class="d-flex flex-column">
-                        <span class="informative-text">
-                            <v-chip class="mt-2" variant="text" color="secondary">
-                                <v-icon start class="ml-0">mdi-sort</v-icon>
-                                Filtrer par référence et désignation
-                            </v-chip>
-                        </span>
+                        <CardTitle 
+                            title="Filtres de recherche"
+                            icon="mdi-sort"
+                        />
                     </div>
                     <v-row style="width: 100%; margin-top: -8px;">
-                        <v-col cols="8">
+                        <v-col cols="4">
                             <v-text-field
                                 class="ml-4"
                                 variant="solo"
@@ -310,6 +333,17 @@ onMounted(async () => {
                                 label="Recherchez une pièce..."
                                 clearable
                                 v-model="stockSearchKeyword"
+                            />
+                        </v-col>
+                        <v-col cols="4">
+                            <v-select
+                                v-if="suppliers"
+                                prepend-icon="mdi-factory"
+                                variant="solo"
+                                :items="suppliers.map(supplier => ({ title: supplier.name, value: supplier.id })) || []"
+                                label="Filtrez par fournisseur"
+                                clearable
+                                v-model="selectedStockSupplier"
                             />
                         </v-col>
                         <v-col cols="4">
@@ -344,7 +378,7 @@ onMounted(async () => {
                     <template v-slot:item.consignment_stock="{ item }">
                         <v-chip
                             variant="text"
-                            :color="item.consignment_stock > 0 ? 'dark' : 'warning'"
+                            :color="item.consignment_stock >= 0 ? 'dark' : 'warning'"
                         >
                             <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
                             {{ item.consignment_stock }}
@@ -354,7 +388,7 @@ onMounted(async () => {
                     <template v-slot:item.subcontractor_stock="{ item }">
                         <v-chip
                             variant="text"
-                            :color="item.subcontractor_stock > 0 ? 'dark' : 'warning'"
+                            :color="item.subcontractor_stock >= 0 ? 'dark' : 'warning'"
                         >
                         <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
                             {{ item.subcontractor_stock }}
@@ -364,7 +398,7 @@ onMounted(async () => {
                     <template v-slot:item.logistic_place_stock="{ item }">
                         <v-chip
                             variant="text"
-                            :color="item.logistic_place_stock > 0 ? 'dark' : 'warning'"
+                            :color="item.logistic_place_stock >= 0 ? 'dark' : 'warning'"
                         >
                         <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
                             {{ item.logistic_place_stock }}
@@ -373,8 +407,8 @@ onMounted(async () => {
 
                     <template v-slot:item.total_current_stock="{ item }">
                         <v-chip
-                            variant="outlined"
-                            :color="item.total_current_stock > 0 ? 'black' : 'warning'"
+                            variant="elevated"
+                            :color="item.total_current_stock >= 0 ? 'white' : 'warning'"
                         >
                         <v-icon class="mr-1">mdi-package-variant-closed</v-icon>
                             {{ item.total_current_stock }}
@@ -408,10 +442,11 @@ onMounted(async () => {
 
                     <template v-slot:item.total_available_stock="{ item }">
                         <v-chip
-                            variant="outlined"
+                            variant="elevated"
+                            color="white"
                         >
-                        <v-icon class="mr-1" :color="item.total_available_stock < 0 ? 'red' : 'black'">
-                            {{ item.total_available_stock < 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
+                        <v-icon class="mr-1" :color="item.total_available_stock <= 0 ? 'red' : 'black'">
+                            {{ item.total_available_stock <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
                         </v-icon>
                         {{ item.total_available_stock }}
                         </v-chip>
@@ -419,10 +454,11 @@ onMounted(async () => {
 
                     <template v-slot:item.total_future_stock="{ item }">
                         <v-chip
-                            variant="outlined"
+                            variant="elevated"
+                            color="white"
                         >
-                            <v-icon class="mr-1" :color="item.total_future_stock < 0 ? 'red' : 'black'">
-                            {{ item.total_future_stock < 0 ? 'mdi-alert-circle-outline' : 'mdi-calendar-clock' }}
+                            <v-icon class="mr-1" :color="item.total_future_stock <= 0 ? 'red' : 'black'">
+                            {{ item.total_future_stock <= 0 ? 'mdi-alert-circle-outline' : 'mdi-calendar-clock' }}
                             </v-icon>
                             {{ item.total_future_stock }}
                         </v-chip>

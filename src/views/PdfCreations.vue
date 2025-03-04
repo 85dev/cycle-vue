@@ -110,7 +110,7 @@ async function refreshAllData() {
         await fetchLogisticPlaces()
 
         loading.value = false;
-    }, 1200);
+    }, 600);
 }
 
 onMounted(async() => {
@@ -121,18 +121,19 @@ onMounted(async() => {
 <template>
     <SpinnLoader :loading="loading"/>
     <div class="main-card mt-6 mb-6">
-        <v-tabs
-            v-model="tab"
-            >
-            <v-tab value="one">
-                <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
-                Bordereaux de livraison
-            </v-tab>
-            <v-tab value="two">
-                <v-icon start class="mr-2">mdi-chart-box</v-icon>
-                Bons de commande
-            </v-tab>
-        </v-tabs>
+        <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
+            <v-tabs v-model="tab">
+                <v-tab value="one">
+                    <v-icon start class="mr-2">mdi-view-dashboard</v-icon>
+                    Bordereaux de livraison
+                </v-tab>
+                <v-tab value="two">
+                    <v-icon start class="mr-2">mdi-chart-box</v-icon>
+                    Bons de commande
+                </v-tab>
+            </v-tabs>
+        </v-card>
+        
         <v-card class="b1-container">
             <v-tabs-window v-model="tab">
                 <v-tabs-window-item value="one">
