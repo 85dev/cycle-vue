@@ -71,7 +71,6 @@ onMounted(async() => {
 <template>
     <SpinnLoader :loading="loading" />
     <v-card class="main-card mt-6 mb-6">
-
         <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
             <v-tabs
             v-model="tab"

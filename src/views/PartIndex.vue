@@ -20,17 +20,15 @@ const suppliers = ref(null)
 
 const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const router = useRouter();
-const searchKeyword = ref(null)
-const stockSearchKeyword = ref(null)
 const loading = ref(false)
 const clients = ref([])
+const tab = ref(null)
+
+// For filtering purposes
+const searchKeyword = ref(null)
 const selectedClient = ref(null)
 const selectedSupplier = ref(null)
-const selectedStockSupplier = ref(null)
-const tab = ref(null)
-const selectedStockClient = ref(null)
 
-let timeout = null
 
 function routeToPart(event, { item }) {
     router.push({ name: "PartRelatedData", params: { id: item.id } });
@@ -71,64 +69,30 @@ async function fetchClients() {
     clients.value = response;
 }
 
-watch([selectedClient, searchKeyword, selectedSupplier], ([newClientName, newKeyword, newSupplier]) => {
-    if (timeout) clearTimeout(timeout);
+watch([selectedClient, searchKeyword, selectedSupplier], applyFilters);
 
-    loading.value = true;
+function applyFilters() {
+    const keyword = searchKeyword.value ? searchKeyword.value.toLowerCase() : null;
+    const supplier = selectedSupplier.value;
+    const client = selectedClient.value;
 
-    timeout = setTimeout(() => {
-        let filtered = userParts.value;
+    filteredParts.value = userParts.value.filter(part => {
+        return (
+            (!client || part.client_name === client) &&
+            (!keyword || (part.designation && part.designation.toLowerCase().includes(keyword)) || 
+                        (part.reference && part.reference.toLowerCase().includes(keyword))) &&
+            (!supplier || (Array.isArray(part.supplier_ids) && part.supplier_ids.includes(supplier)))
+        );
+    });
 
-        if (newClientName) {
-            filtered = filtered.filter(part => part.client_name === newClientName);
-        }
-
-        if (newKeyword) {
-            const keyword = newKeyword.toLowerCase();
-            filtered = filtered.filter(part =>
-                (part.designation && part.designation.toLowerCase().includes(keyword)) ||
-                (part.reference && part.reference.toLowerCase().includes(keyword))
-            );
-        }
-
-        if (newSupplier) {
-            filtered = filtered.filter(part => 
-                Array.isArray(part.supplier_ids) && part.supplier_ids.includes(newSupplier)
-            );
-        }
-
-        filteredParts.value = filtered;
-        loading.value = false;
-    }, 500);
-});
-
-watch([selectedStockClient, stockSearchKeyword, selectedStockSupplier], ([newClientName, newKeyword, newSupplier]) => {
-    if (timeout) clearTimeout(timeout);
-
-    loading.value = true;
-
-    timeout = setTimeout(() => {
-        let filtered = stockParts.value;
-
-        if (newClientName) {
-            filtered = filtered.filter(part => part.client_name === newClientName);
-        }
-
-        if (newKeyword) {
-            const keyword = newKeyword.toLowerCase();
-            filtered = filtered.filter(part =>
-                (part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword))
-            );
-        }
-
-        if (newSupplier) {
-            filtered = filtered.filter(part => part.supplier_ids.includes(newSupplier));
-        }
-
-        filteredStockParts.value = filtered;
-        loading.value = false;
-    }, 500);
-});
+    filteredStockParts.value = stockParts.value.filter(part => {
+        return (
+            (!client || part.client_name === client) &&
+            (!keyword || (part.reference_and_designation && part.reference_and_designation.toLowerCase().includes(keyword))) &&
+            (!supplier || (Array.isArray(part.supplier_ids) && part.supplier_ids.includes(supplier)))
+        );
+    });
+}
 
 watch(selectedCompany, async (newCompany, oldCompany) => {
   if (newCompany?.id !== oldCompany?.id) {
@@ -174,10 +138,7 @@ onMounted(async () => {
           </v-tabs>
         </v-card>
 
-        <v-tabs-window v-model="tab">
-            <!-- 🟢 General Parts Catalog -->
-            <v-tabs-window-item value="one">
-                <v-card class="b1-container" style="margin-top: 1.4em;">
+        <v-card class="b1-container">
                     <div class="d-flex align-center justify-lg-space-between">
                         <CardTitle 
                             title="Filtres de recherche"
@@ -222,6 +183,9 @@ onMounted(async () => {
                     </v-row>
                 </v-card>
 
+        <v-tabs-window v-model="tab">
+            <!-- 🟢 General Parts Catalog -->
+            <v-tabs-window-item value="one">
                 <v-card class="b1-container" style="margin-top: 0.8em;">
                     <v-data-table
                         :loading="loading"
@@ -317,54 +281,12 @@ onMounted(async () => {
             </v-tabs-window-item>
 
             <v-tabs-window-item value="two">
-                <v-card class="b1-container">
-                    <div class="d-flex flex-column">
-                        <CardTitle 
-                            title="Filtres de recherche"
-                            icon="mdi-sort"
-                        />
-                    </div>
-                    <v-row style="width: 100%; margin-top: -8px;">
-                        <v-col cols="4">
-                            <v-text-field
-                                class="ml-4"
-                                variant="solo"
-                                prepend-icon="mdi-magnify"
-                                label="Recherchez une pièce..."
-                                clearable
-                                v-model="stockSearchKeyword"
-                            />
-                        </v-col>
-                        <v-col cols="4">
-                            <v-select
-                                v-if="suppliers"
-                                prepend-icon="mdi-factory"
-                                variant="solo"
-                                :items="suppliers.map(supplier => ({ title: supplier.name, value: supplier.id })) || []"
-                                label="Filtrez par fournisseur"
-                                clearable
-                                v-model="selectedStockSupplier"
-                            />
-                        </v-col>
-                        <v-col cols="4">
-                            <v-select
-                                prepend-icon="mdi-account-outline"
-                                variant="solo"
-                                :items="clients.map(cl => cl.name) || []"
-                                label="Filtrez par client"
-                                clearable
-                                v-model="selectedStockClient"
-                            />
-                        </v-col>
-                    </v-row>
-                </v-card>
-
                 <v-card class="b1-container" style="margin-top: 0.8em;">
                     <v-data-table
                         :loading="loading"
                         density="comfortable"
                         hover
-                        no-data-text="Aucune pièce enregistrée"
+                        no-data-text="Aucune pièce ou aucun stock enregistré"
                         :headers="stockHeaders"
                         :items="filteredStockParts || []"
                         @click:row="routeToPart"
