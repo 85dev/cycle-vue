@@ -145,7 +145,7 @@ onMounted(async () => {
                             icon="mdi-sort"
                         />
                         <div class="mr-3 mb-5">
-                            <CreatePart origin="single" @refresh-parts="fetchParts(true); fetchStockParts(true)" />
+                            <CreatePart origin="single" @refresh-parts="refreshAllData()" />
                         </div>
                     </div>
                     <v-row style="width: 100%; margin-top: -8px;">

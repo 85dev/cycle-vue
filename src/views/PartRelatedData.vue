@@ -15,6 +15,7 @@ import EditPart from '@/components/modals/EditPart.vue';
 import ArchivateOrder from '@/components/modals/ArchivateOrder.vue'
 import DeletingOrder from '@/components/modals/DeletingOrder.vue'
 import SortClientPositionsModal from '@/components/modals/SortClientPositions.vue';
+import LifecycleTimeline from '@/components/LifecycleTimeline.vue';
 
 import TransferPosition from '@/components/modals/TransferPosition.vue';
 import HandleConsignmentConsumption from '@/components/modals/HandleConsignmentConsumption.vue';
@@ -1160,6 +1161,20 @@ onMounted(async () => {
               </div>
             </v-card>
           </div>
+          <v-card class="pa-1 flex-grow-1 mr-3 ml-3 mb-3">
+            <CardTitle 
+              v-if="dataFromSearch.lifecycle_steps.length > 0"
+              title="Cycle de vie"
+              icon="mdi-sync"
+            />
+            <LifecycleTimeline 
+                :lifecycleSteps="dataFromSearch.lifecycle_steps"
+                direction="horizontal"
+                lineColor="blue"
+                iconColor="blue"
+            />
+          </v-card>
+          
         </v-card>
         </v-tabs-window-item>
       </v-tabs-window>
