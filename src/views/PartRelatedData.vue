@@ -44,17 +44,20 @@ const unsortedClientPositions = ref([])
 const transporters = ref([])
 const tab = ref(null);
 
-function getClientOrderStatus(item) {
-  if (!item.real_quantity_delivered || item.real_quantity_delivered === 0) {
-    return { label: "Non livrée", icon: "mdi-progress-clock", color: "warning" };
+function getClientOrderStatus(status) {
+  switch (status) {
+    case "undelivered":
+      return { label: "Non livrée", icon: "mdi-progress-clock", color: "warning" };
+    
+    case "partially_delivered":
+      return { label: "Partiellement livrée", icon: "mdi-package-variant", color: "orange" };
+
+    case "delivered":
+      return { label: "Livrée", icon: "mdi-check-circle-outline", color: "success" };
+
+    default:
+      return { label: "En attente", icon: "mdi-timer-sand", color: "grey" };
   }
-  if (item.real_quantity_delivered >= item.quantity) {
-    return { label: "Livrée", icon: "mdi-check-circle-outline", color: "success" };
-  }
-  if (item.partial_quantity_delivered > 0 && item.real_quantity_delivered < item.quantity) {
-    return { label: "Partiellement livrée", icon: "mdi-package-variant", color: "orange" };
-  }
-  return { label: "En attente", icon: "mdi-timer-sand", color: "grey" };
 }
 
 async function fetchPartData() {
@@ -753,9 +756,9 @@ onMounted(async () => {
                 </v-chip>
             </template>
             <template v-slot:item.status="{ item }">
-              <v-chip variant="text" :color="getClientOrderStatus(item).color">
-                <v-icon class="mr-1" :icon="getClientOrderStatus(item).icon" />
-                {{ getClientOrderStatus(item).label }}
+              <v-chip variant="text" :color="getClientOrderStatus(item.status).color">
+                <v-icon class="mr-1" :icon="getClientOrderStatus(item.status).icon" />
+                {{ getClientOrderStatus(item.status).label }}
               </v-chip>
             </template>
             <template v-slot:item.quantity="{item}">
@@ -765,19 +768,13 @@ onMounted(async () => {
               </v-chip>
             </template>
             <template v-slot:item.remaining_quantity_to_be_delivered="{item}">
-              <v-chip variant="text" :color="item.remaining_quantity_to_be_delivered  ? 'warning' : 'null'">
+              <v-chip variant="text" :color="item.remaining_quantity_to_be_delivered  ? 'warning' : 'success'">
                 <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.remaining_quantity_to_be_delivered }}
               </v-chip>
             </template>
-            <template v-slot:item.partial_quantity_delivered="{ item }">
-              <v-chip variant="text" :color="item.partial_quantity_delivered ? 'warning' : 'null'">
-                <v-icon class="mr-2">mdi-package-variant</v-icon>
-                  {{ item.partial_quantity_delivered || 0 }}
-              </v-chip>
-            </template>
             <template v-slot:item.real_quantity_delivered="{item}">
-              <v-chip variant="elevated" color="white">
+              <v-chip variant="elevated" :color=" item.real_quantity_delivered > item.quantity ? 'success' : 'warning'">
                 <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.real_quantity_delivered }}
               </v-chip>

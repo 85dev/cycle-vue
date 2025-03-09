@@ -122,59 +122,80 @@ onMounted(async () => {
                         </v-chip>
                     </span>
                     <v-card style="margin: 0.4em">
-                        <v-data-table
-                            class="pa-2"
-                            :item-selectable="false"
-                            :items="[reactivePosition]"
-                            variant="underlined"
-                            density="dense"
-                            :headers="transferClientHeaders"
-                        >
-                            <template v-slot:item.transfer_date="{ item }">
+                        <v-container class="pa-4">
+                        <!-- Transfer Information -->
+                        <CardTitle title="Informations de transfert" icon="mdi-calendar-clock" />
+                        <v-row class="align-center">
+                            <v-col cols="6">
                                 <v-text-field
-                                    class="field-slot"
                                     type="date"
                                     v-model="transferDate"
                                     variant="underlined"
                                     label="Date du transfert"
                                     clearable
                                 />
-                            </template>
-                            <template v-slot:item.quantity="{ item }">
+                            </v-col>
+                            <v-col cols="6">
                                 <v-text-field
-                                    class="field-slot"
                                     type="number"
                                     v-model="modifiedQuantity"
                                     variant="underlined"
                                     label="Quantité"
                                     clearable
+                                    :error="modifiedQuantity > props.position.quantity"
+                                    :error-messages="modifiedQuantity > props.position.quantity ? 'Quantité invalide' : ''"
                                 />
-                            </template>
-                            <template v-slot:item.sub_contractor="{ item }">
+                            </v-col>
+                        </v-row>
+
+                        <!-- Destination Selection -->
+                        <CardTitle title="Choix du destinataire" icon="mdi-truck-fast-outline" />
+
+                        <v-row class="align-center">
+                            <v-col cols="6">
                                 <v-select
-                                    class="field-slot"
                                     variant="underlined"
                                     clearable
                                     :items="props.subContractorsList.map(sc => sc.name) || []"
                                     v-model="selectedSubcontractor"
                                     label="Sous-traitant"
-                                    aria-required="true"
                                     :disabled="selectedLogisticPlace"
-                                ></v-select>
-                            </template>
-                            <template v-slot:item.logistic_place="{ item }">
+                                />
+                            </v-col>
+                            <v-col cols="6">
                                 <v-select
-                                    class="field-slot"
                                     variant="underlined"
                                     clearable
                                     :items="props.logisticPlaceList.map(lp => lp.name) || []"
                                     v-model="selectedLogisticPlace"
                                     label="Lieu de stockage"
-                                    aria-required="true"
                                     :disabled="selectedSubcontractor"
-                                ></v-select>
-                            </template>
-                        </v-data-table>
+                                />
+                            </v-col>
+                        </v-row>
+
+                        <!-- Client Order Selection -->
+                        <CardTitle v-if="selectedClient" title="Assigner une commande client" icon="mdi-file-document-outline" />
+                        <v-row v-if="selectedClient" class="align-center">
+                            <v-col cols="6">
+                                <v-select
+                                    variant="underlined"
+                                    clearable
+                                    :items="props.clientOrders.map(co => `${co.client_order_number} (${new Date(co.delivery_date).toLocaleDateString()})`) || []"
+                                    v-model="selectedClientOrder"
+                                    label="Commande client"
+                                />
+                            </v-col>
+                            <v-col cols="6" class="d-flex align-center">
+                                <v-checkbox
+                                    variant="underlined"
+                                    v-model="partialDelivery"
+                                    label="Livraison partielle"
+                                    color="success"
+                                />
+                            </v-col>
+                        </v-row>
+                    </v-container>
                     </v-card>
 
                     <v-card-actions>

@@ -36,8 +36,6 @@ const props = defineProps({
     }
 })
 
-console.log(props.clientOrders);
-
 const emit = defineEmits('refresh')
 
 const reactivePosition = toRefs(props.position)
