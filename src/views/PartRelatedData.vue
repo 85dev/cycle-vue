@@ -206,110 +206,115 @@ onMounted(async () => {
               icon="mdi-package-variant-closed"
             />
             <v-card style="padding: 0.4em; margin: 0.4em;">
-            <CardTitle 
-              title="Détail des stocks"
-              icon="mdi-package-variant"
-              elevation="2"
-            />
-              <v-row dense class="mt-2">
-                <v-col cols="12" md="6" v-if="calculatedStocks.current_stock">
-                  <v-data-table
-                    :items="[
-                      { type: 'Total en stock consignation', quantity: calculatedStocks.current_stock.consignment_stock },
-                      { type: 'Total chez les sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
-                      { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
-                      { type: 'Total disponible', quantity: calculatedStocks.current_stock.total },
-                    ]"
-                    :headers="[
-                      { title: 'Type de stock', value: 'type' },
-                      { title: 'Quantité', value: 'quantity' },
-                    ]"
-                    class="elevation-1"
-                    density="compact"
-                    hide-default-footer
-                  >
-                    <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
-                        <v-icon class="mr-1">
-                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
-                        </v-icon>
-                        {{ item.quantity }}
-                      </v-chip>
-                    </template>
-                  </v-data-table>
-                </v-col>
+              <CardTitle 
+  title="Détail des stocks"
+  icon="mdi-package-variant"
+  elevation="2"
+/>
+<v-row dense class="mt-2">
+  <!-- Current Stock Table -->
+  <v-col cols="12" md="6">
+    <v-data-table
+      :items="[
+        { type: 'Total en stock consignation', quantity: calculatedStocks.current_stock?.consignment_stock ?? 0 },
+        { type: 'Total chez les sous-traitant(s)', quantity: calculatedStocks.current_stock?.subcontractor_stock ?? 0 },
+        { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock?.logistic_place_stock ?? 0 },
+        { type: 'Total disponible', quantity: calculatedStocks.current_stock?.total ?? 0 },
+      ]"
+      :headers="[
+        { title: 'Type de stock', value: 'type' },
+        { title: 'Quantité', value: 'quantity' },
+      ]"
+      class="elevation-1"
+      density="compact"
+      hide-default-footer
+    >
+      <template v-slot:item.quantity="{ item }">
+        <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
+          <v-icon class="mr-1">
+            {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
+          </v-icon>
+          {{ item.quantity }}
+        </v-chip>
+      </template>
+    </v-data-table>
+  </v-col>
 
-                <v-col cols="12" md="6" v-if="calculatedStocks.ordered_stock">
-                  <v-data-table
-                    :items="[
-                      { type: 'Total en commandes client', quantity: calculatedStocks.reserved_stock },
-                    ]"
-                    :headers="[
-                      { title: 'Stocks réservés au client', value: 'type' },
-                      { title: 'Quantité', value: 'quantity' },
-                    ]"
-                    class="elevation-1"
-                    density="compact"
-                    hide-default-footer
-                  >
-                    <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity > 0 ? 'warning' : 'black'">
-                        <v-icon class="mr-1"> mdi-package-variant-closed </v-icon>
-                        {{ item.quantity }}
-                      </v-chip>
-                    </template>
-                  </v-data-table>
-                </v-col>
+  <!-- Reserved Stock Table -->
+  <v-col cols="12" md="6">
+    <v-data-table
+      :items="[
+        { type: 'Total en commandes client', quantity: calculatedStocks.reserved_stock ?? 0 },
+      ]"
+      :headers="[
+        { title: 'Stocks réservés au client', value: 'type' },
+        { title: 'Quantité', value: 'quantity' },
+      ]"
+      class="elevation-1"
+      density="compact"
+      hide-default-footer
+    >
+      <template v-slot:item.quantity="{ item }">
+        <v-chip variant="text" :color="item.quantity > 0 ? 'warning' : 'black'">
+          <v-icon class="mr-1"> mdi-package-variant-closed </v-icon>
+          {{ item.quantity }}
+        </v-chip>
+      </template>
+    </v-data-table>
+  </v-col>
 
-                <!-- Second Row: Reserved Stock & Future Stock -->
-                <v-col class="mt-2" cols="12" md="6" v-if="calculatedStocks.reserved_stock">
-                  <v-data-table
-                    :items="[
-                      { type: 'Total en cours d\'expédition', quantity: calculatedStocks.ordered_stock.expeditions },
-                      { type: 'Total en commande(s) fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
-                    ]"
-                    :headers="[
-                      { title: 'Stocks en commande', value: 'type' },
-                      { title: 'Quantité', value: 'quantity' },
-                    ]"
-                    class="elevation-1"
-                    density="compact"
-                    hide-default-footer
-                  >
-                    <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text">
-                        <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-truck-fast-outline' : 'mdi-package-variant-remove' }}</v-icon>
-                        {{ item.quantity }}
-                      </v-chip>
-                    </template>
-                  </v-data-table>
-                </v-col>
+  <!-- Ordered Stock Table -->
+  <v-col class="mt-2" cols="12" md="6">
+    <v-data-table
+      :items="[
+        { type: 'Total en cours d\'expédition', quantity: calculatedStocks.ordered_stock?.expeditions ?? 0 },
+        { type: 'Total en commande(s) fournisseur', quantity: calculatedStocks.ordered_stock?.supplier_orders ?? 0 },
+      ]"
+      :headers="[
+        { title: 'Stocks en commande', value: 'type' },
+        { title: 'Quantité', value: 'quantity' },
+      ]"
+      class="elevation-1"
+      density="compact"
+      hide-default-footer
+    >
+      <template v-slot:item.quantity="{ item }">
+        <v-chip variant="text">
+          <v-icon class="mr-1">
+            {{ item.quantity > 0 ? 'mdi-truck-fast-outline' : 'mdi-package-variant-remove' }}
+          </v-icon>
+          {{ item.quantity }}
+        </v-chip>
+      </template>
+    </v-data-table>
+  </v-col>
 
-                <v-col class="mt-2" cols="12" md="6" v-if="calculatedStocks.total_current_stock || calculatedStocks.total_future_stock">
-                  <v-data-table
-                    :items="[
-                      { type: 'Total actuel disponible', quantity: calculatedStocks.total_current_stock },
-                      { type: 'Total disponible à terme', quantity: calculatedStocks.total_future_stock }
-                    ]"
-                    :headers="[
-                      { title: 'Stock à terme', value: 'type' },
-                      { title: 'Quantité', value: 'quantity' },
-                    ]"
-                    class="elevation-1"
-                    density="compact"
-                    hide-default-footer
-                  >
-                    <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
-                        <v-icon class="mr-1">
-                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
-                        </v-icon>
-                        {{ item.quantity }}
-                      </v-chip>
-                    </template>
-                  </v-data-table>
-                </v-col>
-              </v-row>
+  <!-- Future Stock Table -->
+  <v-col class="mt-2" cols="12" md="6">
+    <v-data-table
+      :items="[
+        { type: 'Total actuel disponible', quantity: calculatedStocks.total_current_stock ?? 0 },
+        { type: 'Total disponible à terme', quantity: calculatedStocks.total_future_stock ?? 0 },
+      ]"
+      :headers="[
+        { title: 'Stock à terme', value: 'type' },
+        { title: 'Quantité', value: 'quantity' },
+      ]"
+      class="elevation-1"
+      density="compact"
+      hide-default-footer
+    >
+      <template v-slot:item.quantity="{ item }">
+        <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
+          <v-icon class="mr-1">
+            {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
+          </v-icon>
+          {{ item.quantity }}
+        </v-chip>
+      </template>
+    </v-data-table>
+  </v-col>
+</v-row>
         </v-card>
       </v-card>
       <v-card class="b1-container ma-2">
