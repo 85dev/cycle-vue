@@ -35,6 +35,7 @@ const currentPartId = ref(null)
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const clientPositionModal = computed(() => { return unsortedClientPositions.value.length > 0 })
 const calculatedStocks = ref({})
 const subContractorsList = ref([])
@@ -42,6 +43,19 @@ const logisticPlaceList = ref([])
 const unsortedClientPositions = ref([])
 const transporters = ref([])
 const tab = ref(null);
+
+function getClientOrderStatus(item) {
+  if (!item.real_quantity_delivered || item.real_quantity_delivered === 0) {
+    return { label: "Non livrée", icon: "mdi-progress-clock", color: "warning" };
+  }
+  if (item.real_quantity_delivered >= item.quantity) {
+    return { label: "Livrée", icon: "mdi-check-circle-outline", color: "success" };
+  }
+  if (item.partial_quantity_delivered > 0 && item.real_quantity_delivered < item.quantity) {
+    return { label: "Partiellement livrée", icon: "mdi-package-variant", color: "orange" };
+  }
+  return { label: "En attente", icon: "mdi-timer-sand", color: "grey" };
+}
 
 async function fetchPartData() {
   const response = await apiCaller.get(`companies/${selectedCompany.value.id}/part_related_data/${currentPartId.value}`)
@@ -111,8 +125,12 @@ async function fetchLogisticPlacesIndex() {
 watch(selectedCompany, async (newCompany, oldCompany) => {
   if (newCompany?.id !== oldCompany?.id) {
     router.push('/dashboard');
-  }
-});
+  }}
+);
+
+watch(refreshTrigger, async() => {
+  await refreshAllData()
+})
 
 async function refreshAllData() {
     loading.value = true;
@@ -170,8 +188,8 @@ onMounted(async () => {
         </v-tab>
       </v-tabs>
     </v-card>
-      <v-card variant="elevated" color="blue" elevation="6" class="attached-container d-flex align-center flex-column" style="font-size: 14px;">
-        <span class="pl-2 pr-2">Référence en consultation:</span>
+      <v-card variant="elevated" elevation="12" class="attached-container d-flex align-center flex-column" style="font-size: 14px;">
+        <span class="pl-2 pr-2">Référence en consultation :</span>
         <div class="pl-2 pr-2" v-if="dataFromSearch.designation">
             <v-icon class="mr-2">mdi-barcode-scan</v-icon>
             <span class="mr-1"><strong>{{ dataFromSearch.designation }} {{ dataFromSearch.reference }}</strong></span>
@@ -194,10 +212,10 @@ onMounted(async () => {
                 <v-col cols="12" md="6" v-if="calculatedStocks.current_stock">
                   <v-data-table
                     :items="[
-                      { type: 'Consignation client', quantity: calculatedStocks.current_stock.consignment_stock },
-                      { type: 'Total en stock sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
+                      { type: 'Total en stock consignation', quantity: calculatedStocks.current_stock.consignment_stock },
+                      { type: 'Total chez les sous-traitant(s)', quantity: calculatedStocks.current_stock.subcontractor_stock },
                       { type: 'Total sur lieu(x) logistique', quantity: calculatedStocks.current_stock.logistic_place_stock },
-                      { type: 'Total général', quantity: calculatedStocks.current_stock.total },
+                      { type: 'Total disponible', quantity: calculatedStocks.current_stock.total },
                     ]"
                     :headers="[
                       { title: 'Type de stock', value: 'type' },
@@ -208,9 +226,9 @@ onMounted(async () => {
                     hide-default-footer
                   >
                     <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'success'">
+                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
                         <v-icon class="mr-1">
-                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
+                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
                         </v-icon>
                         {{ item.quantity }}
                       </v-chip>
@@ -232,7 +250,7 @@ onMounted(async () => {
                     hide-default-footer
                   >
                     <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity > 0 ? 'warning' : 'success'">
+                      <v-chip variant="text" :color="item.quantity > 0 ? 'warning' : 'black'">
                         <v-icon class="mr-1"> mdi-package-variant-closed </v-icon>
                         {{ item.quantity }}
                       </v-chip>
@@ -244,8 +262,8 @@ onMounted(async () => {
                 <v-col class="mt-2" cols="12" md="6" v-if="calculatedStocks.reserved_stock">
                   <v-data-table
                     :items="[
-                      { type: 'Total des expéditions en cours', quantity: calculatedStocks.ordered_stock.expeditions },
-                      { type: 'Total des commandes fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
+                      { type: 'Total en cours d\'expédition', quantity: calculatedStocks.ordered_stock.expeditions },
+                      { type: 'Total en commande(s) fournisseur', quantity: calculatedStocks.ordered_stock.supplier_orders },
                     ]"
                     :headers="[
                       { title: 'Stocks en commande', value: 'type' },
@@ -257,7 +275,7 @@ onMounted(async () => {
                   >
                     <template v-slot:item.quantity="{ item }">
                       <v-chip variant="text">
-                        <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-remove' }}</v-icon>
+                        <v-icon class="mr-1">{{ item.quantity > 0 ? 'mdi-truck-fast-outline' : 'mdi-package-variant-remove' }}</v-icon>
                         {{ item.quantity }}
                       </v-chip>
                     </template>
@@ -279,9 +297,9 @@ onMounted(async () => {
                     hide-default-footer
                   >
                     <template v-slot:item.quantity="{ item }">
-                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'success'">
+                      <v-chip variant="text" :color="item.quantity <= 0 ? 'warning' : 'black'">
                         <v-icon class="mr-1">
-                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-check-circle-outline' }}
+                          {{ item.quantity <= 0 ? 'mdi-alert-circle-outline' : 'mdi-package-variant-closed-check' }}
                         </v-icon>
                         {{ item.quantity }}
                       </v-chip>
@@ -572,12 +590,14 @@ onMounted(async () => {
                 <div v-if="dataFromSearch.positions_by_sub_contractors && dataFromSearch.positions_by_sub_contractors.length > 0">
                   <div v-for="subcontractor in dataFromSearch.positions_by_sub_contractors" :key="subcontractor.subcontractor_id" class="mb-4">
                     <v-card style="padding:0.4em; margin: 0.4em; margin-bottom: -0.8em;">
-                      <v-card-title>
-                        <v-chip variant="elevated">
-                          <v-icon class="mr-1">mdi-account-wrench-outline</v-icon>
-                          {{ subcontractor.subcontractor_name }}
-                        </v-chip>
-                      </v-card-title>
+                      <div class="d-flex align-center justify-lg-space-between">
+                        <CardTitle 
+                          :title="subcontractor.subcontractor_name"
+                          icon="mdi-account-wrench-outline"
+                          color="dark"
+                        />
+                        <span class="informative-text">{{ subcontractor.knowledge }}</span>
+                      </div>
                       <v-divider></v-divider>
                       <v-data-table
                         :loading="loading"
@@ -707,7 +727,6 @@ onMounted(async () => {
               icon="mdi-cube-send"
             />
             <span class="mr-3">
-              <!-- MODALS -->
                <CreateClientOrder
                 v-if="selectedCompany && dataFromSearch.reference && dataFromSearch.designation && dataFromSearch.client"
                 :part-id="currentPartId"
@@ -734,19 +753,33 @@ onMounted(async () => {
                 </v-chip>
             </template>
             <template v-slot:item.status="{ item }">
-              <v-chip variant="text" style="margin-left: -12px;">
-                <v-icon 
-                  class="mr-1"
-                  :icon="item.status === 'delivered' ? 'mdi-check-circle-outline' : 'mdi-progress-clock'"
-                  :color="item.status === 'delivered' ? 'success' : 'warning'"
-                />
-                {{ item.status === 'delivered' ? 'Livrée' : 'Non-livrée' }}
+              <v-chip variant="text" :color="getClientOrderStatus(item).color">
+                <v-icon class="mr-1" :icon="getClientOrderStatus(item).icon" />
+                {{ getClientOrderStatus(item).label }}
               </v-chip>
             </template>
             <template v-slot:item.quantity="{item}">
-              <v-chip variant="text" color="success" style="margin-left: -12px;">
+              <v-chip variant="text">
                 <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
                 {{ item.quantity }}
+              </v-chip>
+            </template>
+            <template v-slot:item.remaining_quantity_to_be_delivered="{item}">
+              <v-chip variant="text" :color="item.remaining_quantity_to_be_delivered  ? 'warning' : 'null'">
+                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
+                {{ item.remaining_quantity_to_be_delivered }}
+              </v-chip>
+            </template>
+            <template v-slot:item.partial_quantity_delivered="{ item }">
+              <v-chip variant="text" :color="item.partial_quantity_delivered ? 'warning' : 'null'">
+                <v-icon class="mr-2">mdi-package-variant</v-icon>
+                  {{ item.partial_quantity_delivered || 0 }}
+              </v-chip>
+            </template>
+            <template v-slot:item.real_quantity_delivered="{item}">
+              <v-chip variant="elevated" color="white">
+                <v-icon class="mr-2">mdi-package-variant-closed-check</v-icon>
+                {{ item.real_quantity_delivered }}
               </v-chip>
             </template>
             <template v-slot:item.price="{ item }">
@@ -856,20 +889,38 @@ onMounted(async () => {
                   {{ item.original_quantity }}
                 </v-chip>
             </template>
+
             <template v-slot:item.quantity="{ item }">
-                <v-chip variant="text" color="success" v-if="item.quantity < 0 && item.status !== 'completed'">
-                  <v-icon class="mr-2">mdi-progress-check</v-icon>
-                  Excédent de {{ Math.abs(item.quantity) }} 
-                </v-chip>
-                <v-chip variant="text" color="warning" v-else-if="item.quantity > 0 && item.status !== 'completed'"> 
-                  <v-icon class="mr-2">mdi-progress-download</v-icon>
-                  {{ item.quantity }} 
-                </v-chip>
-                <v-chip variant="text" color="success" v-if="item.status === 'completed'">
-                  <v-icon class="mr-2">mdi-cube-send</v-icon>
-                  Expédiée (Total livré : {{ item.quantity }})
-                </v-chip>
+              <v-chip v-if="item.quantity < 0 && item.status !== 'completed'" variant="text" color="red">
+                <v-icon class="mr-2">mdi-alert-circle-outline</v-icon>
+                Excédent de {{ Math.abs(item.quantity) }} 
+              </v-chip>
+
+              <v-chip v-else-if="item.quantity > 0 && item.status !== 'completed'" variant="text" color="warning"> 
+                <v-icon class="mr-2">mdi-progress-download</v-icon>
+                {{ item.quantity }} restant à livrer
+              </v-chip>
+
+              <v-chip v-else-if="item.status === 'completed'" variant="text" color="success">
+                <v-icon class="mr-2">mdi-cube-send</v-icon>
+                Expédiée (Total livré : {{ item.real_quantity_delivered }})
+              </v-chip>
             </template>
+
+            <template v-slot:item.partial_quantity_delivered="{ item }">
+              <v-chip v-if="item.partial_quantity_delivered > 0" variant="text" color="orange">
+                <v-icon class="mr-2">mdi-progress-clock</v-icon>
+                Partiel livré : {{ item.partial_quantity_delivered }}
+              </v-chip>
+            </template>
+
+            <template v-slot:item.real_quantity_delivered="{ item }">
+              <v-chip v-if="item.real_quantity_delivered > 0" :color="item.status === 'completed' ? 'green' : 'blue'" variant="text">
+                <v-icon class="mr-2">mdi-check-circle-outline</v-icon>
+                Total livré : {{ item.real_quantity_delivered }}
+              </v-chip>
+            </template>
+
             <template v-slot:item.status="{ item }">
               <v-chip variant="text" style="margin-left: -12px; font-weight: 500">
                 <v-icon :color="statusIconColor(item.status)" style="margin-right: 4px">
@@ -943,7 +994,7 @@ onMounted(async () => {
                 @click="router.push('/expeditions')"
             >
                 <v-icon class='mr-2'>mdi-ferry</v-icon>
-                <span>Gérer les expédition</span>
+                <span>Gérer les expéditions</span>
             </v-chip> 
           
           </div>
@@ -1021,7 +1072,7 @@ onMounted(async () => {
         </v-card>
         </v-tabs-window-item>
         <v-tabs-window-item value="three">
-          <v-card class="b1-container ma-2">
+          <v-card class="b1-container ma-2 mb-4">
           <div class="d-flex align-center justify-lg-space-between">
             <CardTitle 
               title="Informations sur la pièce"
@@ -1161,17 +1212,16 @@ onMounted(async () => {
               </div>
             </v-card>
           </div>
-          <v-card class="pa-1 flex-grow-1 mr-3 ml-3 mb-3">
-            <CardTitle 
-              v-if="dataFromSearch.lifecycle_steps.length > 0"
+          <v-card class="pa-1 flex-grow-1 mr-3 ml-3 mb-3" v-if="dataFromSearch.lifecycle_steps && dataFromSearch.lifecycle_steps.length > 0">
+            <CardTitle
               title="Cycle de vie"
               icon="mdi-sync"
             />
             <LifecycleTimeline 
                 :lifecycleSteps="dataFromSearch.lifecycle_steps"
                 direction="horizontal"
-                lineColor="blue"
-                iconColor="blue"
+                lineColor="warning"
+                iconColor="dark"
             />
           </v-card>
           

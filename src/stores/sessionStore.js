@@ -17,7 +17,8 @@ const pendingRequests = ref(localStorage.getItem('pending_requests') ? JSON.pars
 const accessRequests = ref(localStorage.getItem('access_requests') ? JSON.parse(localStorage.getItem('access_requests')) : []);
 const companies = ref([]);
 const selectedCompany = ref(localStorage.getItem('selected_company') ? JSON.parse(localStorage.getItem('selected_company')) : null);
-const isOwner = ref(localStorage.getItem('is_owner') === 'true'); // Load from localStorage
+const isOwner = ref(localStorage.getItem('is_owner') === 'true');
+const refreshTrigger = ref(0);
 
 // Get data
 const getters = {
@@ -47,6 +48,9 @@ const getters = {
   },
   getAccessRequests() {
     return accessRequests.value;
+  },
+  getRefreshTrigger() {
+    return refreshTrigger.value;
   }
 };
 
@@ -91,6 +95,10 @@ const actions = {
       console.error('Error:', error)
       throw error
     }
+  },
+
+  async refreshApplication() {
+    refreshTrigger.value += 1;
   },
 
   async initializeAuthState() {

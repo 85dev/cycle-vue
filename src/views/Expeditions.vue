@@ -14,6 +14,7 @@ import ExpeditionDetails from '@/components/modals/ExpeditionDetails.vue';
 import SpinnLoader from '@/components/SpinnLoader.vue';
 
 // Internal component logic
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany()})
 const runningExpeditions = ref(null)
 const deliveredExpeditions = ref(null)
@@ -57,6 +58,10 @@ async function refreshExpeditions() {
 
 watch(selectedCompany, () => {
     refreshExpeditions()
+})
+
+watch(refreshTrigger.value, async() => {
+  await refreshAllData()
 })
 
 onMounted(async() => {

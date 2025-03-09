@@ -17,6 +17,7 @@ const endDate = ref(dateConverter.formatISODate(new Date(Date.now() + 7 * 24 * 6
 const selectedCompany = computed(() => {
   return sessionStore.getters.getSelectedCompany()
 })
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const selectedRows = ref([])
 const isModalOpen = ref(false);
 
@@ -144,6 +145,10 @@ async function refreshData() {
         loading.value = false;
     }, 300);
 }
+
+watch(refreshTrigger, async() => {
+  await refreshData()
+})
 
 onMounted(async() => {
     sessionStore.actions.initializeAuthState(); 

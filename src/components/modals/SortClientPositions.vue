@@ -70,11 +70,11 @@ async function submitSortedPositions() {
     const payload = {
         client_position_ids: mappedClientPositions.value.map(position => position.id),
         standard_stocks: mappedClientPositions.value.map(pos => {
-            const stock = standardStocks.value.find(ss => ss.address === pos.selectedStSt);
+            const stock = standardStocks.value.find(ss => ss.name === pos.selectedStSt);
             return stock ? parseInt(stock.id) : 0;
         }),
         consignment_stocks: mappedClientPositions.value.map(pos => {
-            const stock = consignmentStocks.value.find(cs => cs.address === pos.selectedCoSt);
+            const stock = consignmentStocks.value.find(cs => cs.name === pos.selectedCoSt);
             return stock ? parseInt(stock.id) : 0;
         }),
     };
@@ -118,7 +118,7 @@ onMounted(async() => {
                                 clearable
                                 variant="underlined"
                                 v-model="item.selectedCoSt"
-                                :items="consignmentStocks.map(cs => cs.address) || []"
+                                :items="consignmentStocks.map(cs => cs.name) || []"
                                 label="Stock consignation"
                                 aria-required="true"
                                 :disabled="item.selectedStSt"
@@ -131,7 +131,7 @@ onMounted(async() => {
                                 clearable
                                 variant="underlined"
                                 v-model="item.selectedStSt"
-                                :items="standardStocks.map(ss => ss.address) || []"
+                                :items="standardStocks.map(ss => ss.name) || []"
                                 label="Stock standard"
                                 aria-required="true"
                                 :disabled="item.selectedCoSt"

@@ -58,7 +58,7 @@ async function deletePosition() {
                     style="font-weight: 500;"
                 >
                     <v-icon start class="ml-1">mdi-delete-outline</v-icon>
-                    <span class="mr-1">Supprimer</span>
+                    <span class="mr-1">Archiver</span>
                 </v-chip>
             </template>
 
@@ -83,7 +83,7 @@ async function deletePosition() {
                         <v-btn text="FERMER" @click="isActive.value = false"></v-btn>
 
                         <v-btn color="red" variant="elevated" @click="deletePosition">
-                            Supprimer
+                            Archiver
                         </v-btn>
                     </v-card-actions>
                 </v-card>

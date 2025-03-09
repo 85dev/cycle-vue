@@ -9,6 +9,7 @@ import SpinnLoader from '@/components/SpinnLoader.vue';
 
 const loading = ref(false)
 const deliverySlips = ref([])
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() }) 
 const subcontractorsList = ref([])
 const clientsList = ref([])
@@ -90,7 +91,7 @@ async function downloadPdf(item, type) {
         } finally {
             loading.value = false;
         }
-    }, 1200);
+    }, 600);
 }
 
 watch(selectedCompany, async (newCompany, oldCompany) => {
@@ -98,6 +99,10 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
     await refreshAllData();
   }
 });
+
+watch(refreshTrigger, async() => {
+  await refreshAllData()
+})
 
 async function refreshAllData() {
     loading.value = true;

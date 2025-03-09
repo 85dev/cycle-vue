@@ -1,9 +1,12 @@
 const clientOrdersHeaders = [
     { title: 'Numéro de commande', value: 'client_order_number' },
-    { title: 'Quantité', value: 'quantity'},
+    { title: 'Quantité commandée', value: 'quantity'},
+    { title: 'Reste à livrer', value: 'remaining_quantity_to_be_delivered'},
+    { title: 'Partiel livré', value: 'partial_quantity_delivered'},
+    { title: 'Quantité réelle livrée', value: 'real_quantity_delivered'},
     { title: 'Prix unitaire', value: 'price'},
     { title: 'Statut', value: 'status'},
-    { title: 'Date de livraison souhaitée', value: 'delivery_date'},
+    { title: 'Date de livraison', value: 'delivery_date'},
     { title: 'Date de livraison réelle', value: 'real_delivery_time'},
     { title: 'Actions', value: 'actions', sortable: false }
   ]

@@ -8,15 +8,15 @@ const props = defineProps({
     },
     direction: {
         type: String,
-        default: 'horizontal' // Can be 'horizontal' or 'vertical'
+        default: 'horizontal'
     },
     lineColor: {
         type: String,
-        default: 'warning' // Vuetify color (e.g., primary, warning, success)
+        default: 'warning'
     },
     iconColor: {
         type: String,
-        default: 'dark' // Color of timeline icons
+        default: 'dark'
     }
 });
 </script>
@@ -35,7 +35,7 @@ const props = defineProps({
             v-for="(step, index) in props.lifecycleSteps"
             :key="index"
             elevation="2"
-            icon="mdi-cogs"
+            icon="mdi-step-forward"
             :icon-color="props.iconColor"
             dot-color="white"
         >
@@ -46,7 +46,8 @@ const props = defineProps({
                     variant="elevated"
                     color="white"
                 >
-                    <span style="margin-left: 2px;">
+                    <span class="informative-text" style="font-size: 14px;">
+                        <v-icon class="mr-2">mdi-information-outline</v-icon>
                         {{ step.step_name }}
                     </span>
                 </v-chip>
@@ -59,14 +60,14 @@ const props = defineProps({
                             <v-chip variant="text">
                                 <v-icon class="mr-2">mdi-domain</v-icon>
                                 <span>
-                                    Type d'organisation :
+                                    Type d'entreprise :
                                     <strong>{{ step.entity_type }}</strong>
                                 </span>
                             </v-chip>
                             <v-chip variant="text" style="margin-top: -6px;">
                                 <v-icon class="mr-2">mdi-account-outline</v-icon>
                                 <span>
-                                    organisation associée :
+                                    Entreprise associée :
                                     <strong>{{ step.entity_name }}</strong>
                                 </span>
                             </v-chip>

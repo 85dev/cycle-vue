@@ -2,6 +2,10 @@ const transporters = [
     'Gefco', 'Heppner', 'C.H. Robinson'
 ]
 
+const qualityStatuses = [
+    'Draft', 'In progress', 'Finished'
+]
+
 const knowledgeList = [
     { name: 'Logistique', icon: 'mdi-truck' }, // Logistics
     { name: 'Usinage', icon: 'mdi-wrench-outline' }, // Machining
@@ -18,4 +22,4 @@ const knowledgeList = [
     { name: 'Moule en cire perdue', icon: 'mdi-screwdriver' }, // Mechanical Assembly
 ];
 
-export { transporters, knowledgeList };
+export { transporters, knowledgeList, qualityStatuses };

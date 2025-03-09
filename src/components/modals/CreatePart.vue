@@ -63,8 +63,8 @@ function addLifecycleStep() {
 function removeLifecycleStep(index) {
     lifecycleSteps.value.splice(index, 1);
 }
+
 function addDefaultLifecycleSteps() {
-    // **1️⃣ Ensure only one client step**
     lifecycleSteps.value = lifecycleSteps.value.filter(step => step.entity_type !== 'Client');
 
     if (client.value) {
@@ -79,7 +79,6 @@ function addDefaultLifecycleSteps() {
         }
     }
 
-    // **2️⃣ Ensure only one "Production" step**
     lifecycleSteps.value = lifecycleSteps.value.filter(step => step.step_name !== 'Production');
 
     if (supplier.value && supplier.value.length > 0) {
@@ -96,13 +95,10 @@ function addDefaultLifecycleSteps() {
         }
     }
 
-    // **3️⃣ Handle subcontractor steps**
-    // Remove outdated subcontractor steps that are not in the selected list
     lifecycleSteps.value = lifecycleSteps.value.filter(step => 
         step.entity_type !== 'SubContractor' || subcontractor.value.includes(step.entity_name)
     );
 
-    // Add missing subcontractors
     if (subcontractor.value && subcontractor.value.length > 0) {
         subcontractor.value.forEach(sub => {
             const exists = lifecycleSteps.value.some(step => step.entity_type === 'SubContractor' && step.entity_name === sub);

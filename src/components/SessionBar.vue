@@ -70,8 +70,8 @@ async function fetchData() {
     accessRequests.value = await sessionStore.actions.fetchAccessRequestAccounts()
     sessionStore.actions.initializeAuthState();  // Load user and auth token from localStorage
     userEmail.value = sessionStore.getters.getUserEmail();
-    rail.value = !rail.value
-    
+    sessionStore.actions.refreshApplication() // Trigger refresh for other components
+
     loadingData.value = false;
 }
 
@@ -110,7 +110,9 @@ onMounted(async() => {
       <div v-if="selectedCompany" class="d-flex align-center">
         <v-icon class="mr-1">mdi-database</v-icon>
         Compte entreprise actuellement sélectionné : 
-        <strong class="ml-1" v-if="!loadingData">{{ selectedCompany.name }}</strong>
+        <strong class="ml-1" v-if="!loadingData">
+          {{ selectedCompany.name }}
+        </strong>
         <Microloader class="ml-2" :loading="loadingData" />
       </div>
       <div v-else-if="!loadingData">
@@ -162,7 +164,7 @@ onMounted(async() => {
               <div class="d-flex align-center justify-center">
                 <v-chip v-if="!loadingData" variant="elevated" class="mb-2 mt-2" color="blue">
                   <v-icon class="mr-1">mdi-office-building</v-icon>
-                    {{ selectedCompany.name }}
+                    {{ selectedCompany.name.length > 20 ? selectedCompany.name.substring(0, 23) + '...' : selectedCompany.name }}
                 </v-chip>
                 <div v-else>
                   <Microloader class="mt-4 mb-4" :loading="loadingData"/>

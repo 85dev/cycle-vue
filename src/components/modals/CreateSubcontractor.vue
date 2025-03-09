@@ -14,6 +14,7 @@ const address = ref(null);
 const name = ref(null);
 const contacts = ref([{ email: '', first_name: '', last_name: '', role: '' }]);
 const autocompletedAddresses = ref([]);
+const knowledge = ref('');
 const loading = ref(false);
 const selectedCompany = computed(() => { return sessionStore.getters.getSelectedCompany() })
 
@@ -51,6 +52,7 @@ async function submitSubContractor() {
     subcontractor: {
       name: name.value,
       address: address.value,
+      knowledge: knowledge.value,
       contacts: contacts.value.map(({ email, first_name, last_name, role }) => ({ email, first_name, last_name, role, contactable_type: "supplier" })),
     },
   };
@@ -107,7 +109,7 @@ onMounted(() => {
               label="Nom du sous-traitant"
               v-model="name"
               required
-            ></v-text-field>
+            />
 
             <v-text-field
               variant="underlined"
@@ -116,7 +118,7 @@ onMounted(() => {
               @input="fetchAddressAutocomplete(address)"
               label="Addresse"
               required
-            ></v-text-field>
+            />
 
             <div style="display: flex; justify-content: center;" v-if="loading">
               <SpinnLoader :loading="loading"></SpinnLoader>
@@ -139,6 +141,13 @@ onMounted(() => {
               </v-chip>
             </v-chip-group>
 
+            <v-textarea
+              variant="underlined"
+              class="form-part"
+              label="Savoir-faire / expertise"
+              v-model="knowledge"
+              required
+            />
             
             <v-card flat outlined>
                 <v-card style="margin: 0.4em;">
@@ -169,7 +178,7 @@ onMounted(() => {
                         variant="underlined"
                         class="mr-2"
                         clearable
-                        ></v-text-field>
+                        />
                     </v-col>
                     <v-col cols="12" md="3">
                         <v-text-field
@@ -179,7 +188,7 @@ onMounted(() => {
                         variant="underlined"
                         class="mr-2"
                         clearable
-                        ></v-text-field>
+                        />
                     </v-col>
                     <v-col cols="12" md="3">
                         <v-text-field
@@ -189,7 +198,7 @@ onMounted(() => {
                         variant="underlined"
                         class="mr-2"
                         clearable
-                        ></v-text-field>
+                        />
                     </v-col>
                     <v-col cols="12" md="2">
                         <v-text-field
@@ -199,7 +208,7 @@ onMounted(() => {
                         variant="underlined"
                         class="mr-2"
                         clearable
-                        ></v-text-field>
+                        />
                     </v-col>
                     <v-col cols="12" md="1" class="d-flex justify-end">
                         <v-btn @click="removeContact(index)" icon small>
@@ -217,7 +226,7 @@ onMounted(() => {
             </v-card>
           </v-form>
 
-          <v-card-actions style="margin-bottom: 0.8em;">
+          <v-card-actions>
             <v-spacer></v-spacer>
 
             <v-btn color="red" text="FERMER" @click="isActive.value = false"></v-btn>

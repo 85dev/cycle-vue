@@ -7,9 +7,6 @@ import apiCaller from '@/services/apiCaller';
 import CardTitle from '../CardTitle.vue';
 import GenerateDeliverySlipPDF from './GenerateDeliverySlipPDF.vue';
 
-// Data constant
-import { transferHeaders } from '@/models/tableHeaders';
-
 // Internal logic
 const props = defineProps({
     selectedCompanyId: {
@@ -39,14 +36,18 @@ const props = defineProps({
     }
 })
 
+console.log(props.clientOrders);
+
 const emit = defineEmits('refresh')
 
 const reactivePosition = toRefs(props.position)
 const modifiedQuantity = ref(props.position.quantity)
 const transferDate = ref(new Date().toISOString().split('T')[0]);
 const selectedClient = ref(false)
+const selectedClientOrder = ref(null)
 const selectedLogisticPlace = ref(null)
 const selectedSubcontractor = ref(null)
+const partialDelivery = ref(false)
 const transferData = ref({
     type: null,
     name: null,
@@ -58,6 +59,7 @@ function createPayload() {
     let destinationName = null;
     let logisticPlaceId = null;
     let subContractorId = null;
+    let clientOrderId = selectedClient.value ? props.clientOrders.find(co =>   `${co.client_order_number} (${new Date(co.delivery_date).toLocaleDateString()})` === selectedClientOrder.value)?.id : null;
 
     if (selectedSubcontractor.value) {
         destinationType = "subcontractor";
@@ -71,7 +73,6 @@ function createPayload() {
         destinationType = "client";
         destinationName = props.client.name;
     }
-
     return {
         position_id: props.position.id,
         part_id: props.position.part_id,
@@ -81,13 +82,13 @@ function createPayload() {
         destination_name: destinationName,
         subcontractor_id: subContractorId,
         logistic_place_id: logisticPlaceId,
-        expedition_position_id: props.position.expedition_position_id
+        expedition_position_id: props.position.expedition_position_id,
+        is_partial: partialDelivery.value,
+        ...(selectedClient.value && clientOrderId ? { client_order_id: clientOrderId } : {})
     };
 }
 
 function handleArrival(payload) {
-    console.log(payload);
-    
     if (payload) {
         selectedClient.value = null;
         selectedLogisticPlace.value = null;
@@ -136,7 +137,7 @@ watch([selectedLogisticPlace, selectedSubcontractor, selectedClient], () => {
     };
 });
 
-onMounted(async() => {
+onMounted(() => {
     modifiedQuantity.value = props.position.quantity
 })
 </script>
@@ -186,7 +187,7 @@ onMounted(async() => {
                       style="width: fit-content;"
                     >
                       <v-icon start class="ml-0">mdi-package-variant-closed-check</v-icon>
-                      <span v-if="props.origin === 'subcontractor'">Quantité totale chez le sous-traitant : {{props.position.quantity}}</span>
+                      <span v-if="props.origin === 'subcontractor'">Quantité du lot chez le sous-traitant : <strong>{{props.position.quantity}}</strong></span>
                       <span v-else>Quantité totale sur lieu de stockage : {{props.position.quantity}}</span>
                     </v-chip>
                     <span class="informative-text mt-2" style="margin-left: 0;" v-if="props.position.quantity < modifiedQuantity">
@@ -197,74 +198,101 @@ onMounted(async() => {
                     </span>
                   </span>
                   <v-card style="margin: 0.4em">
-                    <v-data-table
-                            class="pa-2"
-                            :item-selectable="false"
-                            :items="[reactivePosition]"
-                            variant="underlined"
-                            density="dense"
-                            :headers="transferHeaders"
-                        >
-                        <template v-slot:item.transfer_date="{item}">
-                            <v-text-field
+                        <v-container class="pa-4">
+                            <!-- Transfer Information -->
+                            <v-row class="align-center">
+                            <v-col cols="6">
+                                <v-text-field
                                 class="field-slot"
                                 type="date"
                                 v-model="transferDate"
                                 variant="underlined"
                                 label="Date du transfert"
                                 clearable
-                            />
-                        </template>
-                        <template v-slot:item.quantity="{item}">
-                            <v-text-field
+                                />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field
                                 class="field-slot"
                                 type="number"
                                 v-model="modifiedQuantity"
                                 variant="underlined"
                                 label="Quantité"
                                 clearable
-                            />
-                        </template>
-                        <template v-slot:item.sub_contractor="{ item }">
-                            <v-select
+                                />
+                            </v-col>
+                            </v-row>
+
+                            <!-- Destination Section -->
+                            <CardTitle title="Choix du destinataire" icon="mdi-truck-fast-outline" />
+
+                            <v-row class="align-center">
+                            <!-- Subcontractor Selection -->
+                            <v-col cols="4">
+                                <v-select
                                 class="field-slot"
                                 variant="underlined"
                                 clearable
                                 :items="props.subContractorsList.map(sc => sc.name) || []"
                                 v-model="selectedSubcontractor"
                                 label="Sous-traitant"
-                                aria-required="true"
                                 :disabled="selectedLogisticPlace || selectedClient"
-                            ></v-select>
-                        </template>
-                         <template v-slot:item.logistic_place="{ item }">
-                            <v-select
+                                />
+                            </v-col>
+
+                            <!-- Logistic Place Selection -->
+                            <v-col cols="4">
+                                <v-select
                                 class="field-slot"
                                 variant="underlined"
                                 clearable
-                                :items="props.logisticPlaceList.map(sc => sc.name) || []"
+                                :items="props.logisticPlaceList.map(lp => lp.name) || []"
                                 v-model="selectedLogisticPlace"
                                 label="Lieu de stockage"
-                                aria-required="true"
                                 :disabled="selectedSubcontractor || selectedClient"
-                            ></v-select>
-                        </template>
-                        <template v-slot:item.client="{ item }">
-                            <v-checkbox
-                                v-if="props.origin !== 'subcontractor' || props.origin !== 'logistic_place'"
+                                />
+                            </v-col>
+
+                            <!-- Client Checkbox -->
+                            <v-col cols="4" v-if="props.origin !== 'client'">
+                                <v-checkbox
                                 class="field-slot"
                                 v-model="selectedClient"
                                 label="Transférer au client"
                                 variant="underlined"
-                                color="blue"
+                                color="success"
                                 :disabled="selectedSubcontractor || selectedLogisticPlace"
-                            />
-                        </template>
-                        </v-data-table>
-                  </v-card>
+                                />
+                            </v-col>
+                            </v-row>
 
+                            <CardTitle v-if="selectedClient" title="Assigner la commande client correspondante" icon="mdi-file-document-outline" />
 
-                        <!-- Actions -->
+                            <v-row v-if="selectedClient" class="align-center">
+                            <v-col cols="4">
+                                <v-select
+                                class="field-slot"
+                                variant="underlined"
+                                clearable
+                                :items="props.clientOrders.map(co =>  `${co.client_order_number} (${new Date(co.delivery_date).toLocaleDateString()})`) || []"
+                                v-model="selectedClientOrder"
+                                label="Commande client correspondante"
+                                :disabled="!selectedClient"
+                                />
+                            </v-col>
+                            <v-col cols="4" class="d-flex align-center">
+                                <v-checkbox
+                                class="field-slot"
+                                variant="underlined"
+                                v-model="partialDelivery"
+                                label="Livraison partielle"
+                                color="success"
+                                />
+                            </v-col>
+                            </v-row>
+                        </v-container>
+                        </v-card>
+
                         <v-card-actions>
 
                         <v-spacer></v-spacer>

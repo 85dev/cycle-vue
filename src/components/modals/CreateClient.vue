@@ -321,6 +321,10 @@ onMounted(async() => {
                 <v-icon color="success" style="margin-right: 6px;">mdi-help-circle-outline</v-icon>
                 Un stock consignation client concentre les références mises à disposition chez le client, les références ne sont facturées qu'au moment de leurs consommations.
               </span>
+              <span class="informative-text" style="display: flex; align-items: center;">
+                <v-icon color="warning" style="margin-right: 6px;">mdi-alert-circle-outline</v-icon>
+                <strong>Ne renseignez que les lieux de stockage détenus par l'entreprise</strong>
+              </span>
             </div>
 
             <!-- Consignment Stocks Section -->
@@ -329,7 +333,7 @@ onMounted(async() => {
               <v-col cols="12" md="6" class="pl-2">
                 <v-card outlined style="margin: 0.4em;">
                   <CardTitle
-                    title="Lieux de stockage standard"
+                    title="Vos lieux de stockage standard"
                     icon="mdi-dolly"
                     color="dark"
                   />
@@ -402,7 +406,7 @@ onMounted(async() => {
               <v-col cols="12" md="6" class="pr-2">
                 <v-card outlined style="margin: 0.4em;">
                   <CardTitle
-                    title="Lieux de stockage consignation"
+                    title="Vos lieux de stockage consignation"
                     icon="mdi-package-variant-closed-check"
                     color="dark"
                   />

@@ -3,8 +3,8 @@ import { onMounted, ref, defineEmits, computed } from 'vue';
 import sessionStore from '@/stores/sessionStore.js' // Import the new store
 
 // Components
-import SpinnLoader from '@/components/SpinnLoader.vue';
 import CardTitle from '../CardTitle.vue';
+import Microloader from '../Microloader.vue';
 
 // Services
 import apiCaller from '@/services/apiCaller.js';
@@ -15,7 +15,9 @@ const address = ref(null)
 const name = ref(null)
 const autocompletedAddresses = ref([])
 const loading = ref(false)
+const spinnLoading = ref(false)
 const contacts = ref([{ email: '', first_name: '', last_name: '', role: '' }]);
+const knowledge = ref('')
 
 const props = defineProps({
     origin: {
@@ -36,21 +38,22 @@ const emit = defineEmits(['refreshSuppliers'])
 async function fetchAddressAutocomplete(address) {
     if (address) {
     try {
-        loading.value = true
+        spinnLoading.value = true;
         autocompletedAddresses.value = await autocomplete.fetchAddressAutocomplete(address)
     } catch (error) {
         console.error('Error fetching addresses:', error);
     } finally {
-        loading.value = false; // Stop loading spinner after fetching or error
+        spinnLoading.value = false;
     }
   }
 }
 
-async function submitClient() {
+async function submitSupplier() {
     const supplier = {
         supplier: {
             name: name.value,
             address: address.value,
+            knowledge: knowledge.value,
             contacts: contacts.value.map(({ email, first_name, last_name, role }) => ({ email, first_name, last_name, role, contactable_type: "supplier" })),
         }
     }
@@ -107,7 +110,7 @@ onMounted(async() => {
                                 label="Nom du fournisseur"
                                 v-model="name"
                                 required
-                            ></v-text-field>
+                            />
 
                             <v-text-field
                                 variant="underlined"
@@ -116,10 +119,10 @@ onMounted(async() => {
                                 @input="fetchAddressAutocomplete(address)"
                                 label="Addresse"
                                 required
-                            ></v-text-field>
+                            />
 
-                            <div style="display: flex; justify-content: center;" v-if="loading">
-                                <SpinnLoader :loading="loading"></SpinnLoader>
+                            <div style="display: flex; justify-content: center;" v-if="spinnLoading">
+                                <Microloader class="mt-0 mb-4" :loading="spinnLoading"/>
                             </div>
 
                             <v-chip-group
@@ -139,6 +142,13 @@ onMounted(async() => {
                                 </v-chip>
                             </v-chip-group>
 
+                            <v-textarea
+                                variant="underlined"
+                                class="form-part"
+                                label="Savoir-faire / expertise"
+                                v-model="knowledge"
+                                required
+                            />
                             <v-card flat outlined>
                                 <v-card style="margin: 0.4em;">
                                     <CardTitle
@@ -216,7 +226,7 @@ onMounted(async() => {
                             </v-card>
                         </v-form>
 
-                    <v-card-actions style="margin-bottom: 0.8em;">
+                    <v-card-actions>
 
                         <v-spacer></v-spacer>
 
@@ -224,12 +234,12 @@ onMounted(async() => {
                             color="red"
                             text="FERMER"
                             @click="isActive.value = false"
-                        ></v-btn>
+                        />
             
                         <v-btn 
                             variant="elevated"
                             color="success"
-                            @click="submitClient(); isActive.value = false">
+                            @click="submitSupplier(); isActive.value = false">
                             Ajouter
                         </v-btn>
 

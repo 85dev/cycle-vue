@@ -30,7 +30,7 @@ const props = defineProps({
                 color="blue"
                 style="margin-right: 0.6em; font-weight: 500;"
             >
-                <v-icon start class="ml-1">mdi-gesture-spread</v-icon>
+                <v-icon start class="ml-1">mdi-dolly</v-icon>
                 <span class="mr-1">Consulter</span>
             </v-chip>
         </template>

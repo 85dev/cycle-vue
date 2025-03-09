@@ -107,7 +107,7 @@ onMounted(async() => {
                         icon="mdi-file-pdf-box"
                     />
                    
-                    <v-card>
+                    <v-card style="margin: 0.4em">
                         <CardTitle 
                             title="Détails de la commande fournisseur"
                             icon="mdi-list-box-outline"
@@ -160,7 +160,7 @@ onMounted(async() => {
                         </v-row>
                     </v-card>
 
-                    <v-card>
+                    <v-card style="margin: 0.4em">
                         <CardTitle 
                             title="Ajout des données pour le bon de commande"
                             icon="mdi-list-box-outline"

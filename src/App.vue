@@ -13,7 +13,7 @@ onMounted(() => {
   userId.value = sessionStore.getters.getUserID()
   authToken.value = sessionStore.getters.getAuthToken()
 
-  if (userId.value) {
+  if (userId.value && authToken.value) {
     sessionStore.actions.loginUserWithToken(authToken.value)
   } else {
     sessionStore.actions.resetUserInfo()

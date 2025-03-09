@@ -20,7 +20,7 @@ body {
   overflow-x: hidden;
   font-family: 'Montserrat', sans-serif;
   background-color: $pr-bg-color;
-  transition: all 0.15s ease-in-out;
+  transition: all 0.12s;
 }
 
 h1,h2,h3,h4,h5,h6,p,span,strong {
@@ -191,9 +191,10 @@ label, input, .v-btn, .v-data-table {
 
 .attached-container {
   position: fixed;
+  transform: translate(-50%, -50%);
+  bottom: 1%;
+  left: 50%;
   padding: 0.2em;
-  bottom: 24px;
-  right: 24px;
   z-index: 1;
 }
 

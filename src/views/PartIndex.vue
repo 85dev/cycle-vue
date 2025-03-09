@@ -17,7 +17,7 @@ const stockParts = ref(null)
 const filteredParts = ref(null)
 const filteredStockParts = ref(null)
 const suppliers = ref(null)
-
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const selectedCompany = computed(() => sessionStore.getters.getSelectedCompany())
 const router = useRouter();
 const loading = ref(false)
@@ -99,6 +99,10 @@ watch(selectedCompany, async (newCompany, oldCompany) => {
     await refreshAllData();
   }
 });
+
+watch(refreshTrigger.value, async() => {
+  await refreshAllData()
+})
 
 async function refreshAllData() {
     loading.value = true

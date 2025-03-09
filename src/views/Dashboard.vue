@@ -18,6 +18,7 @@ import SpinnLoader from '@/components/SpinnLoader.vue';
 const selectedCompany = computed(() => {
   return sessionStore.getters.getSelectedCompany()
 })
+const refreshTrigger = computed(() => { return sessionStore.getters.getRefreshTrigger })
 const clientOrders = ref([])
 const startDate = ref(null)
 const endDate = ref(null)
@@ -217,6 +218,10 @@ async function refreshAllData() {
   }, 300);
 }
 
+watch(refreshTrigger, async() => {
+  await refreshAllData()
+})
+
 onMounted(async() => {
     await sessionStore.actions.initializeAuthState()
     userId.value = await sessionStore.getters.getUserID();
@@ -234,7 +239,7 @@ onMounted(async() => {
 
 <template>
     <SpinnLoader :loading="loading" />
-      <div class="main-card mb-6 mt-6">
+      <div v-if="selectedCompany" class="main-card mb-6 mt-6">
         <v-card class="b1-container d-flex align-center justify-center" variant="elevated">
           <v-tabs v-model="tab">
             <v-tab value="one">
@@ -357,9 +362,12 @@ onMounted(async() => {
                         variant="text"
                         :color="order.available_stock > order.position_quantity ? 'success' : 'red'"
                       >
-                        <span class="mr-2" style="margin-left: 2px; display: flex;">
+                        <span class="d-flex" style="margin-left: 2px;">
                           <v-icon class="mr-2" :icon="order.available_stock > order.position_quantity ? 'mdi-package-variant-closed-check' : 'mdi-package-variant-closed-minus'"></v-icon>
-                          Pièces en stock : <strong class="ml-1"> {{ order.available_stock }} </strong>
+                          Stock total disponible : 
+                          <span>
+                            <strong class="ml-1"> {{ order.available_stock }} </strong>
+                          </span>
                         </span>
                       </v-chip>
                       <v-chip
